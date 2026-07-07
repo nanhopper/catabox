@@ -6,7 +6,7 @@
   <title>Catabox - Xbox Game Pass catalog tracker</title>
   <style>
     :root {
-      color-scheme: light dark;
+      color-scheme: dark;
       --bg: #0b1016;
       --panel: #121a24;
       --panel-2: #182231;
@@ -53,6 +53,40 @@
       letter-spacing: -0.06em;
     }
 
+    .brand-title {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, ui-monospace, monospace;
+      font-size: clamp(2.6rem, 7.4vw, 5.2rem);
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+    }
+
+    .brand-word {
+      color: transparent;
+      background: linear-gradient(120deg, var(--accent), var(--accent-2) 54%, var(--text));
+      background-clip: text;
+      -webkit-background-clip: text;
+      padding-inline-end: 0.08em;
+      text-shadow: 0 16px 42px color-mix(in srgb, var(--accent-2) 30%, transparent);
+      text-transform: uppercase;
+    }
+
+    .brand-prompt,
+    .brand-cursor {
+      color: var(--accent);
+      font-size: 0.55em;
+      letter-spacing: -0.02em;
+      opacity: 0.82;
+      text-shadow: 0 0 22px color-mix(in srgb, var(--accent) 40%, transparent);
+    }
+
+    .brand-cursor {
+      color: var(--accent-2);
+    }
+
     h2,
     h3 {
       letter-spacing: -0.03em;
@@ -62,6 +96,13 @@
       max-width: 72ch;
       color: var(--muted);
       font-size: 1.05rem;
+    }
+
+    .disclaimer {
+      max-width: 72ch;
+      margin-top: -0.35rem;
+      color: color-mix(in srgb, var(--muted) 78%, transparent);
+      font-size: 0.78rem;
     }
 
     .panel {
@@ -79,6 +120,53 @@
 
     .status.success {
       border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
+    }
+
+    .status-summary {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      flex-wrap: wrap;
+      margin: 0.25rem 0 1rem;
+      color: var(--muted);
+    }
+
+    .status-dot {
+      width: 0.72rem;
+      height: 0.72rem;
+      border-radius: 999px;
+      background: var(--muted);
+      box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--muted) 16%, transparent);
+    }
+
+    .status-dot.success {
+      background: var(--accent);
+      box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--accent) 16%, transparent);
+    }
+
+    .status-dot.failed {
+      background: var(--danger);
+      box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--danger) 16%, transparent);
+    }
+
+    .status-summary strong {
+      color: var(--text);
+    }
+
+    .status-details {
+      margin-top: 1.5rem;
+      background: color-mix(in srgb, var(--panel) 74%, transparent);
+      box-shadow: none;
+    }
+
+    .status-details summary {
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 750;
+    }
+
+    .status-details details[open] .status-grid {
+      margin-top: 1rem;
     }
 
     .status-grid,
@@ -230,12 +318,16 @@
       gap: 1rem;
       width: min(1400px, calc(100% - 2rem));
       padding: 0.65rem;
-      border: 1px solid var(--line);
+      border: 1px solid color-mix(in srgb, var(--accent-2) 20%, var(--line));
       border-radius: 999px;
-      background: color-mix(in srgb, var(--panel) 94%, transparent);
-      box-shadow: var(--shadow);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--panel) 98%, white 2%), color-mix(in srgb, var(--panel) 92%, black 8%));
+      box-shadow:
+        0 20px 46px rgb(0 0 0 / 34%),
+        0 2px 10px rgb(0 0 0 / 22%),
+        inset 0 1px 0 rgb(255 255 255 / 8%);
       transform: translateX(-50%);
-      backdrop-filter: blur(14px);
+      backdrop-filter: blur(18px) saturate(1.12);
     }
 
     .toolbar-summary,
@@ -247,6 +339,7 @@
     }
 
     .toolbar-summary {
+      flex: 1 1 auto;
       min-width: 0;
     }
 
@@ -256,8 +349,103 @@
 
     .results-toolbar button {
       width: auto;
-      min-height: 2.25rem;
-      padding: 0.45rem 0.7rem;
+      min-height: 2rem;
+      padding: 0.35rem 0.55rem;
+    }
+
+    .view-toggle-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+
+    .toolbar-search {
+      flex: 0 1 15rem;
+      min-width: 9rem;
+    }
+
+    .toolbar-search input {
+      width: 100%;
+      min-height: 2rem;
+      border-radius: 999px;
+      padding: 0.35rem 0.75rem;
+      background: color-mix(in srgb, #0d1520 78%, transparent);
+      font-size: 0.84rem;
+      font-weight: 600;
+    }
+
+    .toolbar-filter-label,
+    .results-toolbar .toolbar-badge-button {
+      display: inline-flex;
+      align-items: center;
+      min-height: auto;
+      padding: 0.2rem 0.55rem;
+      font-size: 0.78rem;
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    .ui-icon {
+      display: block;
+      flex: 0 0 auto;
+      width: 1.2rem;
+      height: 1.2rem;
+      fill: none;
+      stroke: currentColor;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-width: 1.8;
+    }
+
+    .toolbar-filter-label {
+      flex: 1 1 10rem;
+      max-width: min(28rem, 34vw);
+      min-width: 0;
+      color: var(--muted);
+      background: transparent;
+      border: 0;
+      padding-inline: 0;
+    }
+
+    .toolbar-filter-text {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.72rem;
+    }
+
+    .toolbar-icon-button {
+      justify-content: center;
+      min-width: 2rem;
+      border-radius: 999px;
+    }
+
+    .toolbar-view-button {
+      width: 2.65rem;
+      min-height: 2.65rem;
+      padding: 0.55rem;
+      color: var(--text);
+      background: color-mix(in srgb, var(--accent-2) 25%, var(--chip));
+      border-color: color-mix(in srgb, var(--accent-2) 42%, var(--line));
+    }
+
+    .toolbar-view-button .ui-icon {
+      width: 1.35rem;
+      height: 1.35rem;
+    }
+
+    .toolbar-actions .toolbar-icon-button {
+      width: 1.95rem;
+      min-height: 1.95rem;
+      padding: 0.35rem;
+      color: var(--muted);
+      background: color-mix(in srgb, var(--panel-2) 62%, transparent);
+    }
+
+    .toolbar-actions .ui-icon {
+      width: 1rem;
+      height: 1rem;
     }
 
     .filter-drawer {
@@ -327,11 +515,25 @@
       background: var(--panel);
     }
 
-    .card img {
-      width: 100%;
-      aspect-ratio: 16 / 9;
+    .game-art {
+      display: block;
       object-fit: cover;
       background: #0d1520;
+      opacity: 0;
+      transition: opacity 160ms ease;
+    }
+
+    .game-art.is-loaded {
+      opacity: 1;
+    }
+
+    .game-art.is-error {
+      opacity: 0.35;
+    }
+
+    .card-art {
+      width: 100%;
+      aspect-ratio: 16 / 9;
     }
 
     .card-body {
@@ -376,6 +578,39 @@
       padding: 0.75rem;
       text-align: left;
       vertical-align: top;
+    }
+
+    .game-title-cell {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 18rem;
+    }
+
+    .game-title-text {
+      min-width: 0;
+    }
+
+    .game-title-text a {
+      font-weight: 700;
+    }
+
+    .table-thumb {
+      flex: 0 0 auto;
+      width: 3rem;
+      height: 4rem;
+      border: 1px solid var(--line);
+      border-radius: 0.45rem;
+      background: #0d1520;
+    }
+
+    .table-thumb-empty {
+      display: inline-grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 0.62rem;
+      line-height: 1.1;
+      text-align: center;
     }
 
     th {
@@ -427,29 +662,6 @@
       border: 0;
     }
 
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg: #f6f8fa;
-        --panel: #ffffff;
-        --panel-2: #f0f3f7;
-        --text: #15202b;
-        --muted: #52616f;
-        --line: #d6dee8;
-        --chip: #eef4fb;
-        --shadow: 0 18px 50px rgb(31 45 61 / 10%);
-      }
-
-      input,
-      select,
-      button {
-        background: #ffffff;
-      }
-
-      th {
-        background: #f8fafc;
-      }
-    }
-
     @media (max-width: 720px) {
       main {
         padding-bottom: 6rem;
@@ -479,6 +691,10 @@
         flex: 1 1 100%;
       }
 
+      .toolbar-filter-label {
+        max-width: none;
+      }
+
       .toolbar-actions button {
         flex: 1;
         min-width: 0;
@@ -488,19 +704,20 @@
 </head>
 <body>
   <header>
-    <p class="chip">Zero-COGS static catalog tracker</p>
-    <h1>Catabox</h1>
-    <p class="lede">Public Xbox Game Pass catalog membership for Ultimate, Premium, and Essential across console and PC. Data is refreshed by GitHub Actions and served as static JSON from this GitHub Pages site.</p>
+    <h1 class="brand-title" aria-label="Catabox">
+      <span class="brand-prompt" aria-hidden="true">cat&gt;</span>
+      <span class="brand-word">Catabox</span>
+      <span class="brand-cursor" aria-hidden="true">_</span>
+    </h1>
+    <p class="lede">Explore what is in Xbox Game Pass across tiers and platforms.</p>
+    <p class="disclaimer">Catabox is an unofficial fan-made tracker and is not affiliated with, endorsed by, or sponsored by Xbox or Microsoft.</p>
+    <p id="statusSummary" class="status-summary" aria-live="polite">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span>Loading catalog status...</span>
+    </p>
   </header>
 
   <main>
-    <section id="statusPanel" class="panel status" aria-labelledby="statusTitle">
-      <h2 id="statusTitle">Update status</h2>
-      <div id="statusContent" class="status-grid">
-        <p class="muted">Loading status...</p>
-      </div>
-    </section>
-
     <section class="kpis" id="kpis" aria-label="Catalog key performance indicators"></section>
 
     <section id="filterPanel" class="panel" aria-labelledby="filtersTitle">
@@ -539,11 +756,6 @@
             <option value="">All publishers</option>
           </select>
         </label>
-        <label>Rating
-          <select id="rating">
-            <option value="">All ratings</option>
-          </select>
-        </label>
         <label>Catalog state
           <select id="state">
             <option value="current">Current catalog</option>
@@ -566,10 +778,8 @@
       </div>
       <div id="resultsHead" class="results-head">
         <div class="button-row" role="group" aria-label="Result actions">
-          <button id="cardsButton" class="secondary" type="button" aria-pressed="true">Card view</button>
-          <button id="tableButton" class="secondary" type="button" aria-pressed="false">Table view</button>
-          <button id="copyButton" class="primary" type="button">Copy names</button>
-          <button id="csvButton" class="secondary" type="button">Export CSV</button>
+          <button id="viewToggleButton" class="secondary view-toggle-button" type="button"></button>
+          <button id="clearFiltersButton" class="secondary clear-filters-button hidden" type="button">Clear filters</button>
         </div>
         <p id="resultsSummary" class="muted" aria-live="polite"></p>
       </div>
@@ -578,13 +788,17 @@
     <div id="resultsToolbar" class="results-toolbar hidden" role="region" aria-label="Results toolbar">
       <div class="toolbar-summary">
         <strong id="toolbarResults" aria-live="polite">0 / 0 games</strong>
-        <span id="toolbarFilters" class="muted">0 filters</span>
-        <span id="toolbarView" class="badge">Card view</span>
+        <label class="toolbar-search">
+          <span class="sr-only">Search games</span>
+          <input id="toolbarSearch" type="search" autocomplete="off" placeholder="Search">
+        </label>
+        <span id="toolbarFilters" class="toolbar-filter-label">No filters</span>
+        <button id="toolbarView" class="badge toolbar-badge-button toolbar-icon-button toolbar-view-button" type="button" aria-label="Switch view"></button>
       </div>
       <div class="toolbar-actions" role="group" aria-label="Quick result actions">
-        <button id="toolbarFiltersButton" class="secondary" type="button">Filters</button>
-        <button id="toolbarClearButton" class="secondary hidden" type="button">Clear</button>
-        <button id="toolbarTopButton" class="secondary hidden" type="button">Top</button>
+        <button id="toolbarFiltersButton" class="secondary toolbar-icon-button" type="button" aria-label="Show filters"></button>
+        <button id="toolbarClearButton" class="secondary toolbar-icon-button hidden" type="button" aria-label="Clear filters"></button>
+        <button id="toolbarTopButton" class="secondary toolbar-icon-button hidden" type="button" aria-label="Back to top"></button>
       </div>
     </div>
 
@@ -606,7 +820,7 @@
     <section id="cards" class="cards" aria-label="Filtered game cards"></section>
     <section id="tableSection" class="table-wrap hidden" aria-labelledby="tableTitle">
       <table id="gamesTable">
-        <caption id="tableTitle">Filtered games</caption>
+        <caption id="tableTitle" class="sr-only">Filtered games</caption>
         <thead>
           <tr>
             <th scope="col">Title</th>
@@ -626,6 +840,15 @@
       <h2 id="historyTitle">History dashboard</h2>
       <p class="muted">First run is a baseline observation. Later badges and charts reflect tracker-observed changes only.</p>
       <div id="historyDashboard" class="chart-grid"></div>
+    </section>
+
+    <section id="statusPanel" class="panel status status-details" aria-labelledby="statusTitle">
+      <details>
+        <summary id="statusTitle">Update diagnostics</summary>
+        <div id="statusContent" class="status-grid">
+          <p class="muted">Loading status...</p>
+        </div>
+      </details>
     </section>
   </main>
 
@@ -655,7 +878,6 @@
       platform: '',
       genre: '',
       publisher: '',
-      rating: '',
       state: 'current',
       change: '',
       since: ''
@@ -671,7 +893,9 @@
       tierComparisonSetsReady: false,
       rows: [],
       view: 'cards',
-      lastFocused: null
+      lastFocused: null,
+      imageObserver: null,
+      viewportImageFrame: 0
     };
 
     const controls = Object.fromEntries(Object.keys(defaults).map((id) => [id, document.getElementById(id)]));
@@ -682,12 +906,17 @@
     const tableSection = document.getElementById('tableSection');
     const tableBody = document.querySelector('#gamesTable tbody');
     const resultsSummary = document.getElementById('resultsSummary');
+    const statusSummary = document.getElementById('statusSummary');
     const resultsToolbar = document.getElementById('resultsToolbar');
     const toolbarResults = document.getElementById('toolbarResults');
+    const toolbarSearch = document.getElementById('toolbarSearch');
     const toolbarFilters = document.getElementById('toolbarFilters');
     const toolbarView = document.getElementById('toolbarView');
+    const toolbarFiltersButton = document.getElementById('toolbarFiltersButton');
     const toolbarClearButton = document.getElementById('toolbarClearButton');
     const toolbarTopButton = document.getElementById('toolbarTopButton');
+    const viewToggleButton = document.getElementById('viewToggleButton');
+    const clearFiltersButton = document.getElementById('clearFiltersButton');
     const filterDrawer = document.getElementById('filterDrawer');
     const filterDrawerPanel = filterDrawer.querySelector('.filter-drawer-panel');
     const filterDrawerControls = document.getElementById('filterDrawerControls');
@@ -701,6 +930,17 @@
         '"': '&quot;',
         "'": '&#39;'
       }[char]));
+    }
+
+    function icon(name) {
+      const icons = {
+        full: '<svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="5" height="5" rx="1.4"></rect><rect x="12" y="3" width="5" height="5" rx="1.4"></rect><rect x="3" y="12" width="5" height="5" rx="1.4"></rect><rect x="12" y="12" width="5" height="5" rx="1.4"></rect></svg>',
+        table: '<svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5.5h2.2"></path><path d="M9 5.5h7"></path><path d="M4 10h2.2"></path><path d="M9 10h7"></path><path d="M4 14.5h2.2"></path><path d="M9 14.5h7"></path></svg>',
+        filter: '<svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 4.5h13l-5.2 6v3.8l-2.6 1.3v-5.1z"></path></svg>',
+        clear: '<svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 4.5h13l-5.2 6v3.8l-2.6 1.3v-5.1z"></path><path d="M4.5 15.5l11-11"></path></svg>',
+        top: '<svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 15.5v-11"></path><path d="M5.5 9L10 4.5 14.5 9"></path></svg>'
+      };
+      return icons[name] ?? '';
     }
 
     function formatDate(value) {
@@ -742,7 +982,6 @@
       const games = app.current.games;
       setOptions(controls.genre, [...new Set(games.flatMap((game) => game.genres ?? []))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.publisher, [...new Set(games.map((game) => game.publisher).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
-      setOptions(controls.rating, [...new Set(games.map((game) => game.ratingId).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b))));
     }
 
     function populateTierComparisonSets() {
@@ -786,11 +1025,24 @@
       history.replaceState(null, '', next);
     }
 
-    function activeFilterCount() {
-      return Object.entries(defaults).filter(([id, fallback]) => {
-        const value = id === 'search' ? controls[id].value.trim() : controls[id].value;
-        return value !== fallback;
-      }).length;
+    function selectedControlText(id) {
+      const control = controls[id];
+      return control instanceof HTMLSelectElement
+        ? control.selectedOptions[0]?.textContent?.trim() ?? control.value
+        : control.value.trim();
+    }
+
+    function activeFilterDescriptions() {
+      return Object.entries(defaults)
+        .filter(([id, fallback]) => {
+          const value = id === 'search' ? controls[id].value.trim() : controls[id].value;
+          return value !== fallback;
+        })
+        .map(([id]) => {
+          if (id === 'search') return `Search: ${controls.search.value.trim()}`;
+          if (id === 'since') return `Since ${controls.since.value}`;
+          return selectedControlText(id).replace(/\s+since date$/i, '');
+        });
     }
 
     function resetFilters() {
@@ -806,12 +1058,47 @@
       toolbarTopButton.classList.toggle('hidden', scrollY < 700);
     }
 
+    function viewLabel(view = app.view) {
+      return view === 'cards' ? 'Full view' : 'Table view';
+    }
+
+    function nextView() {
+      return app.view === 'cards' ? 'table' : 'cards';
+    }
+
+    function setView(view) {
+      app.view = view;
+      renderResults();
+    }
+
+    function toggleView() {
+      setView(nextView());
+    }
+
     function updateResultsToolbar(rows, total) {
-      const filters = activeFilterCount();
+      const filterDescriptions = activeFilterDescriptions();
+      const filters = filterDescriptions.length;
+      const filterSummary = filters === 0 ? 'No filters' : filterDescriptions.join(', ');
+      const next = nextView();
       toolbarResults.textContent = `${rows.length.toLocaleString()} / ${total.toLocaleString()} games`;
-      toolbarFilters.textContent = filters === 1 ? '1 filter' : `${filters} filters`;
-      toolbarView.textContent = app.view === 'cards' ? 'Card view' : 'Table view';
+      if (toolbarSearch.value !== controls.search.value) {
+        toolbarSearch.value = controls.search.value;
+      }
+      toolbarFilters.innerHTML = `<span class="toolbar-filter-text">${escapeHtml(filterSummary)}</span>`;
+      toolbarFilters.title = filterSummary;
+      toolbarFilters.setAttribute('aria-label', filters === 0 ? 'No active filters' : `Active filters: ${filterSummary}`);
+      toolbarFilters.classList.toggle('hidden', filters === 0);
+      toolbarView.innerHTML = icon(next === 'cards' ? 'full' : 'table');
+      toolbarView.title = `Switch to ${viewLabel(next).toLocaleLowerCase()}`;
+      toolbarView.setAttribute('aria-label', toolbarView.title);
+      viewToggleButton.innerHTML = `${icon(next === 'cards' ? 'full' : 'table')}<span>${escapeHtml(viewLabel(next))}</span>`;
+      viewToggleButton.title = `Switch to ${viewLabel(next).toLocaleLowerCase()}`;
+      viewToggleButton.setAttribute('aria-label', viewToggleButton.title);
+      toolbarClearButton.innerHTML = icon('clear');
+      toolbarFiltersButton.innerHTML = icon('filter');
+      toolbarTopButton.innerHTML = icon('top');
       toolbarClearButton.classList.toggle('hidden', filters === 0);
+      clearFiltersButton.classList.toggle('hidden', filters === 0);
       updateToolbarVisibility();
     }
 
@@ -851,8 +1138,12 @@
         return;
       }
       closeFilterDrawer({ restoreFocus: false });
-      filterPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      setTimeout(() => controls.search.focus(), 350);
+      const toolbarOffset = resultsToolbar.classList.contains('hidden')
+        ? 16
+        : resultsToolbar.getBoundingClientRect().height + 24;
+      const top = filterPanel.getBoundingClientRect().top + scrollY - toolbarOffset;
+      scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      setTimeout(() => controls.search.focus({ preventScroll: true }), 350);
     }
 
     function historyRecord(productId) {
@@ -869,7 +1160,6 @@
           publisher: '',
           developer: '',
           genres: [],
-          ratingId: '',
           poster: null,
           boxArt: null,
           heroArt: null,
@@ -927,7 +1217,6 @@
       if (controls.platform.value && !game.platforms.includes(controls.platform.value)) return false;
       if (controls.genre.value && !(game.genres ?? []).includes(controls.genre.value)) return false;
       if (controls.publisher.value && game.publisher !== controls.publisher.value) return false;
-      if (controls.rating.value && String(game.ratingId ?? '') !== controls.rating.value) return false;
       if (!hasChange(game, controls.change.value, controls.since.value)) return false;
       return true;
     }
@@ -954,12 +1243,102 @@
       return `<span class="chips">${badges.map((badge) => `<span class="badge ${escapeHtml(badge.className)}">${escapeHtml(badge.text)}</span>`).join('')}</span>`;
     }
 
+    function cardImage(game) {
+      return game.heroArt || game.poster || game.boxArt;
+    }
+
+    function thumbnailImage(game) {
+      return game.boxArt || game.poster || game.heroArt;
+    }
+
+    function lazyImageHtml(src, className, { width = null, height = null } = {}) {
+      if (!src) return '';
+      return `<img class="${escapeHtml(className)}" data-src="${escapeHtml(src)}" alt="" decoding="async"${width ? ` width="${width}"` : ''}${height ? ` height="${height}"` : ''}>`;
+    }
+
+    function activeImageContainer() {
+      return app.view === 'cards' ? cards : tableBody;
+    }
+
+    function isInViewport(rect) {
+      const height = innerHeight || document.documentElement.clientHeight;
+      return rect.bottom > 0 && rect.top < height;
+    }
+
+    function distanceToViewport(rect) {
+      const height = innerHeight || document.documentElement.clientHeight;
+      if (isInViewport(rect)) {
+        return Math.abs((rect.top + rect.bottom) / 2 - height / 2);
+      }
+      return rect.bottom <= 0 ? Math.abs(rect.bottom) : Math.abs(rect.top - height);
+    }
+
+    function markImageLoaded(image) {
+      image.classList.add('is-loaded');
+    }
+
+    function loadImage(image, priority = 'auto') {
+      if (!(image instanceof HTMLImageElement) || image.src || !image.dataset.src) return;
+      image.loading = priority === 'high' ? 'eager' : 'lazy';
+      image.fetchPriority = priority;
+      if (priority === 'high') {
+        image.setAttribute('fetchpriority', 'high');
+      }
+      image.addEventListener('load', () => markImageLoaded(image), { once: true });
+      image.addEventListener('error', () => image.classList.add('is-error'), { once: true });
+      image.src = image.dataset.src;
+      delete image.dataset.src;
+      if (image.complete) {
+        markImageLoaded(image);
+      }
+      app.imageObserver?.unobserve(image);
+    }
+
+    function setupImageObserver() {
+      if (!('IntersectionObserver' in window)) return;
+      app.imageObserver = new IntersectionObserver((entries) => {
+        entries
+          .filter((entry) => entry.isIntersecting)
+          .sort((left, right) => distanceToViewport(left.boundingClientRect) - distanceToViewport(right.boundingClientRect))
+          .forEach((entry) => loadImage(entry.target, isInViewport(entry.boundingClientRect) ? 'high' : 'auto'));
+      }, { rootMargin: '700px 0px 900px' });
+    }
+
+    function prioritizeViewportImages() {
+      const images = [...activeImageContainer().querySelectorAll('img[data-src]')]
+        .map((image) => ({ image, rect: image.getBoundingClientRect() }))
+        .filter(({ rect }) => isInViewport(rect))
+        .sort((left, right) => distanceToViewport(left.rect) - distanceToViewport(right.rect));
+      images.forEach(({ image }) => loadImage(image, 'high'));
+    }
+
+    function scheduleViewportImageLoad() {
+      if (app.viewportImageFrame) return;
+      app.viewportImageFrame = requestAnimationFrame(() => {
+        app.viewportImageFrame = 0;
+        prioritizeViewportImages();
+      });
+    }
+
+    function observeLazyImages() {
+      const images = [...activeImageContainer().querySelectorAll('img[data-src]')];
+      if (images.length === 0) return;
+      if (!app.imageObserver) {
+        images.forEach((image) => loadImage(image));
+        return;
+      }
+      for (const image of images) {
+        app.imageObserver.observe(image);
+      }
+      scheduleViewportImageLoad();
+    }
+
     function renderCard(game) {
       const article = document.createElement('article');
       article.className = 'card';
-      const image = game.heroArt || game.poster || game.boxArt;
+      const image = cardImage(game);
       article.innerHTML = `
-        ${image ? `<img src="${escapeHtml(image)}" alt="">` : '<div class="empty" aria-hidden="true">No art</div>'}
+        ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
         <div class="card-body">
           <h3><a href="${escapeHtml(game.url)}">${escapeHtml(game.title)}</a></h3>
           <p>${escapeHtml(game.publisher || 'Unknown publisher')}</p>
@@ -974,8 +1353,16 @@
 
     function renderTableRow(game) {
       const row = document.createElement('tr');
+      const image = thumbnailImage(game);
       row.innerHTML = `
-        <td><a href="${escapeHtml(game.url)}">${escapeHtml(game.title)}</a><br><span class="muted">${escapeHtml(game.id)}</span></td>
+        <td>
+          <div class="game-title-cell">
+            ${image ? lazyImageHtml(image, 'game-art table-thumb', { width: 60, height: 80 }) : '<span class="table-thumb table-thumb-empty" aria-hidden="true">No<br>art</span>'}
+            <span class="game-title-text">
+              <a href="${escapeHtml(game.url)}">${escapeHtml(game.title)}</a>
+            </span>
+          </div>
+        </td>
         <td>${chipList(game.memberships, (tier) => labelFor('tiers', tier))}</td>
         <td>${chipList(game.platforms, (platform) => labelFor('platforms', platform))}</td>
         <td>${escapeHtml(labelFor('segments', game.segment))}</td>
@@ -1000,6 +1387,8 @@
         cards.innerHTML = '<p class="empty">No games match these filters.</p>';
       }
       syncUrl();
+      app.imageObserver?.disconnect();
+      observeLazyImages();
     }
 
     function renderKpis() {
@@ -1013,7 +1402,6 @@
         ['Premium not Ultimate', counts.diffs.premiumNotUltimate],
         ['Premium not Essential', counts.diffs.premiumNotEssential],
         ['Ultimate not Premium', counts.diffs.ultimateNotPremium],
-        ['Last checked', formatDate(app.current.generatedAt)],
         ['Last changed', lastChange]
       ];
       document.getElementById('kpis').replaceChildren(...cardsData.map(([label, value]) => {
@@ -1027,8 +1415,17 @@
     function renderStatus() {
       const panel = document.getElementById('statusPanel');
       const status = app.status;
-      panel.classList.toggle('failed', status?.state === 'failed');
-      panel.classList.toggle('success', status?.state === 'success');
+      const state = status?.state ?? 'unknown';
+      const isFailed = state === 'failed';
+      const isSuccess = state === 'success';
+      const generatedAt = status?.catalogGeneratedAt ?? status?.generatedAt ?? app.current.generatedAt;
+      panel.classList.toggle('failed', isFailed);
+      panel.classList.toggle('success', isSuccess);
+      const dotClass = isSuccess ? 'success' : isFailed ? 'failed' : '';
+      statusSummary.innerHTML = `
+        <span class="status-dot ${escapeHtml(dotClass)}" aria-hidden="true"></span>
+        <span><strong>${escapeHtml(state)}</strong> · Updated ${escapeHtml(formatDate(generatedAt))}</span>
+      `;
       const sigls = status?.sourceHealth?.sigls ?? [];
       const warnings = status?.warnings ?? [];
       const errors = status?.errors ?? [];
@@ -1036,8 +1433,12 @@
       document.getElementById('statusContent').innerHTML = `
         <div>
           <strong>Status</strong>
-          <p>${escapeHtml(status?.state ?? 'unknown')}</p>
-          ${status?.state === 'failed' ? '<p class="badge removed">Last good catalog remains published.</p>' : ''}
+          <p>${escapeHtml(state)}</p>
+          ${isFailed ? '<p class="badge removed">Last good catalog remains published.</p>' : ''}
+        </div>
+        <div>
+          <strong>Last update</strong>
+          <p>${escapeHtml(formatDate(generatedAt))}</p>
         </div>
         <div>
           <strong>Catalog hash</strong>
@@ -1161,61 +1562,18 @@
       ].join('');
     }
 
-    function quoteCsv(value) {
-      return `"${String(value ?? '').replaceAll('"', '""')}"`;
-    }
-
-    function exportCsv() {
-      const header = ['id', 'title', 'tiers', 'platforms', 'segment', 'genres', 'publisher', 'url'];
-      const rows = app.rows.map((game) => [
-        game.id,
-        game.title,
-        game.memberships.join('|'),
-        game.platforms.join('|'),
-        game.segment,
-        (game.genres ?? []).join('|'),
-        game.publisher,
-        game.url
-      ]);
-      const csv = [header, ...rows].map((row) => row.map(quoteCsv).join(',')).join('\n');
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'catabox-filtered-games.csv';
-      link.click();
-      URL.revokeObjectURL(url);
-    }
-
-    async function copyNames() {
-      const names = app.rows.map((game) => game.title).join('\n');
-      await navigator.clipboard.writeText(names);
-      resultsSummary.textContent = `Copied ${app.rows.length.toLocaleString()} names to clipboard.`;
-    }
-
     function bindEvents() {
       for (const control of Object.values(controls)) {
         control.addEventListener('input', renderResults);
       }
-      document.getElementById('cardsButton').addEventListener('click', () => {
-        app.view = 'cards';
-        document.getElementById('cardsButton').setAttribute('aria-pressed', 'true');
-        document.getElementById('tableButton').setAttribute('aria-pressed', 'false');
+      viewToggleButton.addEventListener('click', toggleView);
+      toolbarView.addEventListener('click', toggleView);
+      toolbarSearch.addEventListener('input', () => {
+        controls.search.value = toolbarSearch.value;
         renderResults();
       });
-      document.getElementById('tableButton').addEventListener('click', () => {
-        app.view = 'table';
-        document.getElementById('cardsButton').setAttribute('aria-pressed', 'false');
-        document.getElementById('tableButton').setAttribute('aria-pressed', 'true');
-        renderResults();
-      });
-      document.getElementById('copyButton').addEventListener('click', () => {
-        copyNames().catch((error) => {
-          resultsSummary.textContent = `Could not copy names: ${error.message}`;
-        });
-      });
-      document.getElementById('csvButton').addEventListener('click', exportCsv);
-      document.getElementById('toolbarFiltersButton').addEventListener('click', showFilters);
+      clearFiltersButton.addEventListener('click', resetFilters);
+      toolbarFiltersButton.addEventListener('click', showFilters);
       toolbarClearButton.addEventListener('click', resetFilters);
       toolbarTopButton.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
       document.getElementById('filterDrawerClose').addEventListener('click', () => closeFilterDrawer());
@@ -1248,9 +1606,13 @@
           first.focus();
         }
       });
-      addEventListener('scroll', updateToolbarVisibility, { passive: true });
+      addEventListener('scroll', () => {
+        updateToolbarVisibility();
+        scheduleViewportImageLoad();
+      }, { passive: true });
       addEventListener('resize', () => {
         updateToolbarVisibility();
+        scheduleViewportImageLoad();
         if (!mobileQuery.matches && !filterDrawer.classList.contains('hidden')) {
           closeFilterDrawer({ restoreFocus: false });
         }
@@ -1267,6 +1629,7 @@
         app.current = current;
         app.history = historyData;
         app.status = statusData;
+        setupImageObserver();
         populateTierComparisonSets();
         populateFilters();
         restoreFiltersFromUrl();
