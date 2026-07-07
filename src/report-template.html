@@ -537,6 +537,10 @@
       return app.current?.labels?.[kind]?.[id] ?? id;
     }
 
+    function optionValue(item) {
+      return item && typeof item === 'object' && 'id' in item ? item.id : item;
+    }
+
     async function loadJson(path, required = true) {
       const response = await fetch(path, { cache: 'no-store' });
       if (!response.ok) {
@@ -550,7 +554,7 @@
       const first = select.options[0];
       select.replaceChildren(first);
       for (const item of values) {
-        const value = item && typeof item === 'object' && 'id' in item ? item.id : item;
+        const value = optionValue(item);
         const option = document.createElement('option');
         option.value = value;
         option.textContent = labeler(item);
@@ -567,10 +571,17 @@
     }
 
     function populateDiffFallbacks() {
-      app.diffFallbacks = {
-        premiumNotEssential: new Set(app.current.games.filter((game) => game.memberships.includes('premium') && !game.memberships.includes('essential')).map((game) => game.id)),
-        ultimateNotPremium: new Set(app.current.games.filter((game) => game.memberships.includes('ultimate') && !game.memberships.includes('premium')).map((game) => game.id))
-      };
+      const premiumNotEssential = new Set();
+      const ultimateNotPremium = new Set();
+      for (const game of app.current.games) {
+        if (game.memberships.includes('premium') && !game.memberships.includes('essential')) {
+          premiumNotEssential.add(game.id);
+        }
+        if (game.memberships.includes('ultimate') && !game.memberships.includes('premium')) {
+          ultimateNotPremium.add(game.id);
+        }
+      }
+      app.diffFallbacks = { premiumNotEssential, ultimateNotPremium };
     }
 
     function restoreFiltersFromUrl() {
