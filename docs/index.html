@@ -473,9 +473,9 @@
     const TIERS = ['ultimate', 'premium', 'essential'];
     const PLATFORMS = ['console', 'pc'];
     const TIER_COMPARISONS = [
-      { id: 'essential', label: 'All Essential games' },
-      { id: 'premium', label: 'All Premium games' },
-      { id: 'ultimate', label: 'All Ultimate games' },
+      { id: 'allEssential', label: 'All Essential games' },
+      { id: 'allPremium', label: 'All Premium games' },
+      { id: 'allUltimate', label: 'All Ultimate games' },
       { id: 'premiumNotEssential', label: 'Premium, not Essential' },
       { id: 'ultimateNotPremium', label: 'Ultimate, not Premium' }
     ];
@@ -626,8 +626,16 @@
     function matchesTierComparison(game) {
       const value = controls.tierComparison.value;
       if (!value) return true;
-      if (TIERS.includes(value)) return game.memberships.includes(value);
-      return app.current.diffs?.[value]?.includes(game.id) ?? false;
+      if (value === 'allEssential') return game.memberships.includes('essential');
+      if (value === 'allPremium') return game.memberships.includes('premium');
+      if (value === 'allUltimate') return game.memberships.includes('ultimate');
+      if (value === 'premiumNotEssential') {
+        return app.current.diffs?.premiumNotEssential?.includes(game.id) ?? (game.memberships.includes('premium') && !game.memberships.includes('essential'));
+      }
+      if (value === 'ultimateNotPremium') {
+        return app.current.diffs?.ultimateNotPremium?.includes(game.id) ?? (game.memberships.includes('ultimate') && !game.memberships.includes('premium'));
+      }
+      return true;
     }
 
     function matchesFilters(game) {
