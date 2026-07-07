@@ -479,6 +479,7 @@
       { id: 'premiumNotEssential', label: 'Premium, not Essential' },
       { id: 'ultimateNotPremium', label: 'Ultimate, not Premium' }
     ];
+    const TIER_COMPARISON_LABELS = Object.fromEntries(TIER_COMPARISONS.map((item) => [item.id, item.label]));
     const defaults = {
       search: '',
       tier: '',
@@ -545,7 +546,7 @@
     }
 
     function populateFilters() {
-      setOptions(controls.segment, TIER_COMPARISONS.map((item) => item.id), (id) => TIER_COMPARISONS.find((item) => item.id === id)?.label ?? id);
+      setOptions(controls.segment, TIER_COMPARISONS.map((item) => item.id), (id) => TIER_COMPARISON_LABELS[id] ?? id);
       const games = app.current.games;
       setOptions(controls.genre, [...new Set(games.flatMap((game) => game.genres ?? []))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.publisher, [...new Set(games.map((game) => game.publisher).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
