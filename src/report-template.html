@@ -193,6 +193,10 @@
       background: color-mix(in srgb, var(--accent-2) 20%, var(--chip));
     }
 
+    code {
+      overflow-wrap: anywhere;
+    }
+
     .badge.removed,
     .status .error {
       color: #ffd6d3;
@@ -455,12 +459,16 @@
         top: auto;
         bottom: 0.75rem;
         align-items: stretch;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        width: calc(100% - 1rem);
         border-radius: 1rem;
       }
 
       .toolbar-summary,
       .toolbar-actions {
         justify-content: space-between;
+        min-width: 0;
       }
 
       .toolbar-summary {
@@ -468,11 +476,12 @@
       }
 
       .toolbar-actions {
-        flex: 1;
+        flex: 1 1 100%;
       }
 
       .toolbar-actions button {
         flex: 1;
+        min-width: 0;
       }
     }
   </style>
