@@ -215,6 +215,99 @@
       margin: 1rem 0;
     }
 
+    .results-toolbar {
+      position: fixed;
+      top: 0.75rem;
+      left: 50%;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      width: min(1400px, calc(100% - 2rem));
+      padding: 0.65rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--panel) 94%, transparent);
+      box-shadow: var(--shadow);
+      transform: translateX(-50%);
+      backdrop-filter: blur(14px);
+    }
+
+    .toolbar-summary,
+    .toolbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-summary {
+      min-width: 0;
+    }
+
+    .toolbar-summary strong {
+      white-space: nowrap;
+    }
+
+    .results-toolbar button {
+      width: auto;
+      min-height: 2.25rem;
+      padding: 0.45rem 0.7rem;
+    }
+
+    .filter-drawer {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      align-items: end;
+    }
+
+    .filter-drawer-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgb(0 0 0 / 55%);
+    }
+
+    .filter-drawer-panel {
+      position: relative;
+      display: grid;
+      gap: 1rem;
+      max-height: min(86vh, 50rem);
+      padding: 1rem;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 1rem 1rem 0 0;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .filter-drawer-head,
+    .filter-drawer-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .filter-drawer-head h2 {
+      margin: 0;
+    }
+
+    .filter-drawer-head button,
+    .filter-drawer-actions button {
+      width: auto;
+    }
+
+    .filter-drawer-controls .controls {
+      grid-template-columns: 1fr;
+    }
+
+    body.drawer-open {
+      overflow: hidden;
+    }
+
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -352,6 +445,36 @@
         background: #f8fafc;
       }
     }
+
+    @media (max-width: 720px) {
+      main {
+        padding-bottom: 6rem;
+      }
+
+      .results-toolbar {
+        top: auto;
+        bottom: 0.75rem;
+        align-items: stretch;
+        border-radius: 1rem;
+      }
+
+      .toolbar-summary,
+      .toolbar-actions {
+        justify-content: space-between;
+      }
+
+      .toolbar-summary {
+        flex: 1 1 100%;
+      }
+
+      .toolbar-actions {
+        flex: 1;
+      }
+
+      .toolbar-actions button {
+        flex: 1;
+      }
+    }
   </style>
 </head>
 <body>
@@ -371,9 +494,9 @@
 
     <section class="kpis" id="kpis" aria-label="Catalog key performance indicators"></section>
 
-    <section class="panel" aria-labelledby="filtersTitle">
+    <section id="filterPanel" class="panel" aria-labelledby="filtersTitle">
       <h2 id="filtersTitle">Find games</h2>
-      <div class="controls">
+      <div id="filterControls" class="controls">
         <label>Search
           <input id="search" type="search" autocomplete="off" placeholder="Title, publisher, developer, product ID">
         </label>
@@ -432,7 +555,7 @@
           <input id="since" type="date">
         </label>
       </div>
-      <div class="results-head">
+      <div id="resultsHead" class="results-head">
         <div class="button-row" role="group" aria-label="Result actions">
           <button id="cardsButton" class="secondary" type="button" aria-pressed="true">Card view</button>
           <button id="tableButton" class="secondary" type="button" aria-pressed="false">Table view</button>
@@ -442,6 +565,34 @@
         <p id="resultsSummary" class="muted" aria-live="polite"></p>
       </div>
     </section>
+
+    <div id="resultsToolbar" class="results-toolbar hidden" role="region" aria-label="Results toolbar">
+      <div class="toolbar-summary">
+        <strong id="toolbarResults" aria-live="polite">0 / 0 games</strong>
+        <span id="toolbarFilters" class="muted">0 filters</span>
+        <span id="toolbarView" class="badge">Card view</span>
+      </div>
+      <div class="toolbar-actions" role="group" aria-label="Quick result actions">
+        <button id="toolbarFiltersButton" class="secondary" type="button">Filters</button>
+        <button id="toolbarClearButton" class="secondary hidden" type="button">Clear</button>
+        <button id="toolbarTopButton" class="secondary hidden" type="button">Top</button>
+      </div>
+    </div>
+
+    <div id="filterDrawer" class="filter-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="filterDrawerTitle">
+      <div class="filter-drawer-backdrop" data-close-drawer></div>
+      <div class="filter-drawer-panel" tabindex="-1">
+        <div class="filter-drawer-head">
+          <h2 id="filterDrawerTitle">Filters</h2>
+          <button id="filterDrawerClose" class="secondary" type="button" aria-label="Close filters">Close</button>
+        </div>
+        <div id="filterDrawerControls" class="filter-drawer-controls"></div>
+        <div class="filter-drawer-actions">
+          <button id="filterDrawerClear" class="secondary" type="button">Clear filters</button>
+          <button id="filterDrawerApply" class="primary" type="button">Show results</button>
+        </div>
+      </div>
+    </div>
 
     <section id="cards" class="cards" aria-label="Filtered game cards"></section>
     <section id="tableSection" class="table-wrap hidden" aria-labelledby="tableTitle">
@@ -510,14 +661,28 @@
       },
       tierComparisonSetsReady: false,
       rows: [],
-      view: 'cards'
+      view: 'cards',
+      lastFocused: null
     };
 
     const controls = Object.fromEntries(Object.keys(defaults).map((id) => [id, document.getElementById(id)]));
+    const filterPanel = document.getElementById('filterPanel');
+    const filterControls = document.getElementById('filterControls');
+    const resultsHead = document.getElementById('resultsHead');
     const cards = document.getElementById('cards');
     const tableSection = document.getElementById('tableSection');
     const tableBody = document.querySelector('#gamesTable tbody');
     const resultsSummary = document.getElementById('resultsSummary');
+    const resultsToolbar = document.getElementById('resultsToolbar');
+    const toolbarResults = document.getElementById('toolbarResults');
+    const toolbarFilters = document.getElementById('toolbarFilters');
+    const toolbarView = document.getElementById('toolbarView');
+    const toolbarClearButton = document.getElementById('toolbarClearButton');
+    const toolbarTopButton = document.getElementById('toolbarTopButton');
+    const filterDrawer = document.getElementById('filterDrawer');
+    const filterDrawerPanel = filterDrawer.querySelector('.filter-drawer-panel');
+    const filterDrawerControls = document.getElementById('filterDrawerControls');
+    const mobileQuery = matchMedia('(max-width: 720px)');
 
     function escapeHtml(value) {
       return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -610,6 +775,75 @@
       }
       const next = `${location.pathname}${params.toString() ? `?${params}` : ''}`;
       history.replaceState(null, '', next);
+    }
+
+    function activeFilterCount() {
+      return Object.entries(defaults).filter(([id, fallback]) => {
+        const value = id === 'search' ? controls[id].value.trim() : controls[id].value;
+        return value !== fallback;
+      }).length;
+    }
+
+    function resetFilters() {
+      for (const [id, fallback] of Object.entries(defaults)) {
+        controls[id].value = fallback;
+      }
+      renderResults();
+    }
+
+    function updateToolbarVisibility() {
+      const filterIsAboveViewport = filterPanel.getBoundingClientRect().bottom < 0;
+      resultsToolbar.classList.toggle('hidden', !filterIsAboveViewport);
+      toolbarTopButton.classList.toggle('hidden', scrollY < 700);
+    }
+
+    function updateResultsToolbar(rows, total) {
+      const filters = activeFilterCount();
+      toolbarResults.textContent = `${rows.length.toLocaleString()} / ${total.toLocaleString()} games`;
+      toolbarFilters.textContent = filters === 1 ? '1 filter' : `${filters} filters`;
+      toolbarView.textContent = app.view === 'cards' ? 'Card view' : 'Table view';
+      toolbarClearButton.classList.toggle('hidden', filters === 0);
+      updateToolbarVisibility();
+    }
+
+    function returnControlsToPanel() {
+      if (filterControls.parentElement !== filterPanel) {
+        filterPanel.insertBefore(filterControls, resultsHead);
+      }
+    }
+
+    function focusableDrawerElements() {
+      return [...filterDrawer.querySelectorAll('button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])')]
+        .filter((element) => !element.disabled && element.offsetParent !== null);
+    }
+
+    function openFilterDrawer() {
+      app.lastFocused = document.activeElement;
+      filterDrawerControls.append(filterControls);
+      filterDrawer.classList.remove('hidden');
+      document.body.classList.add('drawer-open');
+      requestAnimationFrame(() => {
+        (filterControls.querySelector('input, select, button') ?? filterDrawerPanel).focus();
+      });
+    }
+
+    function closeFilterDrawer({ restoreFocus = true } = {}) {
+      returnControlsToPanel();
+      filterDrawer.classList.add('hidden');
+      document.body.classList.remove('drawer-open');
+      if (restoreFocus && app.lastFocused instanceof HTMLElement) {
+        app.lastFocused.focus();
+      }
+    }
+
+    function showFilters() {
+      if (mobileQuery.matches) {
+        openFilterDrawer();
+        return;
+      }
+      closeFilterDrawer({ restoreFocus: false });
+      filterPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => controls.search.focus(), 350);
     }
 
     function historyRecord(productId) {
@@ -744,9 +978,11 @@
     }
 
     function renderResults() {
-      const rows = allRowsForState().filter(matchesFilters).sort((left, right) => left.sortTitle.localeCompare(right.sortTitle) || left.id.localeCompare(right.id));
+      const sourceRows = allRowsForState();
+      const rows = sourceRows.filter(matchesFilters).sort((left, right) => left.sortTitle.localeCompare(right.sortTitle) || left.id.localeCompare(right.id));
       app.rows = rows;
-      resultsSummary.textContent = `${rows.length.toLocaleString()} of ${allRowsForState().length.toLocaleString()} rows`;
+      resultsSummary.textContent = `${rows.length.toLocaleString()} of ${sourceRows.length.toLocaleString()} games`;
+      updateResultsToolbar(rows, sourceRows.length);
       cards.replaceChildren(...rows.map(renderCard));
       tableBody.replaceChildren(...rows.map(renderTableRow));
       cards.classList.toggle('hidden', app.view !== 'cards');
@@ -970,6 +1206,46 @@
         });
       });
       document.getElementById('csvButton').addEventListener('click', exportCsv);
+      document.getElementById('toolbarFiltersButton').addEventListener('click', showFilters);
+      toolbarClearButton.addEventListener('click', resetFilters);
+      toolbarTopButton.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
+      document.getElementById('filterDrawerClose').addEventListener('click', () => closeFilterDrawer());
+      document.getElementById('filterDrawerApply').addEventListener('click', () => closeFilterDrawer());
+      document.getElementById('filterDrawerClear').addEventListener('click', resetFilters);
+      filterDrawer.addEventListener('click', (event) => {
+        if (event.target instanceof Element && event.target.hasAttribute('data-close-drawer')) {
+          closeFilterDrawer();
+        }
+      });
+      filterDrawer.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          closeFilterDrawer();
+          return;
+        }
+        if (event.key !== 'Tab') return;
+        const focusable = focusableDrawerElements();
+        if (focusable.length === 0) {
+          event.preventDefault();
+          filterDrawerPanel.focus();
+          return;
+        }
+        const first = focusable[0];
+        const last = focusable.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      });
+      addEventListener('scroll', updateToolbarVisibility, { passive: true });
+      addEventListener('resize', () => {
+        updateToolbarVisibility();
+        if (!mobileQuery.matches && !filterDrawer.classList.contains('hidden')) {
+          closeFilterDrawer({ restoreFocus: false });
+        }
+      });
     }
 
     async function init() {
