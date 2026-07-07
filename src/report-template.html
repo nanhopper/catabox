@@ -386,7 +386,7 @@
           </select>
         </label>
         <label>Tier comparison
-          <select id="segment">
+          <select id="tierComparison">
             <option value="">Any tier comparison</option>
           </select>
         </label>
@@ -483,7 +483,7 @@
     const defaults = {
       search: '',
       tier: '',
-      segment: '',
+      tierComparison: '',
       platform: '',
       genre: '',
       publisher: '',
@@ -546,7 +546,7 @@
     }
 
     function populateFilters() {
-      setOptions(controls.segment, TIER_COMPARISONS.map((item) => item.id), (id) => TIER_COMPARISON_LABELS[id] ?? id);
+      setOptions(controls.tierComparison, TIER_COMPARISONS.map((item) => item.id), (id) => TIER_COMPARISON_LABELS[id] ?? id);
       const games = app.current.games;
       setOptions(controls.genre, [...new Set(games.flatMap((game) => game.genres ?? []))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.publisher, [...new Set(games.map((game) => game.publisher).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
@@ -624,7 +624,7 @@
     }
 
     function matchesTierComparison(game) {
-      const value = controls.segment.value;
+      const value = controls.tierComparison.value;
       if (!value) return true;
       if (TIERS.includes(value)) return game.memberships.includes(value);
       return app.current.diffs?.[value]?.includes(game.id) ?? false;
