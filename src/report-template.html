@@ -572,18 +572,18 @@
     }
 
     function populateTierComparisonSets() {
-      const hasPremiumNotEssentialDiff = Array.isArray(app.current.diffs?.premiumNotEssential);
-      const hasUltimateNotPremiumDiff = Array.isArray(app.current.diffs?.ultimateNotPremium);
-      const premiumNotEssential = new Set(hasPremiumNotEssentialDiff ? app.current.diffs.premiumNotEssential : []);
-      const ultimateNotPremium = new Set(hasUltimateNotPremiumDiff ? app.current.diffs.ultimateNotPremium : []);
-      if (!hasPremiumNotEssentialDiff) {
+      const hasPremiumNotEssentialData = Array.isArray(app.current.diffs?.premiumNotEssential);
+      const hasUltimateNotPremiumData = Array.isArray(app.current.diffs?.ultimateNotPremium);
+      const premiumNotEssential = new Set(hasPremiumNotEssentialData ? app.current.diffs.premiumNotEssential : []);
+      const ultimateNotPremium = new Set(hasUltimateNotPremiumData ? app.current.diffs.ultimateNotPremium : []);
+      if (!hasPremiumNotEssentialData) {
         for (const game of app.current.games) {
           if (game.memberships.includes('premium') && !game.memberships.includes('essential')) {
             premiumNotEssential.add(game.id);
           }
         }
       }
-      if (!hasUltimateNotPremiumDiff) {
+      if (!hasUltimateNotPremiumData) {
         for (const game of app.current.games) {
           if (game.memberships.includes('ultimate') && !game.memberships.includes('premium')) {
             ultimateNotPremium.add(game.id);
@@ -744,7 +744,6 @@
     }
 
     function renderResults() {
-      if (!app.tierComparisonSetsReady) populateTierComparisonSets();
       const rows = allRowsForState().filter(matchesFilters).sort((left, right) => left.sortTitle.localeCompare(right.sortTitle) || left.id.localeCompare(right.id));
       app.rows = rows;
       resultsSummary.textContent = `${rows.length.toLocaleString()} of ${allRowsForState().length.toLocaleString()} rows`;
