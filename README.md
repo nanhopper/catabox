@@ -4,6 +4,8 @@
 
 Catabox is a zero-COGS static Xbox Game Pass catalog tracker. It publishes a GitHub Pages site from `docs/` and stores generated catalog data in plain JSON under `data/` and `docs/data/`.
 
+Catabox is an unofficial fan-made tracker and is not affiliated with, endorsed by, or sponsored by Xbox or Microsoft.
+
 The tracker is catalog-only: it does not use personal gamertags, libraries, played history, installed games, analytics, a server, a proxy, a database, paid storage, or runtime secrets.
 
 ## What it tracks
