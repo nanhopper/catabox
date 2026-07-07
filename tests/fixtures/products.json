@@ -1,0 +1,115 @@
+{
+  "9PNJXVCVWD4K": {
+    "ProductId": "9PNJXVCVWD4K",
+    "LocalizedProperties": [
+      {
+        "ProductTitle": "Forza Horizon 4",
+        "PublisherName": "Microsoft Studios",
+        "DeveloperName": "Playground Games",
+        "ShortDescription": "Drive across Britain.",
+        "Images": [
+          {
+            "ImagePurpose": "Poster",
+            "Uri": "//example.test/forza-poster.jpg",
+            "Width": 100,
+            "Height": 150
+          }
+        ]
+      }
+    ],
+    "Properties": {
+      "Categories": [
+        "Racing & flying"
+      ],
+      "ContentRatings": [
+        {
+          "RatingSystem": "PEGI",
+          "RatingId": "3"
+        }
+      ]
+    },
+    "DisplaySkuAvailabilities": [
+      {
+        "Availabilities": [
+          {
+            "Conditions": {
+              "StartDate": "2024-01-01T00:00:00.0000000Z"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "AAA": {
+    "ProductId": "AAA",
+    "LocalizedProperties": [
+      {
+        "ProductTitle": "Alpha Game",
+        "PublisherName": "Studio A",
+        "DeveloperName": "Studio A",
+        "ShortDescription": "Alpha description",
+        "Images": []
+      }
+    ],
+    "Properties": {
+      "Categories": [
+        "Action"
+      ]
+    },
+    "DisplaySkuAvailabilities": []
+  },
+  "BBB": {
+    "ProductId": "BBB",
+    "LocalizedProperties": [
+      {
+        "ProductTitle": "Bravo Game",
+        "PublisherName": "Studio B",
+        "DeveloperName": "Studio B",
+        "ShortDescription": "Bravo description",
+        "Images": []
+      }
+    ],
+    "Properties": {
+      "Categories": [
+        "Adventure"
+      ]
+    },
+    "DisplaySkuAvailabilities": []
+  },
+  "CCC": {
+    "ProductId": "CCC",
+    "LocalizedProperties": [
+      {
+        "ProductTitle": "Charlie Game",
+        "PublisherName": "Studio C",
+        "DeveloperName": "Studio C",
+        "ShortDescription": "Charlie description",
+        "Images": []
+      }
+    ],
+    "Properties": {
+      "Categories": [
+        "Puzzle"
+      ]
+    },
+    "DisplaySkuAvailabilities": []
+  },
+  "DDD": {
+    "ProductId": "DDD",
+    "LocalizedProperties": [
+      {
+        "ProductTitle": "Delta Game",
+        "PublisherName": "Studio D",
+        "DeveloperName": "Studio D",
+        "ShortDescription": "Delta description",
+        "Images": []
+      }
+    ],
+    "Properties": {
+      "Categories": [
+        "RPG"
+      ]
+    },
+    "DisplaySkuAvailabilities": []
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "actionRunNumber": null,
+  "actionRunUrl": null,
+  "baseline": true,
+  "catalogGeneratedAt": "2026-07-07T11:14:03.455Z",
+  "catalogHash": "e03ae6c2e8d7ed20c417be356e3eb69e3e34ed617b439495e16e0f53de18e451",
+  "changed": true,
+  "errors": [],
+  "eventCounts": {},
+  "generatedAt": "2026-07-07T11:14:03.455Z",
+  "language": "en-us",
+  "lastGoodCatalogHash": null,
+  "lastGoodGeneratedAt": null,
+  "market": "FR",
+  "sourceHealth": {
+    "displayCatalog": {
+      "missingProductIds": [],
+      "requested": 914,
+      "returned": 914,
+      "status": "ok"
+    },
+    "sigls": [
+      {
+        "count": 626,
+        "platform": "console",
+        "sourceCount": 626,
+        "status": "ok",
+        "tier": "ultimate",
+        "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0khs0"
+      },
+      {
+        "count": 594,
+        "platform": "pc",
+        "sourceCount": 594,
+        "status": "ok",
+        "tier": "ultimate",
+        "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0khs0"
+      },
+      {
+        "count": 433,
+        "platform": "console",
+        "sourceCount": 433,
+        "status": "ok",
+        "tier": "premium",
+        "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0p85b"
+      },
+      {
+        "count": 404,
+        "platform": "pc",
+        "sourceCount": 404,
+        "status": "ok",
+        "tier": "premium",
+        "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0p85b"
+      },
+      {
+        "count": 94,
+        "platform": "console",
+        "sourceCount": 94,
+        "status": "ok",
+        "tier": "essential",
+        "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0k5dj"
+      },
+      {
+        "count": 85,
+        "platform": "pc",
+        "sourceCount": 85,
+        "status": "ok",
+        "tier": "essential",
+        "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0k5dj"
+      }
+    ]
+  },
+  "state": "success",
+  "warnings": []
+}
