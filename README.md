@@ -1,5 +1,7 @@
 # Catabox
 
+[Open the public Catabox site on GitHub Pages.](https://nanhopper.github.io/catabox/)
+
 Catabox is a zero-COGS static Xbox Game Pass catalog tracker. It publishes a GitHub Pages site from `docs/` and stores generated catalog data in plain JSON under `data/` and `docs/data/`.
 
 The tracker is catalog-only: it does not use personal gamertags, libraries, played history, installed games, analytics, a server, a proxy, a database, paid storage, or runtime secrets.
