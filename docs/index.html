@@ -473,13 +473,21 @@
     const TIERS = ['ultimate', 'premium', 'essential'];
     const PLATFORMS = ['console', 'pc'];
     const TIER_COMPARISONS = [
-      { id: 'allEssential', label: 'All Essential games' },
-      { id: 'allPremium', label: 'All Premium games' },
-      { id: 'allUltimate', label: 'All Ultimate games' },
-      { id: 'premiumNotEssential', label: 'Premium, not Essential' },
-      { id: 'ultimateNotPremium', label: 'Ultimate, not Premium' }
+      { id: 'allEssential', label: 'All Essential games', matches: (game) => game.memberships.includes('essential') },
+      { id: 'allPremium', label: 'All Premium games', matches: (game) => game.memberships.includes('premium') },
+      { id: 'allUltimate', label: 'All Ultimate games', matches: (game) => game.memberships.includes('ultimate') },
+      {
+        id: 'premiumNotEssential',
+        label: 'Premium, not Essential',
+        matches: (game) => app.current.diffs?.premiumNotEssential?.includes(game.id) ?? (game.memberships.includes('premium') && !game.memberships.includes('essential'))
+      },
+      {
+        id: 'ultimateNotPremium',
+        label: 'Ultimate, not Premium',
+        matches: (game) => app.current.diffs?.ultimateNotPremium?.includes(game.id) ?? (game.memberships.includes('ultimate') && !game.memberships.includes('premium'))
+      }
     ];
-    const TIER_COMPARISON_LABELS = Object.fromEntries(TIER_COMPARISONS.map((item) => [item.id, item.label]));
+    const TIER_COMPARISON_BY_ID = Object.fromEntries(TIER_COMPARISONS.map((item) => [item.id, item]));
     const defaults = {
       search: '',
       tier: '',
@@ -537,16 +545,17 @@
     function setOptions(select, values, labeler = (value) => value) {
       const first = select.options[0];
       select.replaceChildren(first);
-      for (const value of values) {
+      for (const item of values) {
+        const value = typeof item === 'object' ? item.id : item;
         const option = document.createElement('option');
         option.value = value;
-        option.textContent = labeler(value);
+        option.textContent = labeler(item);
         select.append(option);
       }
     }
 
     function populateFilters() {
-      setOptions(controls.tierComparison, TIER_COMPARISONS.map((item) => item.id), (id) => TIER_COMPARISON_LABELS[id] ?? id);
+      setOptions(controls.tierComparison, TIER_COMPARISONS, (item) => item.label);
       const games = app.current.games;
       setOptions(controls.genre, [...new Set(games.flatMap((game) => game.genres ?? []))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.publisher, [...new Set(games.map((game) => game.publisher).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
@@ -626,16 +635,7 @@
     function matchesTierComparison(game) {
       const value = controls.tierComparison.value;
       if (!value) return true;
-      if (value === 'allEssential') return game.memberships.includes('essential');
-      if (value === 'allPremium') return game.memberships.includes('premium');
-      if (value === 'allUltimate') return game.memberships.includes('ultimate');
-      if (value === 'premiumNotEssential') {
-        return app.current.diffs?.premiumNotEssential?.includes(game.id) ?? (game.memberships.includes('premium') && !game.memberships.includes('essential'));
-      }
-      if (value === 'ultimateNotPremium') {
-        return app.current.diffs?.ultimateNotPremium?.includes(game.id) ?? (game.memberships.includes('ultimate') && !game.memberships.includes('premium'));
-      }
-      return true;
+      return TIER_COMPARISON_BY_ID[value]?.matches(game) ?? true;
     }
 
     function matchesFilters(game) {
