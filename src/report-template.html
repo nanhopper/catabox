@@ -385,9 +385,9 @@
             <option value="essential">Essential</option>
           </select>
         </label>
-        <label>Segment
-          <select id="segment">
-            <option value="">All tier combinations</option>
+        <label>Tier comparison
+          <select id="tierComparison">
+            <option value="">Any tier comparison</option>
           </select>
         </label>
         <label>Platform
@@ -452,7 +452,7 @@
             <th scope="col">Title</th>
             <th scope="col">Tiers</th>
             <th scope="col">Platforms</th>
-            <th scope="col">Segment</th>
+            <th scope="col">Tier coverage</th>
             <th scope="col">Genre</th>
             <th scope="col">Publisher</th>
             <th scope="col">Observed badges</th>
@@ -472,11 +472,26 @@
   <script>
     const TIERS = ['ultimate', 'premium', 'essential'];
     const PLATFORMS = ['console', 'pc'];
-    const SEGMENTS = ['ultimateOnly', 'premiumOnly', 'essentialOnly', 'ultimatePremium', 'ultimateEssential', 'premiumEssential', 'allTiers'];
+    const TIER_COMPARISONS = [
+      { id: 'allEssential', label: 'All Essential games', matches: (game) => game.memberships.includes('essential') },
+      { id: 'allPremium', label: 'All Premium games', matches: (game) => game.memberships.includes('premium') },
+      { id: 'allUltimate', label: 'All Ultimate games', matches: (game) => game.memberships.includes('ultimate') },
+      {
+        id: 'premiumNotEssential',
+        label: 'Premium, not Essential',
+        matches: (game) => app.tierComparisonSets.premiumNotEssential.has(game.id)
+      },
+      {
+        id: 'ultimateNotPremium',
+        label: 'Ultimate, not Premium',
+        matches: (game) => app.tierComparisonSets.ultimateNotPremium.has(game.id)
+      }
+    ];
+    const TIER_COMPARISON_BY_ID = Object.fromEntries(TIER_COMPARISONS.map((item) => [item.id, item]));
     const defaults = {
       search: '',
       tier: '',
-      segment: '',
+      tierComparison: '',
       platform: '',
       genre: '',
       publisher: '',
@@ -489,6 +504,11 @@
       current: null,
       history: null,
       status: null,
+      tierComparisonSets: {
+        premiumNotEssential: new Set(),
+        ultimateNotPremium: new Set()
+      },
+      tierComparisonSetsReady: false,
       rows: [],
       view: 'cards'
     };
@@ -518,6 +538,10 @@
       return app.current?.labels?.[kind]?.[id] ?? id;
     }
 
+    function optionValue(item) {
+      return item && typeof item === 'object' && 'id' in item ? item.id : item;
+    }
+
     async function loadJson(path, required = true) {
       const response = await fetch(path, { cache: 'no-store' });
       if (!response.ok) {
@@ -530,20 +554,44 @@
     function setOptions(select, values, labeler = (value) => value) {
       const first = select.options[0];
       select.replaceChildren(first);
-      for (const value of values) {
+      for (const item of values) {
+        const value = optionValue(item);
         const option = document.createElement('option');
         option.value = value;
-        option.textContent = labeler(value);
+        option.textContent = labeler(item);
         select.append(option);
       }
     }
 
     function populateFilters() {
-      setOptions(controls.segment, SEGMENTS, (id) => labelFor('segments', id));
+      setOptions(controls.tierComparison, TIER_COMPARISONS, (item) => item.label);
       const games = app.current.games;
       setOptions(controls.genre, [...new Set(games.flatMap((game) => game.genres ?? []))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.publisher, [...new Set(games.map((game) => game.publisher).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.rating, [...new Set(games.map((game) => game.ratingId).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b))));
+    }
+
+    function populateTierComparisonSets() {
+      const hasPremiumNotEssentialData = Array.isArray(app.current.diffs?.premiumNotEssential);
+      const hasUltimateNotPremiumData = Array.isArray(app.current.diffs?.ultimateNotPremium);
+      const premiumNotEssential = new Set(hasPremiumNotEssentialData ? app.current.diffs.premiumNotEssential : []);
+      const ultimateNotPremium = new Set(hasUltimateNotPremiumData ? app.current.diffs.ultimateNotPremium : []);
+      if (!hasPremiumNotEssentialData) {
+        for (const game of app.current.games) {
+          if (game.memberships.includes('premium') && !game.memberships.includes('essential')) {
+            premiumNotEssential.add(game.id);
+          }
+        }
+      }
+      if (!hasUltimateNotPremiumData) {
+        for (const game of app.current.games) {
+          if (game.memberships.includes('ultimate') && !game.memberships.includes('premium')) {
+            ultimateNotPremium.add(game.id);
+          }
+        }
+      }
+      app.tierComparisonSets = { premiumNotEssential, ultimateNotPremium };
+      app.tierComparisonSetsReady = true;
     }
 
     function restoreFiltersFromUrl() {
@@ -616,6 +664,15 @@
       return true;
     }
 
+    function matchesTierComparison(game) {
+      const value = controls.tierComparison.value;
+      if (!value) return true;
+      const comparison = TIER_COMPARISON_BY_ID[value];
+      if (!comparison) return false;
+      if (!app.tierComparisonSetsReady) return false;
+      return comparison.matches(game);
+    }
+
     function matchesFilters(game) {
       const query = controls.search.value.trim().toLocaleLowerCase();
       if (query) {
@@ -623,7 +680,7 @@
         if (!haystack.includes(query)) return false;
       }
       if (controls.tier.value && !game.memberships.includes(controls.tier.value)) return false;
-      if (controls.segment.value && game.segment !== controls.segment.value) return false;
+      if (!matchesTierComparison(game)) return false;
       if (controls.platform.value && !game.platforms.includes(controls.platform.value)) return false;
       if (controls.genre.value && !(game.genres ?? []).includes(controls.genre.value)) return false;
       if (controls.publisher.value && game.publisher !== controls.publisher.value) return false;
@@ -925,6 +982,7 @@
         app.current = current;
         app.history = historyData;
         app.status = statusData;
+        populateTierComparisonSets();
         populateFilters();
         restoreFiltersFromUrl();
         bindEvents();
