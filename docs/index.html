@@ -479,12 +479,12 @@
       {
         id: 'premiumNotEssential',
         label: 'Premium, not Essential',
-        matches: (game) => app.current.diffs?.premiumNotEssential?.includes(game.id) ?? app.diffFallbacks.premiumNotEssential.has(game.id)
+        matches: (game) => app.tierComparisonSets.premiumNotEssential.has(game.id)
       },
       {
         id: 'ultimateNotPremium',
         label: 'Ultimate, not Premium',
-        matches: (game) => app.current.diffs?.ultimateNotPremium?.includes(game.id) ?? app.diffFallbacks.ultimateNotPremium.has(game.id)
+        matches: (game) => app.tierComparisonSets.ultimateNotPremium.has(game.id)
       }
     ];
     const TIER_COMPARISON_BY_ID = Object.fromEntries(TIER_COMPARISONS.map((item) => [item.id, item]));
@@ -504,7 +504,7 @@
       current: null,
       history: null,
       status: null,
-      diffFallbacks: {
+      tierComparisonSets: {
         premiumNotEssential: new Set(),
         ultimateNotPremium: new Set()
       },
@@ -570,18 +570,20 @@
       setOptions(controls.rating, [...new Set(games.map((game) => game.ratingId).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b))));
     }
 
-    function populateDiffFallbacks() {
-      const premiumNotEssential = new Set();
-      const ultimateNotPremium = new Set();
-      for (const game of app.current.games) {
-        if (game.memberships.includes('premium') && !game.memberships.includes('essential')) {
-          premiumNotEssential.add(game.id);
-        }
-        if (game.memberships.includes('ultimate') && !game.memberships.includes('premium')) {
-          ultimateNotPremium.add(game.id);
+    function populateTierComparisonSets() {
+      const premiumNotEssential = new Set(app.current.diffs?.premiumNotEssential ?? []);
+      const ultimateNotPremium = new Set(app.current.diffs?.ultimateNotPremium ?? []);
+      if (!Array.isArray(app.current.diffs?.premiumNotEssential) || !Array.isArray(app.current.diffs?.ultimateNotPremium)) {
+        for (const game of app.current.games) {
+          if (!Array.isArray(app.current.diffs?.premiumNotEssential) && game.memberships.includes('premium') && !game.memberships.includes('essential')) {
+            premiumNotEssential.add(game.id);
+          }
+          if (!Array.isArray(app.current.diffs?.ultimateNotPremium) && game.memberships.includes('ultimate') && !game.memberships.includes('premium')) {
+            ultimateNotPremium.add(game.id);
+          }
         }
       }
-      app.diffFallbacks = { premiumNotEssential, ultimateNotPremium };
+      app.tierComparisonSets = { premiumNotEssential, ultimateNotPremium };
     }
 
     function restoreFiltersFromUrl() {
@@ -969,7 +971,7 @@
         app.current = current;
         app.history = historyData;
         app.status = statusData;
-        populateDiffFallbacks();
+        populateTierComparisonSets();
         populateFilters();
         restoreFiltersFromUrl();
         bindEvents();
