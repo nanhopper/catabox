@@ -85,6 +85,20 @@ function firstValue(...values) {
   return values.find((value) => typeof value === 'string' && value.trim()) ?? null;
 }
 
+function storeSlug(title) {
+  return normalizeWhitespace(title)
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('en-US')
+    .replace(/['\u2019]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'game';
+}
+
+export function xboxStoreUrl(productId, title) {
+  return `https://www.xbox.com/en-us/games/store/${storeSlug(title)}/${encodeURIComponent(productId)}`;
+}
+
 function metadataForProduct(product, productId) {
   const localized = localizedProperties(product);
   const props = productProperties(product);
@@ -105,7 +119,7 @@ function metadataForProduct(product, productId) {
     heroArt: pickImage(localized.Images, ['SuperHeroArt', 'TitledHeroArt', 'HeroArt', 'BrandedKeyArt']),
     description: normalizeWhitespace(firstValue(localized.ShortDescription, localized.ProductDescription, localized.ProductTitle)),
     releaseDate,
-    url: `https://www.xbox.com/en-us/games/store/${productId.toLowerCase()}`
+    url: xboxStoreUrl(productId, title)
   };
 }
 

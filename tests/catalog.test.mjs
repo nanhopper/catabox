@@ -71,6 +71,22 @@ test('normalizeCatalog computes tier segments and diffs without hierarchy assump
   assert.equal(current.games.find((game) => game.id === 'AAA').segment, 'allTiers');
 });
 
+test('normalizeCatalog builds resolvable Xbox store links', () => {
+  const current = currentFromLists([
+    list('ultimate', 'console', ['9PNJXVCVWD4K']),
+    list('ultimate', 'pc', []),
+    list('premium', 'console', []),
+    list('premium', 'pc', []),
+    list('essential', 'console', []),
+    list('essential', 'pc', [])
+  ], '2026-01-01T00:00:00.000Z');
+
+  assert.equal(
+    current.games.find((game) => game.id === '9PNJXVCVWD4K').url,
+    'https://www.xbox.com/en-us/games/store/forza-horizon-4/9PNJXVCVWD4K'
+  );
+});
+
 test('history baseline is not treated as new, later runs track observed changes', () => {
   const first = currentFromLists([
     list('ultimate', 'console', ['AAA', 'BBB']),
