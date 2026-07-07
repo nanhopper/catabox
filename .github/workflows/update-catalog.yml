@@ -1,0 +1,58 @@
+name: Update catalog
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 5 * * 1'
+
+concurrency:
+  group: update-catalog
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Update generated catalog
+        id: update
+        continue-on-error: true
+        run: npm run update
+
+      - name: Test generated catalog
+        if: steps.update.outcome == 'success'
+        run: npm test
+
+      - name: Check generated catalog
+        if: steps.update.outcome == 'success'
+        run: npm run check
+
+      - name: Commit generated catalog and site
+        run: |
+          if [ -n "$(git status --porcelain data docs)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data docs
+            git commit -m "Update Xbox Game Pass catalog" -m "Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>"
+            git push
+          else
+            echo "No generated catalog or site changes."
+          fi
+
+      - name: Fail workflow when update failed
+        if: steps.update.outcome != 'success'
+        run: exit 1

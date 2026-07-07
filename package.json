@@ -1,0 +1,20 @@
+{
+  "name": "catabox",
+  "version": "1.0.0",
+  "description": "Zero-COGS static Xbox Game Pass catalog tracker for GitHub Pages.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "fetch": "node src/fetch-sigls.mjs",
+    "normalize": "node src/normalize-catalog.mjs",
+    "validate": "node src/validate-data.mjs",
+    "check": "npm run validate",
+    "history": "node src/update-history.mjs",
+    "build": "node src/render-site.mjs",
+    "update": "node src/update.mjs",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
