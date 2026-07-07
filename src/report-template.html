@@ -385,9 +385,9 @@
             <option value="essential">Essential</option>
           </select>
         </label>
-        <label>Segment
+        <label>Tier comparison
           <select id="segment">
-            <option value="">All tier combinations</option>
+            <option value="">Any tier comparison</option>
           </select>
         </label>
         <label>Platform
@@ -452,7 +452,7 @@
             <th scope="col">Title</th>
             <th scope="col">Tiers</th>
             <th scope="col">Platforms</th>
-            <th scope="col">Segment</th>
+            <th scope="col">Tier coverage</th>
             <th scope="col">Genre</th>
             <th scope="col">Publisher</th>
             <th scope="col">Observed badges</th>
@@ -472,7 +472,13 @@
   <script>
     const TIERS = ['ultimate', 'premium', 'essential'];
     const PLATFORMS = ['console', 'pc'];
-    const SEGMENTS = ['ultimateOnly', 'premiumOnly', 'essentialOnly', 'ultimatePremium', 'ultimateEssential', 'premiumEssential', 'allTiers'];
+    const TIER_COMPARISONS = [
+      { id: 'essential', label: 'All Essential games' },
+      { id: 'premium', label: 'All Premium games' },
+      { id: 'ultimate', label: 'All Ultimate games' },
+      { id: 'premiumNotEssential', label: 'Premium, not Essential' },
+      { id: 'ultimateNotPremium', label: 'Ultimate, not Premium' }
+    ];
     const defaults = {
       search: '',
       tier: '',
@@ -539,7 +545,7 @@
     }
 
     function populateFilters() {
-      setOptions(controls.segment, SEGMENTS, (id) => labelFor('segments', id));
+      setOptions(controls.segment, TIER_COMPARISONS.map((item) => item.id), (id) => TIER_COMPARISONS.find((item) => item.id === id)?.label ?? id);
       const games = app.current.games;
       setOptions(controls.genre, [...new Set(games.flatMap((game) => game.genres ?? []))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.publisher, [...new Set(games.map((game) => game.publisher).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
@@ -616,6 +622,13 @@
       return true;
     }
 
+    function matchesTierComparison(game) {
+      const value = controls.segment.value;
+      if (!value) return true;
+      if (TIERS.includes(value)) return game.memberships.includes(value);
+      return app.current.diffs?.[value]?.includes(game.id) ?? false;
+    }
+
     function matchesFilters(game) {
       const query = controls.search.value.trim().toLocaleLowerCase();
       if (query) {
@@ -623,7 +636,7 @@
         if (!haystack.includes(query)) return false;
       }
       if (controls.tier.value && !game.memberships.includes(controls.tier.value)) return false;
-      if (controls.segment.value && game.segment !== controls.segment.value) return false;
+      if (!matchesTierComparison(game)) return false;
       if (controls.platform.value && !game.platforms.includes(controls.platform.value)) return false;
       if (controls.genre.value && !(game.genres ?? []).includes(controls.genre.value)) return false;
       if (controls.publisher.value && game.publisher !== controls.publisher.value) return false;
