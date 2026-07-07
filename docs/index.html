@@ -479,12 +479,12 @@
       {
         id: 'premiumNotEssential',
         label: 'Premium, not Essential',
-        matches: (game) => app.current.diffs?.premiumNotEssential?.includes(game.id) ?? (game.memberships.includes('premium') && !game.memberships.includes('essential'))
+        matches: (game) => app.current.diffs?.premiumNotEssential?.includes(game.id) ?? app.diffFallbacks.premiumNotEssential.has(game.id)
       },
       {
         id: 'ultimateNotPremium',
         label: 'Ultimate, not Premium',
-        matches: (game) => app.current.diffs?.ultimateNotPremium?.includes(game.id) ?? (game.memberships.includes('ultimate') && !game.memberships.includes('premium'))
+        matches: (game) => app.current.diffs?.ultimateNotPremium?.includes(game.id) ?? app.diffFallbacks.ultimateNotPremium.has(game.id)
       }
     ];
     const TIER_COMPARISON_BY_ID = Object.fromEntries(TIER_COMPARISONS.map((item) => [item.id, item]));
@@ -504,6 +504,10 @@
       current: null,
       history: null,
       status: null,
+      diffFallbacks: {
+        premiumNotEssential: new Set(),
+        ultimateNotPremium: new Set()
+      },
       rows: [],
       view: 'cards'
     };
@@ -546,7 +550,7 @@
       const first = select.options[0];
       select.replaceChildren(first);
       for (const item of values) {
-        const value = typeof item === 'object' ? item.id : item;
+        const value = item && typeof item === 'object' && 'id' in item ? item.id : item;
         const option = document.createElement('option');
         option.value = value;
         option.textContent = labeler(item);
@@ -560,6 +564,13 @@
       setOptions(controls.genre, [...new Set(games.flatMap((game) => game.genres ?? []))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.publisher, [...new Set(games.map((game) => game.publisher).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.rating, [...new Set(games.map((game) => game.ratingId).filter(Boolean))].sort((a, b) => String(a).localeCompare(String(b))));
+    }
+
+    function populateDiffFallbacks() {
+      app.diffFallbacks = {
+        premiumNotEssential: new Set(app.current.games.filter((game) => game.memberships.includes('premium') && !game.memberships.includes('essential')).map((game) => game.id)),
+        ultimateNotPremium: new Set(app.current.games.filter((game) => game.memberships.includes('ultimate') && !game.memberships.includes('premium')).map((game) => game.id))
+      };
     }
 
     function restoreFiltersFromUrl() {
@@ -947,6 +958,7 @@
         app.current = current;
         app.history = historyData;
         app.status = statusData;
+        populateDiffFallbacks();
         populateFilters();
         restoreFiltersFromUrl();
         bindEvents();
