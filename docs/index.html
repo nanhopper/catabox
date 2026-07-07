@@ -508,6 +508,7 @@
         premiumNotEssential: new Set(),
         ultimateNotPremium: new Set()
       },
+      tierComparisonSetsReady: false,
       rows: [],
       view: 'cards'
     };
@@ -586,6 +587,7 @@
         }
       }
       app.tierComparisonSets = { premiumNotEssential, ultimateNotPremium };
+      app.tierComparisonSetsReady = true;
     }
 
     function restoreFiltersFromUrl() {
@@ -661,7 +663,10 @@
     function matchesTierComparison(game) {
       const value = controls.tierComparison.value;
       if (!value) return true;
-      return TIER_COMPARISON_BY_ID[value]?.matches(game) ?? true;
+      const comparison = TIER_COMPARISON_BY_ID[value];
+      if (!comparison) return false;
+      if (!app.tierComparisonSetsReady) populateTierComparisonSets();
+      return comparison.matches(game);
     }
 
     function matchesFilters(game) {
