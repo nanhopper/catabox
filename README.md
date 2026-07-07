@@ -104,11 +104,11 @@ Useful scripts:
 ## GitHub Pages setup
 
 1. Enable GitHub Pages for the repository.
-2. Set the source to **Deploy from a branch**.
-3. Choose the default branch and `/docs` folder.
-4. Run **Update catalog** manually once, or wait for the weekly schedule.
+2. Set the build and deployment source to **GitHub Actions**.
+3. Run **Deploy GitHub Pages** manually once, or push a change to `docs/` on `main`.
+4. Run **Update catalog** manually, or wait for the weekly schedule, to refresh and redeploy the generated site.
 
-The workflow commits only generated `data/` and `docs/` changes when those files change.
+The update workflow commits only generated `data/` and `docs/` changes when those files change. The Pages workflow publishes the generated `docs/` site after direct `docs/` changes and after successful catalog updates.
 
 ## Limitations
 
