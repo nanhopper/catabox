@@ -571,14 +571,16 @@
     }
 
     function populateTierComparisonSets() {
-      const premiumNotEssential = new Set(app.current.diffs?.premiumNotEssential ?? []);
-      const ultimateNotPremium = new Set(app.current.diffs?.ultimateNotPremium ?? []);
-      if (!Array.isArray(app.current.diffs?.premiumNotEssential) || !Array.isArray(app.current.diffs?.ultimateNotPremium)) {
+      const hasPremiumNotEssentialDiff = Array.isArray(app.current.diffs?.premiumNotEssential);
+      const hasUltimateNotPremiumDiff = Array.isArray(app.current.diffs?.ultimateNotPremium);
+      const premiumNotEssential = new Set(hasPremiumNotEssentialDiff ? app.current.diffs.premiumNotEssential : []);
+      const ultimateNotPremium = new Set(hasUltimateNotPremiumDiff ? app.current.diffs.ultimateNotPremium : []);
+      if (!hasPremiumNotEssentialDiff || !hasUltimateNotPremiumDiff) {
         for (const game of app.current.games) {
-          if (!Array.isArray(app.current.diffs?.premiumNotEssential) && game.memberships.includes('premium') && !game.memberships.includes('essential')) {
+          if (!hasPremiumNotEssentialDiff && game.memberships.includes('premium') && !game.memberships.includes('essential')) {
             premiumNotEssential.add(game.id);
           }
-          if (!Array.isArray(app.current.diffs?.ultimateNotPremium) && game.memberships.includes('ultimate') && !game.memberships.includes('premium')) {
+          if (!hasUltimateNotPremiumDiff && game.memberships.includes('ultimate') && !game.memberships.includes('premium')) {
             ultimateNotPremium.add(game.id);
           }
         }
