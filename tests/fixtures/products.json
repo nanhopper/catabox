@@ -7,12 +7,29 @@
         "PublisherName": "Microsoft Studios",
         "DeveloperName": "Playground Games",
         "ShortDescription": "Drive across Britain.",
+        "ProductDescription": "Drive across beautiful, historic Britain in a shared open world.",
+        "Markets": [
+          "FR",
+          "US"
+        ],
         "Images": [
           {
             "ImagePurpose": "Poster",
             "Uri": "//example.test/forza-poster.jpg",
             "Width": 100,
             "Height": 150
+          }
+        ]
+      }
+    ],
+    "MarketProperties": [
+      {
+        "Market": "FR",
+        "OriginalReleaseDate": "2018-10-01T22:00:00.0000000Z",
+        "ContentRatings": [
+          {
+            "RatingSystem": "PEGI",
+            "RatingId": "PEGI:3"
           }
         ]
       }
@@ -26,14 +43,55 @@
           "RatingSystem": "PEGI",
           "RatingId": "3"
         }
+      ],
+      "Attributes": [
+        {
+          "Name": "SinglePlayer"
+        },
+        {
+          "Name": "XblOnlineCoop",
+          "Minimum": 2,
+          "Maximum": 6
+        },
+        {
+          "Name": "XblLocalCoop",
+          "Minimum": 2,
+          "Maximum": 2
+        },
+        {
+          "Name": "OnlineMultiplayerWithGold",
+          "Minimum": 2,
+          "Maximum": 1000
+        }
       ]
     },
     "DisplaySkuAvailabilities": [
       {
+        "Sku": {
+          "LocalizedProperties": [
+            {
+              "Features": [
+                "Online multiplayer (2-1000)"
+              ]
+            }
+          ],
+          "MarketProperties": [
+            {
+              "Market": "FR",
+              "FirstAvailableDate": "2018-10-01T22:00:00.0000000Z"
+            }
+          ]
+        },
         "Availabilities": [
           {
+            "Markets": [
+              "FR"
+            ],
             "Conditions": {
               "StartDate": "2024-01-01T00:00:00.0000000Z"
+            },
+            "Properties": {
+              "OriginalReleaseDate": "2018-10-02T00:00:00.0000000Z"
             }
           }
         ]
@@ -66,6 +124,9 @@
         "PublisherName": "Studio B",
         "DeveloperName": "Studio B",
         "ShortDescription": "Bravo description",
+        "Markets": [
+          "US"
+        ],
         "Images": []
       }
     ],

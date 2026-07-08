@@ -82,6 +82,32 @@ function validateCounts(current, errors) {
   }
 }
 
+function validateGameMetadata(current, errors) {
+  const games = Array.isArray(current.games) ? current.games : [];
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  for (const game of games) {
+    for (const field of ['availableInFR', 'supportsSinglePlayer', 'supportsMultiplayer', 'supportsOnlineMultiplayer', 'supportsLocalMultiplayer', 'supportsCoop', 'supportsOnlineCoop', 'supportsLocalCoop']) {
+      if (field in game && typeof game[field] !== 'boolean') {
+        add(errors, `game ${game.id} has invalid ${field}: expected boolean`);
+      }
+    }
+    if ('playerModes' in game && (!Array.isArray(game.playerModes) || game.playerModes.some((mode) => typeof mode !== 'string'))) {
+      add(errors, `game ${game.id} has invalid playerModes: expected string array`);
+    }
+    for (const field of ['shortDescription']) {
+      if (field in game && typeof game[field] !== 'string') {
+        add(errors, `game ${game.id} has invalid ${field}: expected string`);
+      }
+    }
+    if (game.pegiRating != null && typeof game.pegiRating !== 'string') {
+      add(errors, `game ${game.id} has invalid pegiRating: expected string or null`);
+    }
+    if (game.releaseDate != null && (typeof game.releaseDate !== 'string' || !datePattern.test(game.releaseDate))) {
+      add(errors, `game ${game.id} has invalid releaseDate: expected YYYY-MM-DD or null`);
+    }
+  }
+}
+
 function validateWarnings(current, previousCurrent, warnings) {
   for (const diffId of ['premiumNotUltimate', 'essentialNotPremium', 'essentialNotUltimate']) {
     const count = current.diffs?.[diffId]?.length ?? 0;
@@ -125,6 +151,7 @@ export function validateCatalog({ current, previousCurrent = null, history = nul
   validateRequiredShape(current, errors);
   validateSources(current, errors);
   validateCounts(current, errors);
+  validateGameMetadata(current, errors);
   validateWarnings(current, previousCurrent, warnings);
   validateHistory(history, errors);
   return { errors, warnings };

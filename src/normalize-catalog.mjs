@@ -35,6 +35,10 @@ function skuAvailability(product) {
   return product?.DisplaySkuAvailabilities?.[0]?.Availabilities?.[0] ?? {};
 }
 
+function sku(product) {
+  return product?.DisplaySkuAvailabilities?.[0]?.Sku ?? {};
+}
+
 function imageUrl(image) {
   const uri = image?.Uri;
   if (!uri) {
@@ -59,7 +63,10 @@ function pickImage(images, purposes) {
 }
 
 function pickContentRating(product) {
-  const ratings = productProperties(product).ContentRatings;
+  const ratings = [
+    ...(product?.MarketProperties ?? []).flatMap((item) => item?.ContentRatings ?? []),
+    ...(productProperties(product).ContentRatings ?? [])
+  ];
   if (!Array.isArray(ratings) || ratings.length === 0) {
     return { ratingSystem: null, ratingId: null };
   }
@@ -68,6 +75,17 @@ function pickContentRating(product) {
     ratingSystem: rating?.RatingSystem ?? null,
     ratingId: rating?.RatingId ?? rating?.Rating ?? rating?.RatingValue ?? null
   };
+}
+
+function pegiRating(product) {
+  const ratings = [
+    ...(product?.MarketProperties ?? []).flatMap((item) => item?.ContentRatings ?? []),
+    ...(productProperties(product).ContentRatings ?? [])
+  ];
+  const rating = ratings.find((item) => /PEGI/i.test(item?.RatingSystem ?? ''));
+  const ratingId = rating?.RatingId ?? rating?.Rating ?? rating?.RatingValue ?? null;
+  const normalized = typeof ratingId === 'string' ? ratingId.match(/(\d{1,2})$/)?.[1] ?? ratingId : ratingId;
+  return normalized ? `PEGI ${normalized}` : null;
 }
 
 function productGenres(product) {
@@ -86,6 +104,135 @@ function firstValue(...values) {
   return values.find((value) => typeof value === 'string' && value.trim()) ?? null;
 }
 
+function marketProperties(product, market) {
+  const properties = product?.MarketProperties;
+  if (!Array.isArray(properties) || properties.length === 0) {
+    return [];
+  }
+  const normalizedMarket = String(market).toUpperCase();
+  const matching = properties.filter((item) => {
+    const itemMarket = typeof item?.Market === 'string' ? item.Market.toUpperCase() : null;
+    const markets = Array.isArray(item?.Markets) ? item.Markets.map((value) => String(value).toUpperCase()) : [];
+    return itemMarket === normalizedMarket || markets.includes(normalizedMarket);
+  });
+  return matching.length > 0 ? matching : properties;
+}
+
+function marketListIncludes(values, market) {
+  return Array.isArray(values) && values.some((value) => String(value).toUpperCase() === market);
+}
+
+function isAvailableInMarket(product, market) {
+  const normalizedMarket = String(market).toUpperCase();
+  const localized = localizedProperties(product);
+  const skuData = sku(product);
+  if (marketListIncludes(localized.Markets, normalizedMarket)) return true;
+  for (const item of product?.MarketProperties ?? []) {
+    if (String(item?.Market ?? '').toUpperCase() === normalizedMarket || marketListIncludes(item?.Markets, normalizedMarket)) {
+      return true;
+    }
+  }
+  for (const item of product?.DisplaySkuAvailabilities ?? []) {
+    if (marketListIncludes(item?.Markets, normalizedMarket)) return true;
+    for (const availability of [...(item?.Availabilities ?? []), ...(item?.HistoricalBestAvailabilities ?? [])]) {
+      if (marketListIncludes(availability?.Markets, normalizedMarket)) return true;
+    }
+    for (const marketProperty of item?.Sku?.MarketProperties ?? []) {
+      if (String(marketProperty?.Market ?? '').toUpperCase() === normalizedMarket || marketListIncludes(marketProperty?.Markets, normalizedMarket)) {
+        return true;
+      }
+    }
+  }
+  return marketListIncludes(skuData?.LocalizedProperties?.[0]?.Markets, normalizedMarket);
+}
+
+function releaseDateForProduct(product, market) {
+  const availability = skuAvailability(product);
+  const skuData = sku(product);
+  const marketProps = marketProperties(product, market);
+  return firstValue(
+    ...marketProps.map((item) => toIsoDate(item?.OriginalReleaseDate)),
+    toIsoDate(availability?.Properties?.OriginalReleaseDate),
+    ...(skuData?.MarketProperties ?? []).map((item) => toIsoDate(item?.FirstAvailableDate)),
+    toIsoDate(productProperties(product).OriginalReleaseDate)
+  );
+}
+
+function productAttributes(product) {
+  const attributes = productProperties(product).Attributes;
+  if (!Array.isArray(attributes)) {
+    return [];
+  }
+  return attributes.filter((attribute) => normalizeWhitespace(attribute?.Name));
+}
+
+function skuFeatureText(product) {
+  return (product?.DisplaySkuAvailabilities ?? [])
+    .flatMap((item) => item?.Sku?.LocalizedProperties ?? [])
+    .flatMap((localized) => localized?.Features ?? [])
+    .map(normalizeWhitespace)
+    .filter(Boolean);
+}
+
+function modeCount(attribute) {
+  const minimum = Number(attribute?.Minimum);
+  const maximum = Number(attribute?.Maximum);
+  if (!Number.isFinite(minimum) || minimum <= 0 || !Number.isFinite(maximum) || maximum <= 0) {
+    return '';
+  }
+  return minimum === maximum ? ` (${minimum})` : ` (${minimum}-${maximum})`;
+}
+
+function addMode(modes, key, label, count = '') {
+  if (!modes.has(key)) {
+    modes.set(key, `${label}${count}`);
+  }
+}
+
+function addModeFromFeature(modes, feature, pattern, key, label) {
+  const match = feature.match(pattern);
+  if (!match) {
+    return;
+  }
+  const count = match[1] ? ` (${match[1].replace(/\s+/g, '')})` : '';
+  addMode(modes, key, label, count);
+}
+
+function playerModes(product) {
+  const modes = new Map();
+  for (const attribute of productAttributes(product)) {
+    const name = normalizeWhitespace(attribute.Name).toLocaleLowerCase('en-US');
+    if (/single.?player/.test(name)) addMode(modes, 'single', 'Single player', modeCount(attribute));
+    if (/online.?multi.?player|onlinemultiplayer|cross.?platform.?multi.?player/.test(name)) addMode(modes, 'onlineMultiplayer', 'Online multiplayer', modeCount(attribute));
+    if (/local.?multi.?player|shared.?split.?screen/.test(name)) addMode(modes, 'localMultiplayer', 'Local multiplayer', modeCount(attribute));
+    if (/online.?co.?op|onlinecoop|coopsupportonline|cross.?platform.?coop/.test(name)) addMode(modes, 'onlineCoop', 'Online co-op', modeCount(attribute));
+    if (/local.?co.?op|couch.?co.?op|split.?screen.?co.?op|shared.?screen.?co.?op/.test(name)) addMode(modes, 'localCoop', 'Local co-op', modeCount(attribute));
+  }
+  for (const feature of skuFeatureText(product)) {
+    addModeFromFeature(modes, feature, /^single[-\s]?player(?:\s*\(([^)]+)\))?/i, 'single', 'Single player');
+    addModeFromFeature(modes, feature, /^online multiplayer(?:\s*\(([^)]+)\))?/i, 'onlineMultiplayer', 'Online multiplayer');
+    addModeFromFeature(modes, feature, /^local multiplayer(?:\s*\(([^)]+)\))?/i, 'localMultiplayer', 'Local multiplayer');
+    addModeFromFeature(modes, feature, /^online co[-\s]?op(?:\s*\(([^)]+)\))?/i, 'onlineCoop', 'Online co-op');
+    addModeFromFeature(modes, feature, /^local co[-\s]?op(?:\s*\(([^)]+)\))?/i, 'localCoop', 'Local co-op');
+  }
+  const playerModes = [...modes.values()];
+  const supportsSinglePlayer = modes.has('single');
+  const supportsOnlineMultiplayer = modes.has('onlineMultiplayer');
+  const supportsLocalMultiplayer = modes.has('localMultiplayer');
+  const supportsOnlineCoop = modes.has('onlineCoop');
+  const supportsLocalCoop = modes.has('localCoop');
+  return {
+    playerModes,
+    supportsSinglePlayer,
+    supportsMultiplayer: supportsOnlineMultiplayer || supportsLocalMultiplayer,
+    supportsOnlineMultiplayer,
+    supportsLocalMultiplayer,
+    supportsCoop: supportsOnlineCoop || supportsLocalCoop,
+    supportsOnlineCoop,
+    supportsLocalCoop
+  };
+}
+
 function storeSlug(title) {
   return normalizeWhitespace(title)
     .normalize('NFKD')
@@ -100,13 +247,12 @@ export function xboxStoreUrl(productId, title) {
   return `https://www.xbox.com/en-us/games/store/${storeSlug(title)}/${encodeURIComponent(productId)}`;
 }
 
-function metadataForProduct(product, productId) {
+function metadataForProduct(product, productId, market) {
   const localized = localizedProperties(product);
-  const props = productProperties(product);
-  const availability = skuAvailability(product);
   const rating = pickContentRating(product);
   const title = normalizeWhitespace(firstValue(localized.ProductTitle, productId));
-  const releaseDate = toIsoDate(availability?.Conditions?.StartDate) ?? toIsoDate(props.OriginalReleaseDate);
+  const shortDescription = normalizeWhitespace(localized.ShortDescription);
+  const modes = playerModes(product);
   return {
     title,
     sortTitle: sortTitle(title),
@@ -118,8 +264,12 @@ function metadataForProduct(product, productId) {
     poster: pickImage(localized.Images, ['Poster', 'BoxArt', 'BrandedKeyArt', 'Tile']),
     boxArt: pickImage(localized.Images, ['BoxArt', 'Poster', 'Tile']),
     heroArt: pickImage(localized.Images, ['SuperHeroArt', 'TitledHeroArt', 'HeroArt', 'BrandedKeyArt']),
-    description: normalizeWhitespace(firstValue(localized.ShortDescription, localized.ProductDescription, localized.ProductTitle)),
-    releaseDate,
+    shortDescription,
+    description: normalizeWhitespace(firstValue(shortDescription, localized.ProductTitle)),
+    releaseDate: releaseDateForProduct(product, market),
+    availableInFR: isAvailableInMarket(product, 'FR'),
+    pegiRating: pegiRating(product),
+    ...modes,
     url: xboxStoreUrl(productId, title)
   };
 }
@@ -256,7 +406,7 @@ export function normalizeCatalog({
     );
     const platforms = uniqueSorted(Object.values(platformByTier).flat()).map((platformId) => platformId.toLowerCase());
     const segment = segmentForTiers(memberships);
-    const metadata = metadataForProduct(products[productId], productId);
+    const metadata = metadataForProduct(products[productId], productId, market);
     const game = {
       id: productId,
       ...metadata,

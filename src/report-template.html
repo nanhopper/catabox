@@ -515,6 +515,33 @@
       background: var(--panel);
     }
 
+    .description-tooltip {
+      position: fixed;
+      z-index: 50;
+      width: min(22rem, 80vw);
+      padding: 0.85rem;
+      border: 1px solid color-mix(in srgb, var(--accent-2) 34%, var(--line));
+      border-radius: 0.9rem;
+      background: color-mix(in srgb, var(--panel) 96%, black 4%);
+      box-shadow: var(--shadow);
+      pointer-events: none;
+    }
+
+    .description-tooltip strong {
+      display: block;
+      margin-bottom: 0.35rem;
+    }
+
+    .description-tooltip p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    [data-description-game] {
+      cursor: help;
+    }
+
     .game-art {
       display: block;
       object-fit: cover;
@@ -563,7 +590,7 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      min-width: 980px;
+      min-width: 1180px;
     }
 
     caption {
@@ -699,7 +726,9 @@
         flex: 1;
         min-width: 0;
       }
+
     }
+
   </style>
 </head>
 <body>
@@ -724,7 +753,7 @@
       <h2 id="filtersTitle">Find games</h2>
       <div id="filterControls" class="controls">
         <label>Search
-          <input id="search" type="search" autocomplete="off" placeholder="Title, publisher, developer, product ID">
+          <input id="search" type="search" autocomplete="off" placeholder="Title, publisher, developer, description, product ID">
         </label>
         <label>Tier
           <select id="tier">
@@ -754,6 +783,35 @@
         <label>Publisher
           <select id="publisher">
             <option value="">All publishers</option>
+          </select>
+        </label>
+        <label>France availability
+          <select id="frAvailability">
+            <option value="">Any FR availability</option>
+            <option value="available">Listed for FR</option>
+            <option value="notAvailable">Not listed for FR</option>
+          </select>
+        </label>
+        <label>PEGI
+          <select id="pegiRating">
+            <option value="">Any PEGI rating</option>
+          </select>
+        </label>
+        <label>Player mode
+          <select id="playerMode">
+            <option value="">Any player mode</option>
+            <option value="single">Single player</option>
+            <option value="multiplayer">Multiplayer</option>
+            <option value="onlineMultiplayer">Online multiplayer</option>
+            <option value="localMultiplayer">Local multiplayer</option>
+            <option value="coop">Co-op</option>
+            <option value="onlineCoop">Online co-op</option>
+            <option value="localCoop">Local co-op</option>
+          </select>
+        </label>
+        <label>Release year
+          <select id="releaseYear">
+            <option value="">Any release year</option>
           </select>
         </label>
         <label>Catalog state
@@ -815,7 +873,10 @@
           <button id="filterDrawerApply" class="primary" type="button">Show results</button>
         </div>
       </div>
+
     </div>
+
+    <div id="descriptionTooltip" class="description-tooltip hidden" role="tooltip"></div>
 
     <section id="cards" class="cards" aria-label="Filtered game cards"></section>
     <section id="tableSection" class="table-wrap hidden" aria-labelledby="tableTitle">
@@ -829,6 +890,8 @@
             <th scope="col">Tier coverage</th>
             <th scope="col">Genre</th>
             <th scope="col">Publisher</th>
+            <th scope="col">Release</th>
+            <th scope="col">PEGI</th>
             <th scope="col">Observed badges</th>
           </tr>
         </thead>
@@ -878,6 +941,10 @@
       platform: '',
       genre: '',
       publisher: '',
+      frAvailability: '',
+      pegiRating: '',
+      playerMode: '',
+      releaseYear: '',
       state: 'current',
       change: '',
       since: ''
@@ -894,6 +961,7 @@
       rows: [],
       view: 'cards',
       lastFocused: null,
+      tooltipGame: null,
       imageObserver: null,
       viewportImageFrame: 0
     };
@@ -920,6 +988,7 @@
     const filterDrawer = document.getElementById('filterDrawer');
     const filterDrawerPanel = filterDrawer.querySelector('.filter-drawer-panel');
     const filterDrawerControls = document.getElementById('filterDrawerControls');
+    const descriptionTooltip = document.getElementById('descriptionTooltip');
     const mobileQuery = matchMedia('(max-width: 720px)');
 
     function escapeHtml(value) {
@@ -982,6 +1051,11 @@
       const games = app.current.games;
       setOptions(controls.genre, [...new Set(games.flatMap((game) => game.genres ?? []))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.publisher, [...new Set(games.map((game) => game.publisher).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
+      setOptions(controls.pegiRating, [...new Set(games.map((game) => game.pegiRating).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })));
+      setOptions(
+        controls.releaseYear,
+        [...new Set(games.map((game) => game.releaseDate?.slice(0, 4)).filter(Boolean))].sort((a, b) => Number(b) - Number(a))
+      );
     }
 
     function populateTierComparisonSets() {
@@ -1164,7 +1238,18 @@
           boxArt: null,
           heroArt: null,
           description: '',
+          shortDescription: '',
           releaseDate: null,
+          availableInFR: false,
+          pegiRating: null,
+          supportsSinglePlayer: false,
+          supportsMultiplayer: false,
+          supportsOnlineMultiplayer: false,
+          supportsLocalMultiplayer: false,
+          supportsCoop: false,
+          supportsOnlineCoop: false,
+          supportsLocalCoop: false,
+          playerModes: [],
           url: '#',
           memberships: record.memberships ?? [],
           platformByTier: record.platformByTier ?? {},
@@ -1206,10 +1291,23 @@
       return comparison.matches(game);
     }
 
+    function matchesPlayerMode(game) {
+      const value = controls.playerMode.value;
+      if (!value) return true;
+      if (value === 'single') return game.supportsSinglePlayer === true;
+      if (value === 'multiplayer') return game.supportsMultiplayer === true;
+      if (value === 'onlineMultiplayer') return game.supportsOnlineMultiplayer === true;
+      if (value === 'localMultiplayer') return game.supportsLocalMultiplayer === true;
+      if (value === 'coop') return game.supportsCoop === true;
+      if (value === 'onlineCoop') return game.supportsOnlineCoop === true;
+      if (value === 'localCoop') return game.supportsLocalCoop === true;
+      return true;
+    }
+
     function matchesFilters(game) {
       const query = controls.search.value.trim().toLocaleLowerCase();
       if (query) {
-        const haystack = [game.title, game.publisher, game.developer, game.id].join(' ').toLocaleLowerCase();
+        const haystack = [game.title, game.publisher, game.developer, game.id, game.shortDescription].join(' ').toLocaleLowerCase();
         if (!haystack.includes(query)) return false;
       }
       if (controls.tier.value && !game.memberships.includes(controls.tier.value)) return false;
@@ -1217,6 +1315,11 @@
       if (controls.platform.value && !game.platforms.includes(controls.platform.value)) return false;
       if (controls.genre.value && !(game.genres ?? []).includes(controls.genre.value)) return false;
       if (controls.publisher.value && game.publisher !== controls.publisher.value) return false;
+      if (controls.frAvailability.value === 'available' && game.availableInFR !== true) return false;
+      if (controls.frAvailability.value === 'notAvailable' && game.availableInFR === true) return false;
+      if (controls.pegiRating.value && game.pegiRating !== controls.pegiRating.value) return false;
+      if (!matchesPlayerMode(game)) return false;
+      if (controls.releaseYear.value && game.releaseDate?.slice(0, 4) !== controls.releaseYear.value) return false;
       if (!hasChange(game, controls.change.value, controls.since.value)) return false;
       return true;
     }
@@ -1249,6 +1352,85 @@
 
     function thumbnailImage(game) {
       return game.boxArt || game.poster || game.heroArt;
+    }
+
+    function releaseLabel(game) {
+      return game.releaseDate ? formatDate(game.releaseDate) : 'Unknown release';
+    }
+
+    function frAvailabilityLabel(game) {
+      if (game.availableInFR === true) return 'Listed for FR';
+      if (game.availableInFR === false) return 'Not listed for FR';
+      return 'FR unknown';
+    }
+
+    function pegiLabel(game) {
+      return game.pegiRating || 'No PEGI metadata';
+    }
+
+    function playerModeLabels(game) {
+      if (Array.isArray(game.playerModes) && game.playerModes.length > 0) {
+        return game.playerModes;
+      }
+      const labels = [];
+      if (game.supportsSinglePlayer) labels.push('Single player');
+      if (game.supportsOnlineMultiplayer) labels.push('Online multiplayer');
+      if (game.supportsLocalMultiplayer) labels.push('Local multiplayer');
+      if (game.supportsOnlineCoop) labels.push('Online co-op');
+      if (game.supportsLocalCoop) labels.push('Local co-op');
+      if (!game.supportsOnlineCoop && !game.supportsLocalCoop && game.supportsCoop) labels.push('Co-op');
+      return labels;
+    }
+
+    function descriptionForGame(game) {
+      return game.shortDescription || game.description || 'No short description metadata.';
+    }
+
+    function tooltipHtml(game) {
+      return `
+        <strong>${escapeHtml(game.title)}</strong>
+        <p>${escapeHtml(descriptionForGame(game))}</p>
+      `;
+    }
+
+    function placeTooltip(clientX, clientY) {
+      const margin = 12;
+      const offset = 18;
+      const rect = descriptionTooltip.getBoundingClientRect();
+      let left = clientX + offset;
+      let top = clientY + offset;
+      if (left + rect.width + margin > innerWidth) {
+        left = clientX - rect.width - offset;
+      }
+      if (top + rect.height + margin > innerHeight) {
+        top = clientY - rect.height - offset;
+      }
+      descriptionTooltip.style.left = `${Math.max(margin, left)}px`;
+      descriptionTooltip.style.top = `${Math.max(margin, top)}px`;
+    }
+
+    function showDescriptionTooltip(game, clientX, clientY) {
+      app.tooltipGame = game;
+      descriptionTooltip.innerHTML = tooltipHtml(game);
+      descriptionTooltip.classList.remove('hidden');
+      placeTooltip(clientX, clientY);
+    }
+
+    function hideDescriptionTooltip() {
+      app.tooltipGame = null;
+      descriptionTooltip.classList.add('hidden');
+    }
+
+    function gameFromDescriptionTarget(target) {
+      const productId = target?.getAttribute('data-description-game');
+      return productId ? findGameById(productId) : null;
+    }
+
+    function pointForElement(element) {
+      const rect = element.getBoundingClientRect();
+      const x = Math.min(rect.right, innerWidth - 24);
+      const y = Math.max(rect.top, 24);
+      return { x, y };
     }
 
     function lazyImageHtml(src, className, { width = null, height = null } = {}) {
@@ -1336,7 +1518,9 @@
     function renderCard(game) {
       const article = document.createElement('article');
       article.className = 'card';
+      article.dataset.descriptionGame = game.id;
       const image = cardImage(game);
+      const modes = playerModeLabels(game);
       article.innerHTML = `
         ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
         <div class="card-body">
@@ -1344,7 +1528,9 @@
           <p>${escapeHtml(game.publisher || 'Unknown publisher')}</p>
           ${chipList(game.memberships, (tier) => labelFor('tiers', tier))}
           ${chipList(game.platforms, (platform) => labelFor('platforms', platform))}
+          ${chipList([releaseLabel(game), pegiLabel(game), frAvailabilityLabel(game)])}
           <p>${escapeHtml((game.genres ?? []).slice(0, 3).join(', ') || 'No genre metadata')}</p>
+          ${modes.length ? chipList(modes.slice(0, 4)) : ''}
           ${badgeList(game)}
         </div>
       `;
@@ -1353,6 +1539,7 @@
 
     function renderTableRow(game) {
       const row = document.createElement('tr');
+      row.dataset.descriptionGame = game.id;
       const image = thumbnailImage(game);
       row.innerHTML = `
         <td>
@@ -1368,9 +1555,25 @@
         <td>${escapeHtml(labelFor('segments', game.segment))}</td>
         <td>${escapeHtml((game.genres ?? []).join(', '))}</td>
         <td>${escapeHtml(game.publisher || '')}</td>
+        <td>${escapeHtml(game.releaseDate ?? '')}</td>
+        <td>${escapeHtml(game.pegiRating ?? '')}</td>
         <td>${badgeList(game)}</td>
       `;
       return row;
+    }
+
+    function findGameById(productId) {
+      return allRowsForState().find((game) => game.id === productId)
+        ?? app.current.games.find((game) => game.id === productId)
+        ?? departedRows().find((game) => game.id === productId)
+        ?? null;
+    }
+
+    function closestFromEvent(event, selector) {
+      const target = event.target;
+      if (target instanceof Element) return target.closest(selector);
+      if (target instanceof Node) return target.parentElement?.closest(selector) ?? null;
+      return null;
     }
 
     function renderResults() {
@@ -1576,11 +1779,41 @@
       toolbarFiltersButton.addEventListener('click', showFilters);
       toolbarClearButton.addEventListener('click', resetFilters);
       toolbarTopButton.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
+      for (const container of [cards, tableBody]) {
+        container.addEventListener('mouseover', (event) => {
+          const target = closestFromEvent(event, '[data-description-game]');
+          if (!target || (event.relatedTarget instanceof Node && target.contains(event.relatedTarget))) return;
+          const game = gameFromDescriptionTarget(target);
+          if (!game) return;
+          showDescriptionTooltip(game, event.clientX, event.clientY);
+        });
+        container.addEventListener('mousemove', (event) => {
+          if (!app.tooltipGame || descriptionTooltip.classList.contains('hidden')) return;
+          placeTooltip(event.clientX, event.clientY);
+        });
+        container.addEventListener('mouseout', (event) => {
+          const target = closestFromEvent(event, '[data-description-game]');
+          if (!target || (event.relatedTarget instanceof Node && target.contains(event.relatedTarget))) return;
+          hideDescriptionTooltip();
+        });
+        container.addEventListener('focusin', (event) => {
+          const target = closestFromEvent(event, '[data-description-game]');
+          const game = gameFromDescriptionTarget(target);
+          if (!game || !target) return;
+          const point = pointForElement(target);
+          showDescriptionTooltip(game, point.x, point.y);
+        });
+        container.addEventListener('focusout', (event) => {
+          if (closestFromEvent(event, '[data-description-game]')) {
+            hideDescriptionTooltip();
+          }
+        });
+      }
       document.getElementById('filterDrawerClose').addEventListener('click', () => closeFilterDrawer());
       document.getElementById('filterDrawerApply').addEventListener('click', () => closeFilterDrawer());
       document.getElementById('filterDrawerClear').addEventListener('click', resetFilters);
       filterDrawer.addEventListener('click', (event) => {
-        if (event.target instanceof Element && event.target.hasAttribute('data-close-drawer')) {
+        if (closestFromEvent(event, '[data-close-drawer]')) {
           closeFilterDrawer();
         }
       });
@@ -1607,10 +1840,12 @@
         }
       });
       addEventListener('scroll', () => {
+        hideDescriptionTooltip();
         updateToolbarVisibility();
         scheduleViewportImageLoad();
       }, { passive: true });
       addEventListener('resize', () => {
+        hideDescriptionTooltip();
         updateToolbarVisibility();
         scheduleViewportImageLoad();
         if (!mobileQuery.matches && !filterDrawer.classList.contains('hidden')) {
