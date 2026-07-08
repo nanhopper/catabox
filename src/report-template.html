@@ -3,7 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1016">
   <title>Catabox - Xbox Game Pass catalog tracker</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <style>
     :root {
       color-scheme: dark;
@@ -55,13 +57,47 @@
 
     .brand-title {
       display: flex;
-      align-items: baseline;
-      gap: 0.6rem;
+      align-items: center;
+      gap: clamp(0.55rem, 1.6vw, 0.9rem);
       flex-wrap: wrap;
       font-family: "Cascadia Code", "SFMono-Regular", Consolas, ui-monospace, monospace;
       font-size: clamp(2.6rem, 7.4vw, 5.2rem);
       line-height: 1.08;
       letter-spacing: -0.025em;
+    }
+
+    .brand-mark {
+      flex: 0 0 auto;
+      width: clamp(3.2rem, 8.6vw, 5.8rem);
+      height: clamp(3.2rem, 8.6vw, 5.8rem);
+      filter:
+        drop-shadow(0 18px 36px rgb(0 0 0 / 34%))
+        drop-shadow(0 0 24px color-mix(in srgb, var(--accent-2) 26%, transparent));
+    }
+
+    .brand-mark .mark-panel {
+      fill: url("#markPanel");
+      stroke: color-mix(in srgb, var(--accent) 76%, var(--text));
+      stroke-width: 2.8;
+    }
+
+    .brand-mark .mark-tile {
+      fill: color-mix(in srgb, var(--muted) 28%, var(--panel-2));
+      stroke: color-mix(in srgb, var(--text) 24%, transparent);
+      stroke-width: 1.8;
+    }
+
+    .brand-mark .mark-tile.accent {
+      fill: color-mix(in srgb, var(--muted) 34%, var(--panel-2));
+    }
+
+    .brand-mark .mark-tile.blue {
+      fill: color-mix(in srgb, var(--accent-2) 18%, var(--muted) 22%, var(--panel-2));
+    }
+
+    .brand-mark .mark-sheen {
+      fill: var(--text);
+      opacity: 0.16;
     }
 
     .brand-word {
@@ -84,9 +120,10 @@
     }
 
     .brand-cursor {
+      --brand-caret-y: 0.18em;
       color: var(--accent-2);
       display: inline-block;
-      transform: translateY(0.04em);
+      transform: translateY(var(--brand-caret-y));
       transform-origin: 50% 70%;
       animation: brand-caret-blink 2.15s cubic-bezier(0.45, 0, 0.2, 1) infinite;
       will-change: opacity, filter, text-shadow, transform;
@@ -100,14 +137,14 @@
         text-shadow:
           0 0 12px color-mix(in srgb, var(--accent-2) 76%, transparent),
           0 0 30px color-mix(in srgb, var(--accent-2) 42%, transparent);
-        transform: translateY(0.04em) scaleX(1);
+        transform: translateY(var(--brand-caret-y)) scaleX(1);
       }
 
       52% {
         opacity: 0.28;
         filter: saturate(0.86);
         text-shadow: 0 0 10px color-mix(in srgb, var(--accent-2) 20%, transparent);
-        transform: translateY(0.04em) scaleX(0.94);
+        transform: translateY(var(--brand-caret-y)) scaleX(0.94);
       }
 
       60%,
@@ -115,7 +152,7 @@
         opacity: 0.08;
         filter: saturate(0.7);
         text-shadow: 0 0 4px color-mix(in srgb, var(--accent-2) 10%, transparent);
-        transform: translateY(0.04em) scaleX(0.9);
+        transform: translateY(var(--brand-caret-y)) scaleX(0.9);
       }
 
       90% {
@@ -124,7 +161,7 @@
         text-shadow:
           0 0 10px color-mix(in srgb, var(--accent-2) 64%, transparent),
           0 0 26px color-mix(in srgb, var(--accent-2) 36%, transparent);
-        transform: translateY(0.04em) scaleX(0.98);
+        transform: translateY(var(--brand-caret-y)) scaleX(0.98);
       }
 
       100% {
@@ -133,7 +170,7 @@
         text-shadow:
           0 0 12px color-mix(in srgb, var(--accent-2) 76%, transparent),
           0 0 30px color-mix(in srgb, var(--accent-2) 42%, transparent);
-        transform: translateY(0.04em) scaleX(1);
+        transform: translateY(var(--brand-caret-y)) scaleX(1);
       }
     }
 
@@ -213,12 +250,6 @@
       margin-top: 1.5rem;
       background: color-mix(in srgb, var(--panel) 74%, transparent);
       box-shadow: none;
-    }
-
-    .filter-note {
-      margin: -0.25rem 0 1rem;
-      color: var(--muted);
-      font-size: 0.86rem;
     }
 
     .status-details summary {
@@ -921,7 +952,22 @@
 <body>
   <header>
     <h1 class="brand-title" aria-label="Catabox">
-      <span class="brand-prompt" aria-hidden="true">cat&gt;</span>
+      <svg class="brand-mark" viewBox="0 0 96 96" aria-hidden="true" focusable="false">
+        <defs>
+          <linearGradient id="markPanel" x1="15" y1="14" x2="81" y2="82" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#2ea043"></stop>
+            <stop offset="0.56" stop-color="#1f6f35"></stop>
+            <stop offset="1" stop-color="#153f2a"></stop>
+          </linearGradient>
+        </defs>
+        <rect class="mark-panel" x="15" y="16" width="66" height="64" rx="13"></rect>
+        <rect class="mark-tile accent" x="24" y="25" width="22" height="18" rx="4"></rect>
+        <rect class="mark-tile blue" x="51" y="25" width="21" height="18" rx="4"></rect>
+        <rect class="mark-tile blue" x="24" y="49" width="21" height="20" rx="4"></rect>
+        <rect class="mark-tile accent" x="50" y="49" width="22" height="20" rx="4"></rect>
+        <path class="mark-sheen" d="M28 29h14v4H28zm27 0h13v4H55zM28 53h13v4H28zm26 0h14v4H54z"></path>
+      </svg>
+      <span class="brand-prompt" aria-hidden="true">cat:\&gt;</span>
       <span class="brand-word">Catabox</span>
       <span class="brand-cursor" aria-hidden="true">_</span>
     </h1>
@@ -938,7 +984,6 @@
 
     <section id="filterPanel" class="panel" aria-labelledby="filtersTitle">
       <h2 id="filtersTitle">Find games</h2>
-      <p class="filter-note">Supported filters accept multiple selections; choose All or clear selections for no filter.</p>
       <div id="filterControls" class="controls">
         <label>Search
           <input id="search" type="search" autocomplete="off" placeholder="Title, publisher, developer, description, product ID">
@@ -994,7 +1039,7 @@
           </div>
         </div>
         <div class="filter-field">
-          <span id="frAvailabilityLabel">France availability</span>
+          <span id="frAvailabilityLabel">French availability</span>
           <div class="multi-select" data-filter-id="frAvailability">
             <select id="frAvailability" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
               <option value="">Any</option>
@@ -1226,7 +1271,7 @@
       platform: 'Platform',
       genre: 'Genre',
       publisher: 'Publisher',
-      frAvailability: 'France availability',
+      frAvailability: 'French availability',
       pegiRating: 'PEGI',
       playerMode: 'Player mode',
       releaseYear: 'Release year',

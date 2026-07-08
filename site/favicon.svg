@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="Catabox">
+  <defs>
+    <linearGradient id="bg" x1="8" y1="8" x2="88" y2="88" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2ea043"/>
+      <stop offset=".5" stop-color="#1f6feb"/>
+      <stop offset="1" stop-color="#121a24"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="15" y1="14" x2="81" y2="82" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2ea043"/>
+      <stop offset=".56" stop-color="#1f6f35"/>
+      <stop offset="1" stop-color="#153f2a"/>
+    </linearGradient>
+    <linearGradient id="edge" x1="18" y1="18" x2="78" y2="78" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7ee787"/>
+      <stop offset="1" stop-color="#58a6ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="22" fill="url(#bg)"/>
+  <circle cx="23" cy="18" r="40" fill="#7ee787" opacity=".22"/>
+  <circle cx="76" cy="76" r="34" fill="#58a6ff" opacity=".26"/>
+  <rect x="15" y="16" width="66" height="64" rx="13" fill="url(#panel)" stroke="url(#edge)" stroke-width="3.4"/>
+  <rect x="24" y="25" width="22" height="18" rx="4" fill="#4d5b68" stroke="#d8efff" stroke-opacity=".24" stroke-width="1.8"/>
+  <rect x="51" y="25" width="21" height="18" rx="4" fill="#405468" stroke="#d8efff" stroke-opacity=".24" stroke-width="1.8"/>
+  <rect x="24" y="49" width="21" height="20" rx="4" fill="#405468" stroke="#d8efff" stroke-opacity=".24" stroke-width="1.8"/>
+  <rect x="50" y="49" width="22" height="20" rx="4" fill="#4d5b68" stroke="#d8efff" stroke-opacity=".24" stroke-width="1.8"/>
+  <path d="M28 29h14v4H28zm27 0h13v4H55zM28 53h13v4H28zm26 0h14v4H54z" fill="#eef5ff" opacity=".16"/>
+</svg>

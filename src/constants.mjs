@@ -84,7 +84,9 @@ export const GENERATED_PATHS = {
   history: 'site/data/history.json',
   status: 'site/data/status.json',
   template: 'src/report-template.html',
-  siteIndex: 'site/index.html'
+  siteIndex: 'site/index.html',
+  faviconSource: 'src/favicon.svg',
+  favicon: 'site/favicon.svg'
 };
 
 export function getTier(tierId) {
