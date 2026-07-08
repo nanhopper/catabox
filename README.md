@@ -51,6 +51,10 @@ The default workflow is weekly plus manual runs:
 
 Daily or wave-window checks can be useful around known Xbox catalog update windows, but they are intentionally not enabled by default to keep the tracker low-noise and low-cost.
 
+### GitHub Actions summaries
+
+Each update workflow run writes a GitHub Actions job summary with summary metrics, change counts, individual catalog events, source health, warnings, and errors. This uses GitHub's built-in workflow UI and does not require email credentials or repository secrets. Configure your personal GitHub notification settings to receive normal Actions status notifications for watched repositories.
+
 ## History semantics
 
 The first successful run is a **baseline observation**. Games present in that first run are marked as first observed, but not as truly new.
@@ -100,6 +104,7 @@ Useful scripts:
 | `npm run fetch` | Fetch and print SIGLS lists |
 | `npm run normalize` | Normalize saved fetch/product payloads |
 | `npm run history` | Update history from an existing `data/current.json` |
+| `npm run summary:catalog` | Render the latest catalog update job summary |
 | `npm run build` | Copy the static site and JSON into `docs/` |
 | `npm run update` | Full fetch, normalize, validate, history, and build pipeline |
 | `npm test` | Run Node built-in tests |

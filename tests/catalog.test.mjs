@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
+import { buildCatalogSummary } from '../src/catalog-summary.mjs';
 import { parseSiglsResponse } from '../src/fetch-sigls.mjs';
 import { normalizeCatalog } from '../src/normalize-catalog.mjs';
 import { updateHistory } from '../src/update-history.mjs';
@@ -128,4 +129,77 @@ test('history baseline is not treated as new, later runs track observed changes'
   assert.equal(observed.history.games.CCC.active, false);
   assert.equal(observed.history.games.BBB.lastTierChangedAt, '2026-01-08T00:00:00.000Z');
   assert.equal(observed.changed, true);
+});
+
+test('catalog action summary renders latest changes', () => {
+  const status = {
+    state: 'success',
+    generatedAt: '2026-01-08T00:00:00.000Z',
+    catalogGeneratedAt: '2026-01-08T00:00:00.000Z',
+    changed: true,
+    baseline: false,
+    eventCounts: {
+      added: 1,
+      tier_added: 1
+    },
+    warnings: ['DisplayCatalog metadata lagged for one product.'],
+    errors: [],
+    actionRunUrl: 'https://github.com/example/catabox/actions/runs/123',
+    sourceHealth: {
+      sigls: [
+        {
+          tier: 'ultimate',
+          platform: 'console',
+          status: 'ok',
+          count: 2,
+          sourceCount: 2
+        }
+      ],
+      displayCatalog: {
+        status: 'ok',
+        requested: 2,
+        returned: 2
+      }
+    }
+  };
+  const history = {
+    events: [
+      {
+        generatedAt: '2026-01-01T00:00:00.000Z',
+        date: '2026-01-01',
+        type: 'removed',
+        productId: 'OLD',
+        title: 'Old game'
+      },
+      {
+        generatedAt: '2026-01-08T00:00:00.000Z',
+        date: '2026-01-08',
+        type: 'added',
+        productId: 'NEW',
+        title: 'A&B <Game>'
+      },
+      {
+        generatedAt: '2026-01-08T00:00:00.000Z',
+        date: '2026-01-08',
+        type: 'tier_added',
+        productId: 'NEW',
+        title: 'A&B <Game>',
+        tier: 'ultimate'
+      }
+    ],
+    observations: [
+      {
+        generatedAt: '2026-01-08T00:00:00.000Z',
+        total: 2
+      }
+    ]
+  };
+
+  const summary = buildCatalogSummary({ status, history, repository: 'example/catabox' });
+  assert.match(summary, /# Catabox catalog update: 2 changes/);
+  assert.match(summary, /\| Metric \| Value \|/);
+  assert.match(summary, /A&B <Game>/);
+  assert.match(summary, /Ultimate \/ Console/);
+  assert.match(summary, /DisplayCatalog metadata/);
+  assert.doesNotMatch(summary, /Old game/);
 });
