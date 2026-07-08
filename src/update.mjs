@@ -14,7 +14,7 @@ import { fetchProducts, productIdsFromSiglsPayload } from './fetch-products.mjs'
 import { normalizeCatalog } from './normalize-catalog.mjs';
 import { updateHistory } from './update-history.mjs';
 import { validateCatalog, validateDeterministicJson } from './validate-data.mjs';
-import { copyStatusToDocs, renderSite } from './render-site.mjs';
+import { renderSite } from './render-site.mjs';
 
 function eventCounts(events) {
   const counts = {};
@@ -93,7 +93,7 @@ async function writeSnapshotIfNeeded(historyResult) {
     return;
   }
   const snapshotEntry = historyResult.history.snapshots.at(-1);
-  await writeJsonFile(`${GENERATED_PATHS.dataDir}/${snapshotEntry.path}`, historyResult.snapshot);
+  await writeJsonFile(`${GENERATED_PATHS.siteDataDir}/${snapshotEntry.path}`, historyResult.snapshot);
 }
 
 async function writeSuccessOutputs({ current, historyResult, status }) {
@@ -107,7 +107,6 @@ async function writeSuccessOutputs({ current, historyResult, status }) {
 
 async function writeFailureOutput(status) {
   await writeJsonFile(GENERATED_PATHS.status, status);
-  await copyStatusToDocs();
 }
 
 function parseCliArgs(argv) {

@@ -6,6 +6,7 @@ import {
   PLATFORM_IDS,
   PLATFORM_LABELS,
   PRODUCT_SWAP_MAP,
+  GENERATED_PATHS,
   SEGMENT_IDS,
   SEGMENT_LABELS,
   TIER_IDS,
@@ -330,7 +331,7 @@ function parseCliArgs(argv) {
   const args = {
     sigls: null,
     products: null,
-    out: 'data/current.json',
+    out: GENERATED_PATHS.current,
     market: DEFAULT_MARKET,
     language: DEFAULT_LANGUAGE
   };

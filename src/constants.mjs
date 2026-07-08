@@ -77,19 +77,14 @@ export const DIFF_LABELS = {
 };
 
 export const GENERATED_PATHS = {
-  dataDir: 'data',
-  docsDir: 'docs',
-  docsDataDir: 'docs/data',
-  snapshotsDir: 'data/snapshots',
-  docsSnapshotsDir: 'docs/data/snapshots',
-  current: 'data/current.json',
-  history: 'data/history.json',
-  status: 'data/status.json',
-  docsCurrent: 'docs/data/current.json',
-  docsHistory: 'docs/data/history.json',
-  docsStatus: 'docs/data/status.json',
+  siteDir: 'site',
+  siteDataDir: 'site/data',
+  snapshotsDir: 'site/data/snapshots',
+  current: 'site/data/current.json',
+  history: 'site/data/history.json',
+  status: 'site/data/status.json',
   template: 'src/report-template.html',
-  docsIndex: 'docs/index.html'
+  siteIndex: 'site/index.html'
 };
 
 export function getTier(tierId) {
