@@ -85,6 +85,62 @@
 
     .brand-cursor {
       color: var(--accent-2);
+      display: inline-block;
+      transform: translateY(0.04em);
+      transform-origin: 50% 70%;
+      animation: brand-caret-blink 2.15s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+      will-change: opacity, filter, text-shadow, transform;
+    }
+
+    @keyframes brand-caret-blink {
+      0%,
+      42% {
+        opacity: 0.98;
+        filter: saturate(1.18);
+        text-shadow:
+          0 0 12px color-mix(in srgb, var(--accent-2) 76%, transparent),
+          0 0 30px color-mix(in srgb, var(--accent-2) 42%, transparent);
+        transform: translateY(0.04em) scaleX(1);
+      }
+
+      52% {
+        opacity: 0.28;
+        filter: saturate(0.86);
+        text-shadow: 0 0 10px color-mix(in srgb, var(--accent-2) 20%, transparent);
+        transform: translateY(0.04em) scaleX(0.94);
+      }
+
+      60%,
+      80% {
+        opacity: 0.08;
+        filter: saturate(0.7);
+        text-shadow: 0 0 4px color-mix(in srgb, var(--accent-2) 10%, transparent);
+        transform: translateY(0.04em) scaleX(0.9);
+      }
+
+      90% {
+        opacity: 0.88;
+        filter: saturate(1.1);
+        text-shadow:
+          0 0 10px color-mix(in srgb, var(--accent-2) 64%, transparent),
+          0 0 26px color-mix(in srgb, var(--accent-2) 36%, transparent);
+        transform: translateY(0.04em) scaleX(0.98);
+      }
+
+      100% {
+        opacity: 0.98;
+        filter: saturate(1.18);
+        text-shadow:
+          0 0 12px color-mix(in srgb, var(--accent-2) 76%, transparent),
+          0 0 30px color-mix(in srgb, var(--accent-2) 42%, transparent);
+        transform: translateY(0.04em) scaleX(1);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .brand-cursor {
+        animation: none;
+      }
     }
 
     h2,
