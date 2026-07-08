@@ -1,5 +1,7 @@
 import { readFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
 import {
+  GENERATED_PATHS,
   PLATFORM_IDS,
   TIER_IDS,
   hashObject,
@@ -288,9 +290,9 @@ export function updateHistory({
 
 function parseCliArgs(argv) {
   const args = {
-    current: 'data/current.json',
-    history: 'data/history.json',
-    out: 'data/history.json'
+    current: GENERATED_PATHS.current,
+    history: GENERATED_PATHS.history,
+    out: GENERATED_PATHS.history
   };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
@@ -317,7 +319,7 @@ async function runCli() {
   } else {
     await writeJsonFile(args.out, result.history);
     if (result.snapshot) {
-      const snapshotPath = `data/${result.history.snapshots.at(-1).path}`;
+      const snapshotPath = join(dirname(args.out), result.history.snapshots.at(-1).path);
       await writeJsonFile(snapshotPath, result.snapshot);
     }
   }

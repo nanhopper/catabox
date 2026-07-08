@@ -2,7 +2,7 @@
 
 [Open the public Catabox site on GitHub Pages.](https://nanhopper.github.io/catabox/)
 
-Catabox is a zero-COGS static Xbox Game Pass catalog tracker. It publishes a GitHub Pages site from `docs/` and stores generated catalog data in plain JSON under `data/` and `docs/data/`.
+Catabox is a zero-COGS static Xbox Game Pass catalog tracker. It publishes a GitHub Pages site from `site/` and stores generated catalog data in plain JSON under `site/data/`.
 
 Catabox is an unofficial fan-made tracker and is not affiliated with, endorsed by, or sponsored by Xbox or Microsoft.
 
@@ -15,7 +15,7 @@ The tracker is catalog-only: it does not use personal gamertags, libraries, play
 - Default market availability: `FR`
 - Default product names and metadata language: `en-us`
 
-The generated `data/current.json` includes tier/platform lists, enriched game metadata, catalog diffs, tier-combination segments, source health, and a deterministic catalog hash. `docs/data/*.json` mirrors those files for the static site.
+The generated `site/data/current.json` includes tier/platform lists, enriched game metadata, catalog diffs, tier-combination segments, source health, and a deterministic catalog hash.
 
 ## Data sources
 
@@ -40,7 +40,7 @@ The known product swap `9PNQKHFLD2WQ -> 9PNJXVCVWD4K` is applied before metadata
 
 ## Why fetching happens in GitHub Actions
 
-Browser-side live fetching from `catalog.gamepass.com` is not viable for a public static site because the endpoint does not provide CORS headers that allow direct browser reads. Catabox fetches data in Node during a GitHub Actions run, commits static JSON, and the browser only reads adjacent `docs/data/*.json` files.
+Browser-side live fetching from `catalog.gamepass.com` is not viable for a public static site because the endpoint does not provide CORS headers that allow direct browser reads. Catabox fetches data in Node during a GitHub Actions run, commits static JSON, and the browser only reads adjacent `data/*.json` files from the published site.
 
 ## Refresh cadence
 
@@ -69,11 +69,11 @@ Later successful runs generate tracker-observed events:
 - `platform_added`
 - `platform_removed`
 
-Membership-only snapshots are written only for baseline or changed runs under `data/snapshots/` and mirrored to `docs/data/snapshots/`.
+Membership-only snapshots are written only for baseline or changed runs under `site/data/snapshots/`.
 
 ## Validation and safety
 
-`npm run update` fails if a required SIGLS request fails. On failure, `data/current.json`, `data/history.json`, and the generated site remain last-good; `data/status.json` and `docs/data/status.json` record the failed run so the site can show a banner.
+`npm run update` fails if a required SIGLS request fails. On failure, `site/data/current.json`, `site/data/history.json`, and the generated site remain last-good; `site/data/status.json` records the failed run so the site can show a banner.
 
 Validation also checks:
 
@@ -95,7 +95,7 @@ npm test
 npm run check
 ```
 
-Open `docs/index.html` directly or serve `docs/` with any static file server. The site uses relative `data/current.json`, `data/history.json`, and `data/status.json` paths.
+Open `site/index.html` directly or serve `site/` with any static file server. The site uses relative `data/current.json`, `data/history.json`, and `data/status.json` paths.
 
 Useful scripts:
 
@@ -103,9 +103,9 @@ Useful scripts:
 | --- | --- |
 | `npm run fetch` | Fetch and print SIGLS lists |
 | `npm run normalize` | Normalize saved fetch/product payloads |
-| `npm run history` | Update history from an existing `data/current.json` |
+| `npm run history` | Update history from an existing `site/data/current.json` |
 | `npm run summary:catalog` | Render the latest catalog update job summary |
-| `npm run build` | Copy the static site and JSON into `docs/` |
+| `npm run build` | Render the static site shell into `site/` |
 | `npm run update` | Full fetch, normalize, validate, history, and build pipeline |
 | `npm test` | Run Node built-in tests |
 | `npm run check` | Validate generated JSON |
@@ -114,10 +114,10 @@ Useful scripts:
 
 1. In repository settings, enable GitHub Pages and set the source to **GitHub Actions**.
 2. Ensure Actions is allowed to create Pages deployments for the repository.
-3. Run **Deploy GitHub Pages** manually once, or push a change to `docs/` on `main`.
+3. Run **Deploy GitHub Pages** manually once, or push a change to `site/` on `main`.
 4. Run **Update catalog** manually, or wait for the weekly schedule, to refresh and redeploy the generated site.
 
-The update workflow commits only generated `data/` and `docs/` changes when those files change. The Pages workflow publishes the generated `docs/` site after direct `docs/` changes and after successful catalog updates.
+The update workflow commits only generated `site/` changes when those files change. The Pages workflow publishes the generated `site/` after direct `site/` changes and after successful catalog updates.
 
 ## Limitations
 
