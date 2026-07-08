@@ -647,6 +647,55 @@
       background: #101925;
     }
 
+    .sort-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      width: auto;
+      min-height: auto;
+      padding: 0;
+      border: 0;
+      border-radius: 0.25rem;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .sort-button:focus-visible {
+      outline: 2px solid var(--accent-2);
+      outline-offset: 0.2rem;
+    }
+
+    .sort-indicator {
+      width: 0.6rem;
+      height: 0.6rem;
+      color: var(--accent-2);
+    }
+
+    .sort-indicator::before {
+      content: '';
+      display: block;
+      width: 0;
+      height: 0;
+      margin-top: 0.1rem;
+      border-right: 0.3rem solid transparent;
+      border-bottom: 0.45rem solid currentColor;
+      border-left: 0.3rem solid transparent;
+      opacity: 0.28;
+    }
+
+    th[aria-sort="ascending"] .sort-indicator::before {
+      opacity: 1;
+    }
+
+    th[aria-sort="descending"] .sort-indicator::before {
+      border-top: 0.45rem solid currentColor;
+      border-bottom: 0;
+      opacity: 1;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -884,13 +933,23 @@
         <caption id="tableTitle" class="sr-only">Filtered games</caption>
         <thead>
           <tr>
-            <th scope="col">Title</th>
+            <th scope="col" aria-sort="ascending">
+              <button class="sort-button" type="button" data-sort-key="title">
+                <span>Title</span>
+                <span class="sort-indicator" aria-hidden="true"></span>
+              </button>
+            </th>
             <th scope="col">Tiers</th>
             <th scope="col">Platforms</th>
             <th scope="col">Tier coverage</th>
             <th scope="col">Genre</th>
             <th scope="col">Publisher</th>
-            <th scope="col">Release</th>
+            <th scope="col" aria-sort="none">
+              <button class="sort-button" type="button" data-sort-key="release">
+                <span>Release</span>
+                <span class="sort-indicator" aria-hidden="true"></span>
+              </button>
+            </th>
             <th scope="col">PEGI</th>
             <th scope="col">Observed badges</th>
           </tr>
@@ -934,6 +993,18 @@
       }
     ];
     const TIER_COMPARISON_BY_ID = Object.fromEntries(TIER_COMPARISONS.map((item) => [item.id, item]));
+    const SORT_CONFIG = {
+      title: {
+        label: 'Title',
+        defaultDirection: 'asc',
+        compare: (left, right, direction) => compareText(left.sortTitle ?? left.title, right.sortTitle ?? right.title, direction)
+      },
+      release: {
+        label: 'Release',
+        defaultDirection: 'desc',
+        compare: compareReleaseDate
+      }
+    };
     const defaults = {
       search: '',
       tier: '',
@@ -960,6 +1031,10 @@
       tierComparisonSetsReady: false,
       rows: [],
       view: 'cards',
+      sort: {
+        key: 'title',
+        direction: 'asc'
+      },
       lastFocused: null,
       tooltipGame: null,
       imageObserver: null,
@@ -973,6 +1048,7 @@
     const cards = document.getElementById('cards');
     const tableSection = document.getElementById('tableSection');
     const tableBody = document.querySelector('#gamesTable tbody');
+    const tableSortButtons = [...document.querySelectorAll('button[data-sort-key]')];
     const resultsSummary = document.getElementById('resultsSummary');
     const statusSummary = document.getElementById('statusSummary');
     const resultsToolbar = document.getElementById('resultsToolbar');
@@ -1015,6 +1091,35 @@
     function formatDate(value) {
       if (!value) return 'n/a';
       return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: value.includes('T') ? 'short' : undefined }).format(new Date(value));
+    }
+
+    function compareText(left, right, direction = 'asc') {
+      const result = String(left ?? '').localeCompare(String(right ?? ''), undefined, { numeric: true, sensitivity: 'base' });
+      return direction === 'desc' ? -result : result;
+    }
+
+    function releaseTime(game) {
+      const time = Date.parse(game.releaseDate ?? '');
+      return Number.isFinite(time) ? time : null;
+    }
+
+    function compareReleaseDate(left, right, direction = 'asc') {
+      const leftTime = releaseTime(left);
+      const rightTime = releaseTime(right);
+      if (leftTime === null || rightTime === null) {
+        if (leftTime === rightTime) return 0;
+        return leftTime === null ? 1 : -1;
+      }
+      const result = leftTime - rightTime;
+      return direction === 'desc' ? -result : result;
+    }
+
+    function oppositeDirection(direction) {
+      return direction === 'asc' ? 'desc' : 'asc';
+    }
+
+    function directionLabel(direction) {
+      return direction === 'desc' ? 'descending' : 'ascending';
     }
 
     function labelFor(kind, id) {
@@ -1147,6 +1252,36 @@
 
     function toggleView() {
       setView(nextView());
+    }
+
+    function compareRows(left, right) {
+      const sort = SORT_CONFIG[app.sort.key] ?? SORT_CONFIG.title;
+      return sort.compare(left, right, app.sort.direction)
+        || compareText(left.sortTitle ?? left.title, right.sortTitle ?? right.title)
+        || String(left.id ?? '').localeCompare(String(right.id ?? ''));
+    }
+
+    function updateTableSortHeaders() {
+      for (const button of tableSortButtons) {
+        const key = button.dataset.sortKey;
+        const sort = SORT_CONFIG[key];
+        if (!sort) continue;
+        const active = app.sort.key === key;
+        const direction = active ? app.sort.direction : sort.defaultDirection;
+        const header = button.closest('th');
+        header?.setAttribute('aria-sort', active ? directionLabel(direction) : 'none');
+        button.setAttribute('aria-label', `${active ? `Sorted ${directionLabel(direction)}. ` : ''}Sort by ${sort.label} ${directionLabel(active ? oppositeDirection(direction) : direction)}`);
+      }
+    }
+
+    function setTableSort(key) {
+      const sort = SORT_CONFIG[key];
+      if (!sort) return;
+      app.sort = {
+        key,
+        direction: app.sort.key === key ? oppositeDirection(app.sort.direction) : sort.defaultDirection
+      };
+      renderResults();
     }
 
     function updateResultsToolbar(rows, total) {
@@ -1578,10 +1713,11 @@
 
     function renderResults() {
       const sourceRows = allRowsForState();
-      const rows = sourceRows.filter(matchesFilters).sort((left, right) => left.sortTitle.localeCompare(right.sortTitle) || left.id.localeCompare(right.id));
+      const rows = sourceRows.filter(matchesFilters).sort(compareRows);
       app.rows = rows;
       resultsSummary.textContent = `${rows.length.toLocaleString()} of ${sourceRows.length.toLocaleString()} games`;
       updateResultsToolbar(rows, sourceRows.length);
+      updateTableSortHeaders();
       cards.replaceChildren(...rows.map(renderCard));
       tableBody.replaceChildren(...rows.map(renderTableRow));
       cards.classList.toggle('hidden', app.view !== 'cards');
@@ -1771,6 +1907,9 @@
       }
       viewToggleButton.addEventListener('click', toggleView);
       toolbarView.addEventListener('click', toggleView);
+      for (const button of tableSortButtons) {
+        button.addEventListener('click', () => setTableSort(button.dataset.sortKey));
+      }
       toolbarSearch.addEventListener('input', () => {
         controls.search.value = toolbarSearch.value;
         renderResults();
