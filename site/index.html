@@ -159,6 +159,12 @@
       box-shadow: none;
     }
 
+    .filter-note {
+      margin: -0.25rem 0 1rem;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
     .status-details summary {
       cursor: pointer;
       color: var(--muted);
@@ -209,7 +215,8 @@
       align-items: end;
     }
 
-    label {
+    label,
+    .filter-field {
       display: grid;
       gap: 0.35rem;
       color: var(--muted);
@@ -230,9 +237,84 @@
       font: inherit;
     }
 
+    input,
+    select {
+      font-weight: 400;
+    }
+
     button {
       cursor: pointer;
       font-weight: 700;
+    }
+
+    .multi-select {
+      position: relative;
+    }
+
+    .multi-select-native {
+      display: none;
+    }
+
+    .multi-select-button {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.6rem;
+      text-align: left;
+      font-weight: 400;
+    }
+
+    .multi-select-button::after {
+      content: "";
+      flex: 0 0 auto;
+      width: 0.48rem;
+      height: 0.48rem;
+      margin-top: -0.2rem;
+      border-right: 2px solid currentColor;
+      border-bottom: 2px solid currentColor;
+      transform: rotate(45deg);
+      opacity: 0.72;
+    }
+
+    .multi-select-menu {
+      position: absolute;
+      top: calc(100% + 0.35rem);
+      left: 0;
+      right: 0;
+      z-index: 30;
+      display: grid;
+      gap: 0.12rem;
+      max-height: min(18rem, 54vh);
+      overflow: auto;
+      padding: 0.35rem;
+      border: 1px solid var(--line);
+      border-radius: 0.75rem;
+      background: #0d1520;
+      box-shadow: var(--shadow);
+    }
+
+    .multi-option {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 2.1rem;
+      padding: 0.35rem 0.45rem;
+      border-radius: 0.5rem;
+      color: var(--text);
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .multi-option:hover,
+    .multi-option:focus-within {
+      background: var(--chip);
+    }
+
+    .multi-option input[type="checkbox"] {
+      width: auto;
+      min-height: auto;
+      margin: 0;
+      accent-color: var(--accent-2);
     }
 
     button.primary {
@@ -751,85 +833,136 @@
 
     <section id="filterPanel" class="panel" aria-labelledby="filtersTitle">
       <h2 id="filtersTitle">Find games</h2>
+      <p class="filter-note">Supported filters accept multiple selections; choose All or clear selections for no filter.</p>
       <div id="filterControls" class="controls">
         <label>Search
           <input id="search" type="search" autocomplete="off" placeholder="Title, publisher, developer, description, product ID">
         </label>
-        <label>Tier
-          <select id="tier">
-            <option value="">All tiers</option>
-            <option value="ultimate">Ultimate</option>
-            <option value="premium">Premium</option>
-            <option value="essential">Essential</option>
-          </select>
-        </label>
+        <div class="filter-field">
+          <span id="tierLabel">Tier</span>
+          <div class="multi-select" data-filter-id="tier">
+            <select id="tier" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
+              <option value="">All tiers</option>
+              <option value="ultimate">Ultimate</option>
+              <option value="premium">Premium</option>
+              <option value="essential">Essential</option>
+            </select>
+            <button id="tierButton" class="multi-select-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="tierMenu" aria-labelledby="tierLabel tierButton"></button>
+            <div id="tierMenu" class="multi-select-menu hidden" role="group" aria-labelledby="tierLabel"></div>
+          </div>
+        </div>
         <label>Tier comparison
           <select id="tierComparison">
-            <option value="">Any tier comparison</option>
+            <option value="">No comparison</option>
           </select>
         </label>
-        <label>Platform
-          <select id="platform">
-            <option value="">All platforms</option>
-            <option value="console">Console</option>
-            <option value="pc">PC</option>
-          </select>
-        </label>
-        <label>Genre
-          <select id="genre">
-            <option value="">All genres</option>
-          </select>
-        </label>
-        <label>Publisher
-          <select id="publisher">
-            <option value="">All publishers</option>
-          </select>
-        </label>
-        <label>France availability
-          <select id="frAvailability">
-            <option value="">Any FR availability</option>
-            <option value="available">Listed for FR</option>
-            <option value="notAvailable">Not listed for FR</option>
-          </select>
-        </label>
-        <label>PEGI
-          <select id="pegiRating">
-            <option value="">Any PEGI rating</option>
-          </select>
-        </label>
-        <label>Player mode
-          <select id="playerMode">
-            <option value="">Any player mode</option>
-            <option value="single">Single player</option>
-            <option value="multiplayer">Multiplayer</option>
-            <option value="onlineMultiplayer">Online multiplayer</option>
-            <option value="localMultiplayer">Local multiplayer</option>
-            <option value="coop">Co-op</option>
-            <option value="onlineCoop">Online co-op</option>
-            <option value="localCoop">Local co-op</option>
-          </select>
-        </label>
-        <label>Release year
-          <select id="releaseYear">
-            <option value="">Any release year</option>
-          </select>
-        </label>
-        <label>Catalog state
-          <select id="state">
-            <option value="current">Current catalog</option>
-            <option value="all">Current + departed</option>
-            <option value="departed">Departed only</option>
-          </select>
-        </label>
-        <label>Observed change
-          <select id="change">
-            <option value="">Any change status</option>
-            <option value="new">New or readded since date</option>
-            <option value="tier">Tier changed since date</option>
-            <option value="platform">Platform changed since date</option>
-            <option value="removed">Removed since date</option>
-          </select>
-        </label>
+        <div class="filter-field">
+          <span id="platformLabel">Platform</span>
+          <div class="multi-select" data-filter-id="platform">
+            <select id="platform" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
+              <option value="">All platforms</option>
+              <option value="console">Console</option>
+              <option value="pc">PC</option>
+            </select>
+            <button id="platformButton" class="multi-select-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="platformMenu" aria-labelledby="platformLabel platformButton"></button>
+            <div id="platformMenu" class="multi-select-menu hidden" role="group" aria-labelledby="platformLabel"></div>
+          </div>
+        </div>
+        <div class="filter-field">
+          <span id="genreLabel">Genre</span>
+          <div class="multi-select" data-filter-id="genre">
+            <select id="genre" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
+              <option value="">All genres</option>
+            </select>
+            <button id="genreButton" class="multi-select-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="genreMenu" aria-labelledby="genreLabel genreButton"></button>
+            <div id="genreMenu" class="multi-select-menu hidden" role="group" aria-labelledby="genreLabel"></div>
+          </div>
+        </div>
+        <div class="filter-field">
+          <span id="publisherLabel">Publisher</span>
+          <div class="multi-select" data-filter-id="publisher">
+            <select id="publisher" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
+              <option value="">All publishers</option>
+            </select>
+            <button id="publisherButton" class="multi-select-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="publisherMenu" aria-labelledby="publisherLabel publisherButton"></button>
+            <div id="publisherMenu" class="multi-select-menu hidden" role="group" aria-labelledby="publisherLabel"></div>
+          </div>
+        </div>
+        <div class="filter-field">
+          <span id="frAvailabilityLabel">France availability</span>
+          <div class="multi-select" data-filter-id="frAvailability">
+            <select id="frAvailability" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
+              <option value="">Any</option>
+              <option value="available">Yes</option>
+              <option value="notAvailable">No</option>
+            </select>
+            <button id="frAvailabilityButton" class="multi-select-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="frAvailabilityMenu" aria-labelledby="frAvailabilityLabel frAvailabilityButton"></button>
+            <div id="frAvailabilityMenu" class="multi-select-menu hidden" role="group" aria-labelledby="frAvailabilityLabel"></div>
+          </div>
+        </div>
+        <div class="filter-field">
+          <span id="pegiRatingLabel">PEGI</span>
+          <div class="multi-select" data-filter-id="pegiRating">
+            <select id="pegiRating" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
+              <option value="">Any PEGI rating</option>
+            </select>
+            <button id="pegiRatingButton" class="multi-select-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="pegiRatingMenu" aria-labelledby="pegiRatingLabel pegiRatingButton"></button>
+            <div id="pegiRatingMenu" class="multi-select-menu hidden" role="group" aria-labelledby="pegiRatingLabel"></div>
+          </div>
+        </div>
+        <div class="filter-field">
+          <span id="playerModeLabel">Player mode</span>
+          <div class="multi-select" data-filter-id="playerMode">
+            <select id="playerMode" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
+              <option value="">Any player mode</option>
+              <option value="single">Single player</option>
+              <option value="multiplayer">Multiplayer</option>
+              <option value="onlineMultiplayer">Online multiplayer</option>
+              <option value="localMultiplayer">Local multiplayer</option>
+              <option value="coop">Co-op</option>
+              <option value="onlineCoop">Online co-op</option>
+              <option value="localCoop">Local co-op</option>
+            </select>
+            <button id="playerModeButton" class="multi-select-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="playerModeMenu" aria-labelledby="playerModeLabel playerModeButton"></button>
+            <div id="playerModeMenu" class="multi-select-menu hidden" role="group" aria-labelledby="playerModeLabel"></div>
+          </div>
+        </div>
+        <div class="filter-field">
+          <span id="releaseYearLabel">Release year</span>
+          <div class="multi-select" data-filter-id="releaseYear">
+            <select id="releaseYear" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
+              <option value="">Any release year</option>
+            </select>
+            <button id="releaseYearButton" class="multi-select-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="releaseYearMenu" aria-labelledby="releaseYearLabel releaseYearButton"></button>
+            <div id="releaseYearMenu" class="multi-select-menu hidden" role="group" aria-labelledby="releaseYearLabel"></div>
+          </div>
+        </div>
+        <div class="filter-field">
+          <span id="stateLabel">Catalog state</span>
+          <div class="multi-select" data-filter-id="state">
+            <select id="state" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
+              <option value="current">Current</option>
+              <option value="departed">Departed</option>
+            </select>
+            <button id="stateButton" class="multi-select-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="stateMenu" aria-labelledby="stateLabel stateButton"></button>
+            <div id="stateMenu" class="multi-select-menu hidden" role="group" aria-labelledby="stateLabel"></div>
+          </div>
+        </div>
+        <div class="filter-field">
+          <span id="changeLabel">Observed change</span>
+          <div class="multi-select" data-filter-id="change">
+            <select id="change" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
+              <option value="">Any change status</option>
+              <option value="noChange">No observed change</option>
+              <option value="new">New or readded since date</option>
+              <option value="tier">Tier changed since date</option>
+              <option value="platform">Platform changed since date</option>
+              <option value="removed">Removed since date</option>
+            </select>
+            <button id="changeButton" class="multi-select-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="changeMenu" aria-labelledby="changeLabel changeButton"></button>
+            <div id="changeMenu" class="multi-select-menu hidden" role="group" aria-labelledby="changeLabel"></div>
+          </div>
+        </div>
         <label>Since
           <input id="since" type="date">
         </label>
@@ -919,9 +1052,11 @@
     const TIERS = ['ultimate', 'premium', 'essential'];
     const PLATFORMS = ['console', 'pc'];
     const TIER_COMPARISONS = [
-      { id: 'allEssential', label: 'All Essential games', matches: (game) => game.memberships.includes('essential') },
-      { id: 'allPremium', label: 'All Premium games', matches: (game) => game.memberships.includes('premium') },
-      { id: 'allUltimate', label: 'All Ultimate games', matches: (game) => game.memberships.includes('ultimate') },
+      {
+        id: 'premiumNotUltimate',
+        label: 'Premium, not Ultimate',
+        matches: (game) => app.tierComparisonSets.premiumNotUltimate.has(game.id)
+      },
       {
         id: 'premiumNotEssential',
         label: 'Premium, not Essential',
@@ -931,6 +1066,16 @@
         id: 'ultimateNotPremium',
         label: 'Ultimate, not Premium',
         matches: (game) => app.tierComparisonSets.ultimateNotPremium.has(game.id)
+      },
+      {
+        id: 'essentialNotPremium',
+        label: 'Essential, not Premium',
+        matches: (game) => app.tierComparisonSets.essentialNotPremium.has(game.id)
+      },
+      {
+        id: 'essentialNotUltimate',
+        label: 'Essential, not Ultimate',
+        matches: (game) => app.tierComparisonSets.essentialNotUltimate.has(game.id)
       }
     ];
     const TIER_COMPARISON_BY_ID = Object.fromEntries(TIER_COMPARISONS.map((item) => [item.id, item]));
@@ -949,13 +1094,29 @@
       change: '',
       since: ''
     };
+    const filterLabels = {
+      tier: 'Tier',
+      platform: 'Platform',
+      genre: 'Genre',
+      publisher: 'Publisher',
+      frAvailability: 'France availability',
+      pegiRating: 'PEGI',
+      playerMode: 'Player mode',
+      releaseYear: 'Release year',
+      state: 'Catalog state',
+      change: 'Observed change'
+    };
+    const multiSelectIds = new Set(Object.keys(filterLabels));
     const app = {
       current: null,
       history: null,
       status: null,
       tierComparisonSets: {
+        premiumNotUltimate: new Set(),
         premiumNotEssential: new Set(),
-        ultimateNotPremium: new Set()
+        ultimateNotPremium: new Set(),
+        essentialNotPremium: new Set(),
+        essentialNotUltimate: new Set()
       },
       tierComparisonSetsReady: false,
       rows: [],
@@ -1046,8 +1207,157 @@
       }
     }
 
+    function isMultiSelect(control) {
+      return control instanceof HTMLSelectElement && multiSelectIds.has(control.id);
+    }
+
+    function selectedValues(id) {
+      const control = controls[id];
+      if (!isMultiSelect(control)) {
+        return control.value ? [control.value] : [];
+      }
+      const values = [...control.selectedOptions].map((option) => option.value).filter(Boolean);
+      if (id === 'state' && values.length === 0) return [defaults.state];
+      return values;
+    }
+
+    function selectedValuesMatch(id, predicate) {
+      const values = selectedValues(id);
+      return values.length === 0 || values.some(predicate);
+    }
+
+    function setSelectedValues(id, values) {
+      const control = controls[id];
+      if (!isMultiSelect(control)) {
+        control.value = values[0] ?? defaults[id];
+        return;
+      }
+      const normalizedValues = id === 'state'
+        ? values.flatMap((value) => value === 'all' ? ['current', 'departed'] : value)
+        : values;
+      if (id === 'state' && normalizedValues.length === 0) {
+        normalizedValues.push(defaults.state);
+      }
+      const selected = new Set(normalizedValues.filter(Boolean));
+      let matched = false;
+      for (const option of control.options) {
+        option.selected = option.value ? selected.has(option.value) : selected.size === 0;
+        matched ||= option.selected && Boolean(option.value);
+      }
+      if (selected.size > 0 && !matched) {
+        for (const option of control.options) {
+          option.selected = option.value === defaults[id];
+        }
+      }
+      updateMultiSelectControl(id);
+    }
+
+    function multiSelectButton(id) {
+      return document.getElementById(`${id}Button`);
+    }
+
+    function multiSelectMenu(id) {
+      return document.getElementById(`${id}Menu`);
+    }
+
+    function multiSelectFallback(id) {
+      return controls[id].options[0]?.textContent?.trim() ?? 'Any';
+    }
+
+    function multiSelectSummary(id) {
+      const selected = [...controls[id].selectedOptions].filter((option) => option.value);
+      if (selected.length === 0) return multiSelectFallback(id);
+      if (selected.length <= 2) {
+        return selected.map((option) => option.textContent?.trim() ?? option.value).join(', ');
+      }
+      return `${selected.length} selected`;
+    }
+
+    function updateMultiSelectControl(id) {
+      if (!multiSelectIds.has(id)) return;
+      const button = multiSelectButton(id);
+      const menu = multiSelectMenu(id);
+      if (!button || !menu) return;
+      const values = selectedValues(id);
+      const summary = multiSelectSummary(id);
+      button.textContent = summary;
+      button.title = selectedControlText(id) || multiSelectFallback(id);
+      for (const checkbox of menu.querySelectorAll('input[type="checkbox"]')) {
+        checkbox.checked = checkbox.value ? values.includes(checkbox.value) : values.length === 0;
+      }
+    }
+
+    function renderMultiSelectControl(id) {
+      const control = controls[id];
+      const menu = multiSelectMenu(id);
+      if (!isMultiSelect(control) || !menu) return;
+      const values = selectedValues(id);
+      menu.replaceChildren(...[...control.options].map((option) => {
+        const item = document.createElement('label');
+        item.className = 'multi-option';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = option.value;
+        checkbox.checked = option.value ? values.includes(option.value) : values.length === 0;
+        checkbox.dataset.filterId = id;
+        const text = document.createElement('span');
+        text.textContent = option.textContent;
+        item.append(checkbox, text);
+        return item;
+      }));
+      updateMultiSelectControl(id);
+    }
+
+    function renderMultiSelectControls() {
+      for (const id of multiSelectIds) {
+        renderMultiSelectControl(id);
+      }
+    }
+
+    function setMultiSelectOpen(id, open) {
+      const button = multiSelectButton(id);
+      const menu = multiSelectMenu(id);
+      if (!button || !menu) return;
+      menu.classList.toggle('hidden', !open);
+      button.setAttribute('aria-expanded', String(open));
+    }
+
+    function closeMultiSelectMenus(exceptId = null) {
+      for (const id of multiSelectIds) {
+        if (id !== exceptId) setMultiSelectOpen(id, false);
+      }
+    }
+
+    function toggleMultiSelectMenu(id) {
+      const menu = multiSelectMenu(id);
+      if (!menu) return;
+      const willOpen = menu.classList.contains('hidden');
+      closeMultiSelectMenus(id);
+      setMultiSelectOpen(id, willOpen);
+    }
+
+    function applyCheckboxSelection(checkbox) {
+      const id = checkbox.dataset.filterId;
+      if (!id) return;
+      if (!checkbox.value) {
+        setSelectedValues(id, []);
+        return;
+      }
+      const values = new Set(selectedValues(id));
+      if (checkbox.checked) {
+        values.add(checkbox.value);
+      } else {
+        values.delete(checkbox.value);
+      }
+      setSelectedValues(id, [...values]);
+    }
+
     function populateFilters() {
-      setOptions(controls.tierComparison, TIER_COMPARISONS, (item) => item.label);
+      setOptions(
+        controls.tierComparison,
+        TIER_COMPARISONS.filter((item) => app.tierComparisonSets[item.id]?.size > 0),
+        (item) => item.label
+      );
       const games = app.current.games;
       setOptions(controls.genre, [...new Set(games.flatMap((game) => game.genres ?? []))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.publisher, [...new Set(games.map((game) => game.publisher).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
@@ -1059,31 +1369,31 @@
     }
 
     function populateTierComparisonSets() {
-      const hasPremiumNotEssentialData = Array.isArray(app.current.diffs?.premiumNotEssential);
-      const hasUltimateNotPremiumData = Array.isArray(app.current.diffs?.ultimateNotPremium);
-      const premiumNotEssential = new Set(hasPremiumNotEssentialData ? app.current.diffs.premiumNotEssential : []);
-      const ultimateNotPremium = new Set(hasUltimateNotPremiumData ? app.current.diffs.ultimateNotPremium : []);
-      if (!hasPremiumNotEssentialData) {
-        for (const game of app.current.games) {
-          if (game.memberships.includes('premium') && !game.memberships.includes('essential')) {
-            premiumNotEssential.add(game.id);
-          }
-        }
-      }
-      if (!hasUltimateNotPremiumData) {
-        for (const game of app.current.games) {
-          if (game.memberships.includes('ultimate') && !game.memberships.includes('premium')) {
-            ultimateNotPremium.add(game.id);
-          }
-        }
-      }
-      app.tierComparisonSets = { premiumNotEssential, ultimateNotPremium };
+      const comparisonRules = {
+        premiumNotUltimate: ['premium', 'ultimate'],
+        premiumNotEssential: ['premium', 'essential'],
+        ultimateNotPremium: ['ultimate', 'premium'],
+        essentialNotPremium: ['essential', 'premium'],
+        essentialNotUltimate: ['essential', 'ultimate']
+      };
+      app.tierComparisonSets = Object.fromEntries(Object.entries(comparisonRules).map(([id, [includedTier, excludedTier]]) => {
+        const existing = app.current.diffs?.[id];
+        if (Array.isArray(existing)) return [id, new Set(existing)];
+        return [id, new Set(app.current.games
+          .filter((game) => game.memberships.includes(includedTier) && !game.memberships.includes(excludedTier))
+          .map((game) => game.id))];
+      }));
       app.tierComparisonSetsReady = true;
     }
 
     function restoreFiltersFromUrl() {
       const params = new URLSearchParams(location.search);
       for (const [id, fallback] of Object.entries(defaults)) {
+        if (isMultiSelect(controls[id])) {
+          const values = params.getAll(id);
+          setSelectedValues(id, values.length ? values : [fallback]);
+          continue;
+        }
         controls[id].value = params.get(id) ?? fallback;
       }
     }
@@ -1091,6 +1401,16 @@
     function syncUrl() {
       const params = new URLSearchParams();
       for (const [id, fallback] of Object.entries(defaults)) {
+        if (isMultiSelect(controls[id])) {
+          const values = selectedValues(id);
+          if (id === 'state' && values.length === 1 && values[0] === fallback) {
+            continue;
+          }
+          for (const value of values) {
+            params.append(id, value);
+          }
+          continue;
+        }
         if (controls[id].value !== fallback) {
           params.set(id, controls[id].value);
         }
@@ -1101,26 +1421,36 @@
 
     function selectedControlText(id) {
       const control = controls[id];
-      return control instanceof HTMLSelectElement
-        ? control.selectedOptions[0]?.textContent?.trim() ?? control.value
-        : control.value.trim();
+      if (!(control instanceof HTMLSelectElement)) return control.value.trim();
+      const selected = [...control.selectedOptions].filter((option) => option.value);
+      if (selected.length === 0) return control.value;
+      return selected.map((option) => option.textContent?.trim() ?? option.value).join(', ');
     }
 
     function activeFilterDescriptions() {
       return Object.entries(defaults)
         .filter(([id, fallback]) => {
+          if (isMultiSelect(controls[id])) {
+            const values = selectedValues(id);
+            return id === 'state' ? !(values.length === 1 && values[0] === fallback) : values.length > 0;
+          }
           const value = id === 'search' ? controls[id].value.trim() : controls[id].value;
           return value !== fallback;
         })
         .map(([id]) => {
           if (id === 'search') return `Search: ${controls.search.value.trim()}`;
           if (id === 'since') return `Since ${controls.since.value}`;
-          return selectedControlText(id).replace(/\s+since date$/i, '');
+          const text = selectedControlText(id).replace(/\s+since date/gi, '');
+          return isMultiSelect(controls[id]) ? `${filterLabels[id] ?? id}: ${text}` : text;
         });
     }
 
     function resetFilters() {
       for (const [id, fallback] of Object.entries(defaults)) {
+        if (isMultiSelect(controls[id])) {
+          setSelectedValues(id, []);
+          continue;
+        }
         controls[id].value = fallback;
       }
       renderResults();
@@ -1260,9 +1590,9 @@
     }
 
     function allRowsForState() {
-      const state = controls.state.value;
-      if (state === 'departed') return departedRows();
-      if (state === 'all') return [...app.current.games, ...departedRows()];
+      const states = new Set(selectedValues('state'));
+      if (states.has('current') && states.has('departed')) return [...app.current.games, ...departedRows()];
+      if (states.has('departed')) return departedRows();
       return app.current.games;
     }
 
@@ -1274,6 +1604,16 @@
     function hasChange(game, change, since) {
       if (!change) return true;
       const record = historyRecord(game.id);
+      if (change === 'noChange') {
+        return !record || (
+          !record.addedAt
+          && !record.readdedAt
+          && !record.lastTierChangedAt
+          && !record.lastPlatformChangedAt
+          && !record.removedAt
+          && !game.departed
+        );
+      }
       if (!record) return false;
       if (change === 'new') return isOnOrAfter(record.addedAt, since) || isOnOrAfter(record.readdedAt, since);
       if (change === 'tier') return isOnOrAfter(record.lastTierChangedAt, since);
@@ -1285,23 +1625,21 @@
     function matchesTierComparison(game) {
       const value = controls.tierComparison.value;
       if (!value) return true;
-      const comparison = TIER_COMPARISON_BY_ID[value];
-      if (!comparison) return false;
       if (!app.tierComparisonSetsReady) return false;
-      return comparison.matches(game);
+      return TIER_COMPARISON_BY_ID[value]?.matches(game) ?? false;
     }
 
     function matchesPlayerMode(game) {
-      const value = controls.playerMode.value;
-      if (!value) return true;
-      if (value === 'single') return game.supportsSinglePlayer === true;
-      if (value === 'multiplayer') return game.supportsMultiplayer === true;
-      if (value === 'onlineMultiplayer') return game.supportsOnlineMultiplayer === true;
-      if (value === 'localMultiplayer') return game.supportsLocalMultiplayer === true;
-      if (value === 'coop') return game.supportsCoop === true;
-      if (value === 'onlineCoop') return game.supportsOnlineCoop === true;
-      if (value === 'localCoop') return game.supportsLocalCoop === true;
-      return true;
+      return selectedValuesMatch('playerMode', (value) => {
+        if (value === 'single') return game.supportsSinglePlayer === true;
+        if (value === 'multiplayer') return game.supportsMultiplayer === true;
+        if (value === 'onlineMultiplayer') return game.supportsOnlineMultiplayer === true;
+        if (value === 'localMultiplayer') return game.supportsLocalMultiplayer === true;
+        if (value === 'coop') return game.supportsCoop === true;
+        if (value === 'onlineCoop') return game.supportsOnlineCoop === true;
+        if (value === 'localCoop') return game.supportsLocalCoop === true;
+        return false;
+      });
     }
 
     function matchesFilters(game) {
@@ -1310,17 +1648,20 @@
         const haystack = [game.title, game.publisher, game.developer, game.id, game.shortDescription].join(' ').toLocaleLowerCase();
         if (!haystack.includes(query)) return false;
       }
-      if (controls.tier.value && !game.memberships.includes(controls.tier.value)) return false;
+      if (!selectedValuesMatch('tier', (value) => game.memberships.includes(value))) return false;
       if (!matchesTierComparison(game)) return false;
-      if (controls.platform.value && !game.platforms.includes(controls.platform.value)) return false;
-      if (controls.genre.value && !(game.genres ?? []).includes(controls.genre.value)) return false;
-      if (controls.publisher.value && game.publisher !== controls.publisher.value) return false;
-      if (controls.frAvailability.value === 'available' && game.availableInFR !== true) return false;
-      if (controls.frAvailability.value === 'notAvailable' && game.availableInFR === true) return false;
-      if (controls.pegiRating.value && game.pegiRating !== controls.pegiRating.value) return false;
+      if (!selectedValuesMatch('platform', (value) => game.platforms.includes(value))) return false;
+      if (!selectedValuesMatch('genre', (value) => (game.genres ?? []).includes(value))) return false;
+      if (!selectedValuesMatch('publisher', (value) => game.publisher === value)) return false;
+      if (!selectedValuesMatch('frAvailability', (value) => {
+        if (value === 'available') return game.availableInFR === true;
+        if (value === 'notAvailable') return game.availableInFR !== true;
+        return false;
+      })) return false;
+      if (!selectedValuesMatch('pegiRating', (value) => game.pegiRating === value)) return false;
       if (!matchesPlayerMode(game)) return false;
-      if (controls.releaseYear.value && game.releaseDate?.slice(0, 4) !== controls.releaseYear.value) return false;
-      if (!hasChange(game, controls.change.value, controls.since.value)) return false;
+      if (!selectedValuesMatch('releaseYear', (value) => game.releaseDate?.slice(0, 4) === value)) return false;
+      if (!selectedValuesMatch('change', (value) => hasChange(game, value, controls.since.value))) return false;
       return true;
     }
 
@@ -1596,17 +1937,20 @@
 
     function renderKpis() {
       const counts = app.current.counts;
-      const lastChange = app.history?.lastChangedAt ? formatDate(app.history.lastChangedAt) : 'Baseline only';
-      const cardsData = [
+      const baseCards = [
         ['Total catalog', counts.total],
         ['Ultimate', counts.tiers.ultimate],
         ['Premium', counts.tiers.premium],
-        ['Essential', counts.tiers.essential],
+        ['Essential', counts.tiers.essential]
+      ];
+      const diffCards = [
         ['Premium not Ultimate', counts.diffs.premiumNotUltimate],
         ['Premium not Essential', counts.diffs.premiumNotEssential],
         ['Ultimate not Premium', counts.diffs.ultimateNotPremium],
-        ['Last changed', lastChange]
-      ];
+        ['Essential not Premium', counts.diffs.essentialNotPremium],
+        ['Essential not Ultimate', counts.diffs.essentialNotUltimate]
+      ].filter(([, value]) => Number(value) > 0);
+      const cardsData = [...baseCards, ...diffCards];
       document.getElementById('kpis').replaceChildren(...cardsData.map(([label, value]) => {
         const item = document.createElement('article');
         item.className = 'kpi';
@@ -1767,7 +2111,22 @@
 
     function bindEvents() {
       for (const control of Object.values(controls)) {
-        control.addEventListener('input', renderResults);
+        if (isMultiSelect(control)) continue;
+        const eventName = control instanceof HTMLInputElement && control.type === 'search' ? 'input' : 'change';
+        control.addEventListener(eventName, renderResults);
+      }
+      for (const id of multiSelectIds) {
+        multiSelectButton(id)?.addEventListener('click', () => toggleMultiSelectMenu(id));
+        multiSelectMenu(id)?.addEventListener('change', (event) => {
+          if (!(event.target instanceof HTMLInputElement) || event.target.type !== 'checkbox') return;
+          applyCheckboxSelection(event.target);
+          renderResults();
+        });
+        multiSelectMenu(id)?.addEventListener('keydown', (event) => {
+          if (event.key !== 'Escape') return;
+          setMultiSelectOpen(id, false);
+          multiSelectButton(id)?.focus();
+        });
       }
       viewToggleButton.addEventListener('click', toggleView);
       toolbarView.addEventListener('click', toggleView);
@@ -1817,8 +2176,14 @@
           closeFilterDrawer();
         }
       });
+      document.addEventListener('click', (event) => {
+        if (!closestFromEvent(event, '.multi-select')) {
+          closeMultiSelectMenus();
+        }
+      });
       filterDrawer.addEventListener('keydown', (event) => {
         if (event.key === 'Escape') {
+          closeMultiSelectMenus();
           closeFilterDrawer();
           return;
         }
@@ -1868,6 +2233,7 @@
         populateTierComparisonSets();
         populateFilters();
         restoreFiltersFromUrl();
+        renderMultiSelectControls();
         bindEvents();
         renderStatus();
         renderKpis();
