@@ -88,6 +88,48 @@ test('normalizeCatalog builds resolvable Xbox store links', () => {
   );
 });
 
+test('normalizeCatalog enriches DisplayCatalog metadata with availability, PEGI, modes, dates, and descriptions', () => {
+  const current = currentFromLists([
+    list('ultimate', 'console', ['9PNJXVCVWD4K', 'BBB']),
+    list('ultimate', 'pc', []),
+    list('premium', 'console', []),
+    list('premium', 'pc', []),
+    list('essential', 'console', []),
+    list('essential', 'pc', [])
+  ], '2026-01-01T00:00:00.000Z');
+
+  const forza = current.games.find((game) => game.id === '9PNJXVCVWD4K');
+  assert.equal(forza.availableInFR, true);
+  assert.equal(forza.pegiRating, 'PEGI 3');
+  assert.equal(forza.ratingSystem, 'PEGI');
+  assert.equal(forza.ratingId, 'PEGI:3');
+  assert.equal(forza.supportsSinglePlayer, true);
+  assert.equal(forza.supportsMultiplayer, true);
+  assert.equal(forza.supportsOnlineMultiplayer, true);
+  assert.equal(forza.supportsLocalMultiplayer, false);
+  assert.equal(forza.supportsCoop, true);
+  assert.equal(forza.supportsOnlineCoop, true);
+  assert.equal(forza.supportsLocalCoop, true);
+  assert.deepEqual(forza.playerModes, [
+    'Single player',
+    'Online co-op (2-6)',
+    'Local co-op (2)',
+    'Online multiplayer (2-1000)'
+  ]);
+  assert.equal(forza.releaseDate, '2018-10-01');
+  assert.equal(forza.shortDescription, 'Drive across Britain.');
+  assert.equal('fullDescription' in forza, false);
+  assert.equal(forza.description, 'Drive across Britain.');
+
+  const bravo = current.games.find((game) => game.id === 'BBB');
+  assert.equal(bravo.availableInFR, false);
+  assert.equal(bravo.pegiRating, null);
+  assert.deepEqual(bravo.playerModes, []);
+  assert.equal(bravo.supportsSinglePlayer, false);
+  assert.equal(bravo.supportsMultiplayer, false);
+  assert.equal(bravo.supportsCoop, false);
+});
+
 test('history baseline is not treated as new, later runs track observed changes', () => {
   const first = currentFromLists([
     list('ultimate', 'console', ['AAA', 'BBB']),
