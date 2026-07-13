@@ -777,6 +777,59 @@
       font-size: 0.9rem;
     }
 
+    .variant-links {
+      font-size: 0.84rem;
+    }
+
+    .variant-links summary {
+      width: fit-content;
+      color: var(--accent-2);
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .variant-links[open] summary {
+      margin-bottom: 0.5rem;
+    }
+
+    .variant-menu {
+      display: grid;
+      gap: 0.55rem;
+      padding: 0.6rem;
+      border: 1px solid var(--line);
+      border-radius: 0.65rem;
+      background: var(--panel-2);
+    }
+
+    .variant-group {
+      display: grid;
+      gap: 0.25rem;
+    }
+
+    .variant-group + .variant-group {
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .variant-group-label,
+    .variant-link-meta {
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .variant-list {
+      display: grid;
+      gap: 0.4rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .variant-list li {
+      display: grid;
+      gap: 0.1rem;
+    }
+
     .table-wrap {
       overflow: auto;
       border: 1px solid var(--line);
@@ -1317,6 +1370,7 @@
       current: null,
       history: null,
       status: null,
+      productsById: new Map(),
       tierComparisonSets: {
         premiumNotUltimate: new Set(),
         premiumNotEssential: new Set(),
@@ -1449,6 +1503,44 @@
         throw new Error(`Could not load ${path}: ${response.status}`);
       }
       return response.json();
+    }
+
+    function currentFamilies() {
+      return app.current?.families ?? app.current?.games ?? [];
+    }
+
+    function storeSlug(title) {
+      return String(title ?? '')
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLocaleLowerCase('en-US')
+        .replace(/['\u2019]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'game';
+    }
+
+    function productHistoryRecord(productId) {
+      return app.history?.games?.[productId] ?? null;
+    }
+
+    function productForId(productId) {
+      const current = app.productsById.get(productId);
+      if (current) return current;
+      const record = productHistoryRecord(productId);
+      if (!record) return null;
+      return {
+        ...record,
+        url: record.url || `https://www.xbox.com/en-us/games/store/${storeSlug(record.title)}/${encodeURIComponent(productId)}`
+      };
+    }
+
+    function variantsFor(family) {
+      const historyFamily = app.history?.families?.[family.id];
+      const variantIds = family.variantIds
+        ?? historyFamily?.allVariantIds
+        ?? historyFamily?.variantIds
+        ?? [family.id];
+      return variantIds.map(productForId).filter(Boolean);
     }
 
     function setOptions(select, values, labeler = (value) => value) {
@@ -1614,7 +1706,7 @@
         TIER_COMPARISONS.filter((item) => app.tierComparisonSets[item.id]?.size > 0),
         (item) => item.label
       );
-      const games = app.current.games;
+      const games = currentFamilies();
       setOptions(controls.genre, [...new Set(games.flatMap((game) => game.genres ?? []))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.publisher, [...new Set(games.map((game) => game.publisher).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
       setOptions(controls.pegiRating, [...new Set(games.map((game) => game.pegiRating).filter(Boolean))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true })));
@@ -1633,9 +1725,9 @@
         essentialNotUltimate: ['essential', 'ultimate']
       };
       app.tierComparisonSets = Object.fromEntries(Object.entries(comparisonRules).map(([id, [includedTier, excludedTier]]) => {
-        const existing = app.current.diffs?.[id];
+        const existing = app.current.familyDiffs?.[id];
         if (Array.isArray(existing)) return [id, new Set(existing)];
-        return [id, new Set(app.current.games
+        return [id, new Set(currentFamilies()
           .filter((game) => game.memberships.includes(includedTier) && !game.memberships.includes(excludedTier))
           .map((game) => game.id))];
       }));
@@ -1837,16 +1929,21 @@
     }
 
     function historyRecord(productId) {
-      return app.history?.games?.[productId] ?? null;
+      return app.history?.families?.[productId] ?? null;
     }
 
     function departedRows() {
-      return Object.values(app.history?.games ?? {})
+      return Object.values(app.history?.families ?? {})
         .filter((record) => !record.active)
         .map((record) => ({
           id: record.id,
+          familyKey: record.familyKey,
+          familySchemaVersion: record.familySchemaVersion,
           title: record.title,
           sortTitle: record.title.toLocaleLowerCase(),
+          primaryVariantId: record.variantIds?.[0] ?? record.allVariantIds?.[0] ?? null,
+          variantIds: record.allVariantIds ?? record.variantIds ?? [],
+          variantCount: (record.allVariantIds ?? record.variantIds ?? []).length,
           publisher: '',
           developer: '',
           genres: [],
@@ -1878,9 +1975,9 @@
 
     function allRowsForState() {
       const states = new Set(selectedValues('state'));
-      if (states.has('current') && states.has('departed')) return [...app.current.games, ...departedRows()];
+      if (states.has('current') && states.has('departed')) return [...currentFamilies(), ...departedRows()];
       if (states.has('departed')) return departedRows();
-      return app.current.games;
+      return currentFamilies();
     }
 
     function isOnOrAfter(date, since) {
@@ -1932,7 +2029,10 @@
     function matchesFilters(game) {
       const query = controls.search.value.trim().toLocaleLowerCase();
       if (query) {
-        const haystack = [game.title, game.publisher, game.developer, game.id, game.shortDescription].join(' ').toLocaleLowerCase();
+        const variantText = variantsFor(game)
+          .flatMap((variant) => [variant.title, variant.id])
+          .join(' ');
+        const haystack = [game.title, game.publisher, game.developer, game.id, game.shortDescription, variantText].join(' ').toLocaleLowerCase();
         if (!haystack.includes(query)) return false;
       }
       if (!selectedValuesMatch('tier', (value) => game.memberships.includes(value))) return false;
@@ -1966,6 +2066,65 @@
 
     function chipList(values, labeler = (value) => value) {
       return `<span class="chips">${values.map((value) => `<span class="chip">${escapeHtml(labeler(value))}</span>`).join('')}</span>`;
+    }
+
+    function variantPlatformLabel(variant) {
+      const platforms = variant.platforms ?? [];
+      return platforms.length
+        ? platforms.map((platform) => labelFor('platforms', platform)).join(' + ')
+        : 'Platform unspecified';
+    }
+
+    function orderedVariants(game) {
+      const selectedPlatforms = new Set(selectedValues('platform'));
+      return variantsFor(game)
+        .map((variant, index) => ({
+          variant,
+          index,
+          preferred: (variant.platforms ?? []).some((platform) => selectedPlatforms.has(platform))
+        }))
+        .sort((left, right) =>
+          Number(right.preferred) - Number(left.preferred)
+          || variantPlatformLabel(left.variant).localeCompare(variantPlatformLabel(right.variant))
+          || left.index - right.index
+        )
+        .map(({ variant }) => variant);
+    }
+
+    function titleHtml(game) {
+      const variants = orderedVariants(game);
+      if (variants.length !== 1) return escapeHtml(game.title);
+      return `<a href="${escapeHtml(variants[0].url)}">${escapeHtml(game.title)}</a>`;
+    }
+
+    function variantLinksHtml(game) {
+      const variants = orderedVariants(game);
+      if (variants.length <= 1) return '';
+      const groups = new Map();
+      for (const variant of variants) {
+        const platform = variantPlatformLabel(variant);
+        groups.set(platform, [...(groups.get(platform) ?? []), variant]);
+      }
+      return `
+        <details class="variant-links">
+          <summary>${variants.length.toLocaleString()} Xbox listings</summary>
+          <div class="variant-menu">
+            ${[...groups.entries()].map(([platform, group]) => `
+              <div class="variant-group">
+                <strong class="variant-group-label">${escapeHtml(platform)}</strong>
+                <ul class="variant-list">
+                  ${group.map((variant) => `
+                    <li>
+                      <a href="${escapeHtml(variant.url)}">${escapeHtml(variant.title)}</a>
+                      <span class="variant-link-meta">${escapeHtml(variantPlatformLabel(variant))} · Product ID ${escapeHtml(variant.id)}</span>
+                    </li>
+                  `).join('')}
+                </ul>
+              </div>
+            `).join('')}
+          </div>
+        </details>
+      `;
     }
 
     function badgeList(game) {
@@ -2430,7 +2589,8 @@
       article.innerHTML = `
         ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
         <div class="card-body">
-          <h3><a href="${escapeHtml(game.url)}">${escapeHtml(game.title)}</a></h3>
+          <h3>${titleHtml(game)}</h3>
+          ${variantLinksHtml(game)}
           <p>${escapeHtml(game.publisher || 'Unknown publisher')}</p>
           ${chipList(game.memberships, (tier) => labelFor('tiers', tier))}
           ${chipList(game.platforms, (platform) => labelFor('platforms', platform))}
@@ -2452,7 +2612,8 @@
           <div class="game-title-cell">
             ${image ? lazyImageHtml(image, 'game-art table-thumb', { width: 60, height: 80 }) : '<span class="table-thumb table-thumb-empty" aria-hidden="true">No<br>art</span>'}
             <span class="game-title-text">
-              <a href="${escapeHtml(game.url)}">${escapeHtml(game.title)}</a>
+              <span>${titleHtml(game)}</span>
+              ${variantLinksHtml(game)}
             </span>
           </div>
         </td>
@@ -2468,10 +2629,10 @@
       return row;
     }
 
-    function findGameById(productId) {
-      return allRowsForState().find((game) => game.id === productId)
-        ?? app.current.games.find((game) => game.id === productId)
-        ?? departedRows().find((game) => game.id === productId)
+    function findGameById(familyId) {
+      return allRowsForState().find((game) => game.id === familyId)
+        ?? currentFamilies().find((game) => game.id === familyId)
+        ?? departedRows().find((game) => game.id === familyId)
         ?? null;
     }
 
@@ -2487,7 +2648,8 @@
       const sourceRows = allRowsForState();
       const rows = sourceRows.filter(matchesFilters).sort(compareRows);
       app.rows = rows;
-      resultsSummary.textContent = `${rows.length.toLocaleString()} of ${sourceRows.length.toLocaleString()} games`;
+      const listingCount = rows.reduce((sum, game) => sum + Math.max(variantsFor(game).length, 1), 0);
+      resultsSummary.textContent = `${rows.length.toLocaleString()} of ${sourceRows.length.toLocaleString()} games · ${listingCount.toLocaleString()} product listings`;
       updateResultsToolbar(rows, sourceRows.length);
       updateTableSortHeaders();
       cards.replaceChildren(...rows.map(renderCard));
@@ -2503,12 +2665,13 @@
     }
 
     function renderKpis() {
-      const counts = app.current.counts;
+      const counts = app.current.familyCounts ?? app.current.counts;
       const baseCards = [
-        ['Total catalog', counts.total],
+        ['Games', counts.total],
         ['Ultimate', counts.tiers.ultimate],
         ['Premium', counts.tiers.premium],
-        ['Essential', counts.tiers.essential]
+        ['Essential', counts.tiers.essential],
+        ['Product listings', app.current.counts.total]
       ];
       const diffCards = [
         ['Premium not Ultimate', counts.diffs.premiumNotUltimate],
@@ -2555,7 +2718,11 @@
           <p>${escapeHtml(formatDate(generatedAt))}</p>
         </div>
         <div>
-          <strong>Catalog hash</strong>
+          <strong>Game-family hash</strong>
+          <p><code>${escapeHtml(status?.familyHash ?? app.current.familyHash)}</code></p>
+        </div>
+        <div>
+          <strong>Product catalog hash</strong>
           <p><code>${escapeHtml(status?.catalogHash ?? app.current.catalogHash)}</code></p>
         </div>
         <div>
@@ -2592,8 +2759,9 @@
     }
 
     function renderLineChart(title, observations) {
-      const series = observations.map((item) => ({ label: item.date, value: item.total }));
+      const series = observations.map((item) => ({ label: item.date, value: item.familyTotal ?? item.total }));
       const points = pointsForSeries(series, 420, 150);
+      const latestProductTotal = observations.at(-1)?.productTotal;
       return `
         <article class="chart">
           <h3>${escapeHtml(title)}</h3>
@@ -2604,7 +2772,7 @@
               return `<circle cx="${x}" cy="${y}" r="4"><title>${escapeHtml(item.label)}: ${item.value}</title></circle>`;
             }).join('')}
           </svg>
-          <p class="muted">${series.length} observations. Latest total: ${series.at(-1)?.value ?? 0}.</p>
+          <p class="muted">${series.length} observations. Latest: ${series.at(-1)?.value ?? 0} games${latestProductTotal == null ? '' : ` from ${latestProductTotal} product listings`}.</p>
         </article>
       `;
     }
@@ -2612,14 +2780,15 @@
     function renderEventBars(observations) {
       const rows = observations.slice(-24).map((item) => ({
         label: item.date,
-        added: (item.eventCounts?.added ?? 0) + (item.eventCounts?.readded ?? 0),
-        removed: item.eventCounts?.removed ?? 0
+        added: (item.familyEventCounts?.added ?? item.eventCounts?.added ?? 0)
+          + (item.familyEventCounts?.readded ?? item.eventCounts?.readded ?? 0),
+        removed: item.familyEventCounts?.removed ?? item.eventCounts?.removed ?? 0
       }));
       const max = Math.max(1, ...rows.flatMap((item) => [item.added, item.removed]));
       return `
         <article class="chart">
-          <h3>Adds/removes per run</h3>
-          <svg viewBox="0 0 420 170" role="img" aria-label="Adds and removals per run">
+          <h3>Game adds/removes per run</h3>
+          <svg viewBox="0 0 420 170" role="img" aria-label="Game adds and removals per run">
             ${rows.map((item, index) => {
               const groupWidth = 420 / Math.max(rows.length, 1);
               const x = index * groupWidth;
@@ -2637,27 +2806,35 @@
     }
 
     function renderChurn() {
-      const events = app.history?.events ?? [];
+      const events = app.history?.familyEvents ?? app.history?.events ?? [];
+      const productEvents = app.history?.events ?? [];
       const adds = events.filter((event) => ['added', 'readded'].includes(event.type)).length;
       const removes = events.filter((event) => event.type === 'removed').length;
       const tierMoves = events.filter((event) => event.type.startsWith('tier_')).length;
       const platformMoves = events.filter((event) => event.type.startsWith('platform_')).length;
-      const activeRecords = Object.values(app.history?.games ?? {}).filter((record) => record.active);
+      const activeRecords = Object.values(app.history?.families ?? app.history?.games ?? {}).filter((record) => record.active);
       const now = Date.now();
       const tenures = activeRecords
         .map((record) => record.firstObservedAt ? (now - Date.parse(record.firstObservedAt)) / 86400000 : null)
         .filter((value) => Number.isFinite(value));
       const averageTenure = tenures.length ? Math.round(tenures.reduce((sum, value) => sum + value, 0) / tenures.length) : 0;
       const recentTier = events.filter((event) => event.type.startsWith('tier_')).slice(-8).reverse();
+      const recentProducts = productEvents.slice(-8).reverse();
       return `
         <article class="chart">
-          <h3>Churn and tenure</h3>
+          <h3>Game churn and tenure</h3>
           <p><strong>${adds}</strong> added/readded, <strong>${removes}</strong> removed, <strong>${tierMoves}</strong> tier events, <strong>${platformMoves}</strong> platform events.</p>
           <p class="muted">Average active tenure since tracker observation: ${averageTenure} days.</p>
         </article>
         <article class="chart">
           <h3>Recent tier migrations</h3>
           ${recentTier.length ? `<ol>${recentTier.map((event) => `<li>${escapeHtml(event.title)}: ${escapeHtml(event.type.replace('_', ' '))} ${escapeHtml(event.tier)} on ${escapeHtml(event.date)}</li>`).join('')}</ol>` : '<p class="muted">No tracker-observed tier migrations yet.</p>'}
+        </article>
+        <article class="chart">
+          <h3>Product-listing audit</h3>
+          <p><strong>${productEvents.length.toLocaleString()}</strong> raw product events remain available alongside the family history.</p>
+          <p class="muted">SKU additions, removals, and replacements can occur without changing the game-family catalog.</p>
+          ${recentProducts.length ? `<ol>${recentProducts.map((event) => `<li>${escapeHtml(event.title)}: ${escapeHtml(event.type.replace('_', ' '))} · ${escapeHtml(event.productId)} on ${escapeHtml(event.date)}</li>`).join('')}</ol>` : '<p class="muted">No tracker-observed product-listing changes yet.</p>'}
         </article>
       `;
     }
@@ -2670,7 +2847,7 @@
         return;
       }
       dashboard.innerHTML = [
-        renderLineChart('Catalog size over time', observations),
+        renderLineChart('Games over time', observations),
         renderEventBars(observations),
         renderChurn()
       ].join('');
@@ -2811,6 +2988,7 @@
         app.current = current;
         app.history = historyData;
         app.status = statusData;
+        app.productsById = new Map(current.games.map((game) => [game.id, game]));
         setupImageObserver();
         populateTierComparisonSets();
         populateFilters();

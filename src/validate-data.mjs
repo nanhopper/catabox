@@ -8,6 +8,10 @@ import {
   isMainModule,
   stableStringify
 } from './constants.mjs';
+import {
+  GAME_FAMILY_SCHEMA_VERSION,
+  buildFamilyCatalog
+} from './game-families.mjs';
 
 function tierUnion(rawLists, tierId) {
   return [...new Set(PLATFORM_IDS.flatMap((platformId) => rawLists?.[tierId]?.[platformId] ?? []))].sort();
@@ -18,13 +22,34 @@ function add(collection, message) {
 }
 
 function validateRequiredShape(current, errors) {
-  for (const field of ['generatedAt', 'catalogHash', 'market', 'language', 'counts', 'labels', 'sourceLists', 'rawLists', 'games', 'diffs', 'segments', 'metadata']) {
+  for (const field of [
+    'generatedAt',
+    'catalogHash',
+    'familyHash',
+    'market',
+    'language',
+    'counts',
+    'familyCounts',
+    'labels',
+    'sourceLists',
+    'rawLists',
+    'games',
+    'families',
+    'diffs',
+    'familyDiffs',
+    'segments',
+    'familySegments',
+    'metadata'
+  ]) {
     if (!(field in current)) {
       add(errors, `current.json is missing required field: ${field}`);
     }
   }
   if (!Array.isArray(current.games)) {
     add(errors, 'current.games must be an array');
+  }
+  if (!Array.isArray(current.families)) {
+    add(errors, 'current.families must be an array');
   }
 }
 
@@ -83,58 +108,130 @@ function validateCounts(current, errors) {
   }
 }
 
-function validateGameMetadata(current, errors) {
+function validateFamilies(current, errors) {
   const games = Array.isArray(current.games) ? current.games : [];
+  const families = Array.isArray(current.families) ? current.families : [];
+  const expected = buildFamilyCatalog(games);
+  const expectedFamilies = expected.families;
+  const includeScreenshots = games.every((game) => 'screenshots' in game);
+  const comparable = (family) => {
+    const value = { ...family };
+    if (!includeScreenshots) delete value.screenshots;
+    return value;
+  };
+  if (stableStringify(families.map(comparable)) !== stableStringify(expectedFamilies.map(comparable))) {
+    add(errors, 'current.families does not match deterministic family grouping');
+  }
+  if (current.familyHash !== expected.familyHash) {
+    add(errors, 'current.familyHash does not match deterministic family membership');
+  }
+  if (current.familyCounts?.total !== expectedFamilies.length) {
+    add(errors, `familyCounts.total (${current.familyCounts?.total}) does not match families length (${expectedFamilies.length})`);
+  }
+
+  for (const [label, actual, expectedValue] of [
+    ['familyCounts', current.familyCounts, expected.familyCounts],
+    ['familySegments', current.familySegments, expected.familySegments],
+    ['familyDiffs', current.familyDiffs, expected.familyDiffs]
+  ]) {
+    if (stableStringify(actual) !== stableStringify(expectedValue)) {
+      add(errors, `${label} does not match deterministic family grouping`);
+    }
+  }
+
+  const grouping = current.metadata?.familyGrouping;
+  if (grouping?.schemaVersion !== GAME_FAMILY_SCHEMA_VERSION) {
+    add(errors, `metadata.familyGrouping.schemaVersion must be ${GAME_FAMILY_SCHEMA_VERSION}`);
+  }
+  if (grouping?.productCount !== games.length
+    || grouping?.familyCount !== expectedFamilies.length
+    || grouping?.collapsedProductCount !== games.length - expectedFamilies.length) {
+    add(errors, 'metadata.familyGrouping counts do not match catalog data');
+  }
+}
+
+function validateGameMetadata(current, errors) {
   const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-  for (const game of games) {
-    for (const field of ['availableInFR', 'supportsSinglePlayer', 'supportsMultiplayer', 'supportsOnlineMultiplayer', 'supportsLocalMultiplayer', 'supportsCoop', 'supportsOnlineCoop', 'supportsLocalCoop']) {
-      if (field in game && typeof game[field] !== 'boolean') {
-        add(errors, `game ${game.id} has invalid ${field}: expected boolean`);
-      }
-    }
-    if ('playerModes' in game && (!Array.isArray(game.playerModes) || game.playerModes.some((mode) => typeof mode !== 'string'))) {
-      add(errors, `game ${game.id} has invalid playerModes: expected string array`);
-    }
-    if ('screenshots' in game) {
-      if (!Array.isArray(game.screenshots)) {
-        add(errors, `game ${game.id} has invalid screenshots: expected string array`);
-      } else {
-        if (game.screenshots.length > MAX_GAME_SCREENSHOTS) {
-          add(errors, `game ${game.id} has invalid screenshots: expected at most ${MAX_GAME_SCREENSHOTS}`);
-        }
-        const uniqueScreenshots = new Set();
-        for (const screenshot of game.screenshots) {
-          if (typeof screenshot !== 'string') {
-            add(errors, `game ${game.id} has invalid screenshot: expected absolute HTTPS URL`);
-            continue;
-          }
-          let url;
-          try {
-            url = new URL(screenshot);
-          } catch {
-            add(errors, `game ${game.id} has invalid screenshot URL: ${screenshot}`);
-            continue;
-          }
-          if (url.protocol !== 'https:') {
-            add(errors, `game ${game.id} has invalid screenshot URL protocol: ${screenshot}`);
-          }
-          if (uniqueScreenshots.has(url.href)) {
-            add(errors, `game ${game.id} has duplicate screenshot URL: ${screenshot}`);
-          }
-          uniqueScreenshots.add(url.href);
+  const collections = [
+    ['game', Array.isArray(current.games) ? current.games : []],
+    ['family', Array.isArray(current.families) ? current.families : []]
+  ];
+  for (const [kind, items] of collections) {
+    for (const game of items) {
+      for (const field of ['availableInFR', 'supportsSinglePlayer', 'supportsMultiplayer', 'supportsOnlineMultiplayer', 'supportsLocalMultiplayer', 'supportsCoop', 'supportsOnlineCoop', 'supportsLocalCoop']) {
+        if (field in game && typeof game[field] !== 'boolean') {
+          add(errors, `${kind} ${game.id} has invalid ${field}: expected boolean`);
         }
       }
-    }
-    for (const field of ['shortDescription']) {
-      if (field in game && typeof game[field] !== 'string') {
-        add(errors, `game ${game.id} has invalid ${field}: expected string`);
+      if ('playerModes' in game && (!Array.isArray(game.playerModes) || game.playerModes.some((mode) => typeof mode !== 'string'))) {
+        add(errors, `${kind} ${game.id} has invalid playerModes: expected string array`);
+      }
+      if ('screenshots' in game) {
+        if (!Array.isArray(game.screenshots)) {
+          add(errors, `${kind} ${game.id} has invalid screenshots: expected string array`);
+        } else {
+          if (game.screenshots.length > MAX_GAME_SCREENSHOTS) {
+            add(errors, `${kind} ${game.id} has invalid screenshots: expected at most ${MAX_GAME_SCREENSHOTS}`);
+          }
+          const uniqueScreenshots = new Set();
+          for (const screenshot of game.screenshots) {
+            if (typeof screenshot !== 'string') {
+              add(errors, `${kind} ${game.id} has invalid screenshot: expected absolute HTTPS URL`);
+              continue;
+            }
+            let url;
+            try {
+              url = new URL(screenshot);
+            } catch {
+              add(errors, `${kind} ${game.id} has invalid screenshot URL: ${screenshot}`);
+              continue;
+            }
+            if (url.protocol !== 'https:') {
+              add(errors, `${kind} ${game.id} has invalid screenshot URL protocol: ${screenshot}`);
+            }
+            if (uniqueScreenshots.has(url.href)) {
+              add(errors, `${kind} ${game.id} has duplicate screenshot URL: ${screenshot}`);
+            }
+            uniqueScreenshots.add(url.href);
+          }
+        }
+      }
+      for (const field of ['shortDescription']) {
+        if (field in game && typeof game[field] !== 'string') {
+          add(errors, `${kind} ${game.id} has invalid ${field}: expected string`);
+        }
+      }
+      if (game.pegiRating != null && typeof game.pegiRating !== 'string') {
+        add(errors, `${kind} ${game.id} has invalid pegiRating: expected string or null`);
+      }
+      if (game.releaseDate != null && (typeof game.releaseDate !== 'string' || !datePattern.test(game.releaseDate))) {
+        add(errors, `${kind} ${game.id} has invalid releaseDate: expected YYYY-MM-DD or null`);
       }
     }
-    if (game.pegiRating != null && typeof game.pegiRating !== 'string') {
-      add(errors, `game ${game.id} has invalid pegiRating: expected string or null`);
+  }
+}
+
+function validateFamilyReferences(current, errors) {
+  const gameIds = new Set((current.games ?? []).map((game) => game.id));
+  const seenVariantIds = new Set();
+  for (const family of current.families ?? []) {
+    if (!Array.isArray(family.variantIds) || family.variantIds.length === 0) {
+      add(errors, `family ${family.id} must reference at least one variant`);
+      continue;
     }
-    if (game.releaseDate != null && (typeof game.releaseDate !== 'string' || !datePattern.test(game.releaseDate))) {
-      add(errors, `game ${game.id} has invalid releaseDate: expected YYYY-MM-DD or null`);
+    for (const variantId of family.variantIds) {
+      if (!gameIds.has(variantId)) {
+        add(errors, `family ${family.id} references missing game ${variantId}`);
+      }
+      if (seenVariantIds.has(variantId)) {
+        add(errors, `game ${variantId} belongs to more than one family`);
+      }
+      seenVariantIds.add(variantId);
+    }
+  }
+  for (const gameId of gameIds) {
+    if (!seenVariantIds.has(gameId)) {
+      add(errors, `game ${gameId} does not belong to a family`);
     }
   }
 }
@@ -156,7 +253,7 @@ function validateWarnings(current, previousCurrent, warnings) {
   }
 }
 
-function validateHistory(history, errors) {
+function validateHistory(history, current, errors) {
   if (!history) {
     return;
   }
@@ -166,9 +263,80 @@ function validateHistory(history, errors) {
       add(errors, `history event ${event.id ?? '(no id)'} references unknown product ${event.productId}`);
     }
   }
+  if (history.familySchemaVersion !== GAME_FAMILY_SCHEMA_VERSION) {
+    add(errors, `history.familySchemaVersion must be ${GAME_FAMILY_SCHEMA_VERSION}`);
+  }
+  const knownFamilyIds = new Set(Object.keys(history.families ?? {}));
+  for (const event of history.familyEvents ?? []) {
+    if (!knownFamilyIds.has(event.familyId)) {
+      add(errors, `family history event ${event.id ?? '(no id)'} references unknown family ${event.familyId}`);
+    }
+    for (const variantId of event.variantIds ?? []) {
+      if (!knownIds.has(variantId)) {
+        add(errors, `family history event ${event.id ?? '(no id)'} references unknown product ${variantId}`);
+      }
+    }
+  }
+  const currentFamilies = new Map((current.families ?? []).map((family) => [family.id, family]));
+  for (const [familyId, record] of Object.entries(history.families ?? {})) {
+    for (const variantId of record.allVariantIds ?? record.variantIds ?? []) {
+      if (!knownIds.has(variantId)) {
+        add(errors, `history family ${familyId} references unknown product ${variantId}`);
+      }
+    }
+    if (!record.active) continue;
+    const family = currentFamilies.get(familyId);
+    if (!family) {
+      add(errors, `active history family ${familyId} is missing from current catalog`);
+      continue;
+    }
+    if (stableStringify(record.variantIds ?? []) !== stableStringify(family.variantIds)) {
+      add(errors, `history family ${familyId} variants do not match current catalog`);
+    }
+    if (stableStringify(record.platformByTier ?? {}) !== stableStringify(family.platformByTier)) {
+      add(errors, `history family ${familyId} membership does not match current catalog`);
+    }
+  }
+  for (const familyId of currentFamilies.keys()) {
+    if (!history.families?.[familyId]?.active) {
+      add(errors, `current family ${familyId} is not active in history`);
+    }
+  }
+  for (const observation of history.observations ?? []) {
+    if (typeof observation.familyChanged !== 'boolean' || typeof observation.productChanged !== 'boolean') {
+      add(errors, `history observation ${observation.generatedAt} is missing dual change flags`);
+    }
+    if (observation.total !== observation.familyTotal) {
+      add(errors, `history observation ${observation.generatedAt} total does not match family total`);
+    }
+    if (observation.familyCounts?.total !== observation.familyTotal) {
+      add(errors, `history observation ${observation.generatedAt} family counts do not match family total`);
+    }
+    if (observation.productCounts?.total !== observation.productTotal) {
+      add(errors, `history observation ${observation.generatedAt} product counts do not match product total`);
+    }
+  }
+  const latestObservation = (history.observations ?? []).at(-1);
+  if (latestObservation?.generatedAt === current.generatedAt) {
+    if (latestObservation.familyTotal !== current.familyCounts?.total) {
+      add(errors, 'latest history observation family total does not match current catalog');
+    }
+    if (latestObservation.productTotal !== current.counts?.total) {
+      add(errors, 'latest history observation product total does not match current catalog');
+    }
+  }
   for (const snapshot of history.snapshots ?? []) {
     if (!snapshot.path?.startsWith('snapshots/')) {
       add(errors, `history snapshot has invalid path: ${snapshot.path}`);
+    }
+    if (snapshot.total !== snapshot.familyTotal) {
+      add(errors, `history snapshot ${snapshot.path} total does not match family total`);
+    }
+    if (snapshot.familyCounts?.total !== snapshot.familyTotal) {
+      add(errors, `history snapshot ${snapshot.path} family counts do not match family total`);
+    }
+    if (snapshot.productCounts?.total !== snapshot.productTotal) {
+      add(errors, `history snapshot ${snapshot.path} product counts do not match product total`);
     }
   }
 }
@@ -182,9 +350,11 @@ export function validateCatalog({ current, previousCurrent = null, history = nul
   validateRequiredShape(current, errors);
   validateSources(current, errors);
   validateCounts(current, errors);
+  validateFamilyReferences(current, errors);
+  validateFamilies(current, errors);
   validateGameMetadata(current, errors);
   validateWarnings(current, previousCurrent, warnings);
-  validateHistory(history, errors);
+  validateHistory(history, current, errors);
   return { errors, warnings };
 }
 
