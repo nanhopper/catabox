@@ -777,15 +777,24 @@
       font-size: 0.9rem;
     }
 
-    .variant-links {
+    .variant-links,
+    .xbox-link {
       font-size: 0.84rem;
     }
 
+    .xbox-link,
     .variant-links summary {
       width: fit-content;
       color: var(--accent-2);
-      cursor: pointer;
       font-weight: 700;
+    }
+
+    .xbox-link {
+      display: inline-block;
+    }
+
+    .variant-links summary {
+      cursor: pointer;
     }
 
     .variant-links[open] summary {
@@ -811,8 +820,7 @@
       border-top: 1px solid var(--line);
     }
 
-    .variant-group-label,
-    .variant-link-meta {
+    .variant-group-label {
       color: var(--muted);
       font-size: 0.76rem;
     }
@@ -2092,14 +2100,15 @@
     }
 
     function titleHtml(game) {
-      const variants = orderedVariants(game);
-      if (variants.length !== 1) return escapeHtml(game.title);
-      return `<a href="${escapeHtml(variants[0].url)}">${escapeHtml(game.title)}</a>`;
+      return escapeHtml(game.title);
     }
 
     function variantLinksHtml(game) {
       const variants = orderedVariants(game);
-      if (variants.length <= 1) return '';
+      if (variants.length === 0) return '';
+      if (variants.length === 1) {
+        return `<a class="xbox-link" href="${escapeHtml(variants[0].url)}">Open on Xbox</a>`;
+      }
       const groups = new Map();
       for (const variant of variants) {
         const platform = variantPlatformLabel(variant);
@@ -2107,7 +2116,7 @@
       }
       return `
         <details class="variant-links">
-          <summary>${variants.length.toLocaleString()} Xbox listings</summary>
+          <summary>Open on Xbox</summary>
           <div class="variant-menu">
             ${[...groups.entries()].map(([platform, group]) => `
               <div class="variant-group">
@@ -2116,7 +2125,6 @@
                   ${group.map((variant) => `
                     <li>
                       <a href="${escapeHtml(variant.url)}">${escapeHtml(variant.title)}</a>
-                      <span class="variant-link-meta">${escapeHtml(variantPlatformLabel(variant))} · Product ID ${escapeHtml(variant.id)}</span>
                     </li>
                   `).join('')}
                 </ul>
@@ -2648,8 +2656,7 @@
       const sourceRows = allRowsForState();
       const rows = sourceRows.filter(matchesFilters).sort(compareRows);
       app.rows = rows;
-      const listingCount = rows.reduce((sum, game) => sum + Math.max(variantsFor(game).length, 1), 0);
-      resultsSummary.textContent = `${rows.length.toLocaleString()} of ${sourceRows.length.toLocaleString()} games · ${listingCount.toLocaleString()} product listings`;
+      resultsSummary.textContent = `${rows.length.toLocaleString()} of ${sourceRows.length.toLocaleString()} games`;
       updateResultsToolbar(rows, sourceRows.length);
       updateTableSortHeaders();
       cards.replaceChildren(...rows.map(renderCard));
@@ -2670,8 +2677,7 @@
         ['Games', counts.total],
         ['Ultimate', counts.tiers.ultimate],
         ['Premium', counts.tiers.premium],
-        ['Essential', counts.tiers.essential],
-        ['Product listings', app.current.counts.total]
+        ['Essential', counts.tiers.essential]
       ];
       const diffCards = [
         ['Premium not Ultimate', counts.diffs.premiumNotUltimate],
