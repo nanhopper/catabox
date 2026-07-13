@@ -1340,6 +1340,8 @@
         frameIndex: -1,
         activeLayer: 0,
         failedUrls: new Set(),
+        acceptedUrls: new Set(),
+        fingerprints: [],
         nextFrame: null,
         loadingImages: new Set()
       },
@@ -1375,6 +1377,7 @@
     const reducedMotionQuery = matchMedia('(prefers-reduced-motion: reduce)');
     const previewFrameDelayMs = 800;
     const previewFrameRetryMs = 100;
+    const previewFingerprintTolerance = 2;
 
     function escapeHtml(value) {
       return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -2048,6 +2051,8 @@
       app.preview.frameIndex = -1;
       app.preview.activeLayer = 0;
       app.preview.failedUrls = new Set();
+      app.preview.acceptedUrls = new Set();
+      app.preview.fingerprints = [];
       app.preview.nextFrame = null;
     }
 
@@ -2067,6 +2072,7 @@
 
     function loadPreviewImage(url, priority, generation, onReady, onError) {
       const image = new Image();
+      image.crossOrigin = 'anonymous';
       image.decoding = 'async';
       image.fetchPriority = priority;
       app.preview.loadingImages.add(image);
@@ -2079,7 +2085,7 @@
         const finish = () => {
           release();
           if (isCurrentPreview(generation)) {
-            onReady();
+            onReady(image);
           }
         };
         if (typeof image.decode === 'function') {
@@ -2095,6 +2101,52 @@
         }
       };
       image.src = url;
+    }
+
+    function previewImageFingerprint(image) {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 16;
+        canvas.height = 9;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        if (!context) {
+          return null;
+        }
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+        let fingerprint = '';
+        for (let y = 0; y < canvas.height; y += 1) {
+          for (let x = 0; x < canvas.width - 1; x += 1) {
+            const left = (y * canvas.width + x) * 4;
+            const right = left + 4;
+            const leftLuminance = pixels[left] * 0.299 + pixels[left + 1] * 0.587 + pixels[left + 2] * 0.114;
+            const rightLuminance = pixels[right] * 0.299 + pixels[right + 1] * 0.587 + pixels[right + 2] * 0.114;
+            fingerprint += leftLuminance > rightLuminance ? '1' : '0';
+          }
+        }
+        return fingerprint;
+      } catch {
+        return null;
+      }
+    }
+
+    function fingerprintDistance(left, right) {
+      if (!left || !right || left.length !== right.length) {
+        return Number.POSITIVE_INFINITY;
+      }
+      let distance = 0;
+      for (let index = 0; index < left.length; index += 1) {
+        if (left[index] !== right[index]) {
+          distance += 1;
+        }
+      }
+      return distance;
+    }
+
+    function isDuplicatePreviewFingerprint(fingerprint) {
+      return fingerprint
+        ? app.preview.fingerprints.some((existing) => fingerprintDistance(existing, fingerprint) <= previewFingerprintTolerance)
+        : false;
     }
 
     function nextPreviewFrameIndex(screenshots, currentIndex) {
@@ -2129,8 +2181,20 @@
         ready: false
       };
       app.preview.nextFrame = candidate;
-      loadPreviewImage(candidate.url, 'auto', generation, () => {
-        if (app.preview.nextFrame === candidate) {
+      loadPreviewImage(candidate.url, 'auto', generation, (image) => {
+        if (app.preview.nextFrame !== candidate) {
+          return;
+        }
+        if (app.preview.acceptedUrls.has(candidate.url)) {
+          candidate.ready = true;
+          return;
+        }
+        candidate.fingerprint = previewImageFingerprint(image);
+        if (isDuplicatePreviewFingerprint(candidate.fingerprint)) {
+          app.preview.failedUrls.add(candidate.url);
+          app.preview.nextFrame = null;
+          prepareNextPreviewFrame(generation);
+        } else {
           candidate.ready = true;
         }
       }, () => {
@@ -2178,6 +2242,10 @@
       outgoing.classList.remove('is-active');
       app.preview.frameIndex = candidate.index;
       app.preview.activeLayer = incomingLayer;
+      app.preview.acceptedUrls.add(candidate.url);
+      if (candidate.fingerprint) {
+        app.preview.fingerprints.push(candidate.fingerprint);
+      }
       app.preview.nextFrame = null;
       prepareNextPreviewFrame(generation);
       schedulePreviewAdvance(generation);
@@ -2198,7 +2266,7 @@
         loadInitialPreviewFrame(game, generation, startIndex, attempts + 1);
         return;
       }
-      loadPreviewImage(url, 'high', generation, () => {
+      loadPreviewImage(url, 'high', generation, (image) => {
         const frame = previewFrame(0);
         if (!(frame instanceof HTMLImageElement)) {
           return;
@@ -2207,6 +2275,11 @@
         frame.classList.add('is-active');
         app.preview.frameIndex = index;
         app.preview.activeLayer = 0;
+        app.preview.acceptedUrls.add(url);
+        const fingerprint = previewImageFingerprint(image);
+        if (fingerprint) {
+          app.preview.fingerprints.push(fingerprint);
+        }
         prepareNextPreviewFrame(generation);
         schedulePreviewAdvance(generation);
       }, () => {
