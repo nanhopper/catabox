@@ -2,9 +2,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { buildCatalogSummary } from '../src/catalog-summary.mjs';
+import { MAX_GAME_SCREENSHOTS } from '../src/constants.mjs';
 import { parseSiglsResponse } from '../src/fetch-sigls.mjs';
 import { normalizeCatalog } from '../src/normalize-catalog.mjs';
 import { updateHistory } from '../src/update-history.mjs';
+import { validateCatalog } from '../src/validate-data.mjs';
 
 const products = JSON.parse(await readFile(new URL('./fixtures/products.json', import.meta.url), 'utf8'));
 
@@ -30,10 +32,10 @@ function list(tier, platform, productIds) {
   };
 }
 
-function currentFromLists(lists, generatedAt) {
+function currentFromLists(lists, generatedAt, productMap = products) {
   return normalizeCatalog({
     sigls: lists,
-    products,
+    products: productMap,
     productSource: { endpoint: 'fixture' },
     generatedAt,
     market: 'FR',
@@ -120,6 +122,16 @@ test('normalizeCatalog enriches DisplayCatalog metadata with availability, PEGI,
   assert.equal(forza.shortDescription, 'Drive across Britain.');
   assert.equal('fullDescription' in forza, false);
   assert.equal(forza.description, 'Drive across Britain.');
+  assert.deepEqual(forza.screenshots, [
+    'https://store-images.s-microsoft.com/image/shot-a?w=640&h=360&q=80&format=jpg',
+    'https://store-images.s-microsoft.com/image/shot-b?w=640&h=360&q=80&format=jpg',
+    'https://store-images.s-microsoft.com/image/shot-c?w=640&h=360&q=80&format=jpg',
+    'https://store-images.s-microsoft.com/image/shot-d?w=640&h=360&q=80&format=jpg',
+    'https://store-images.s-microsoft.com/image/shot-e?w=640&h=360&q=80&format=jpg',
+    'https://store-images.s-microsoft.com/image/shot-f?w=640&h=360&q=80&format=jpg',
+    'https://store-images.s-microsoft.com/image/shot-g?w=640&h=360&q=80&format=jpg',
+    'https://store-images.s-microsoft.com/image/shot-h?w=640&h=360&q=80&format=jpg'
+  ]);
 
   const bravo = current.games.find((game) => game.id === 'BBB');
   assert.equal(bravo.availableInFR, false);
@@ -128,6 +140,74 @@ test('normalizeCatalog enriches DisplayCatalog metadata with availability, PEGI,
   assert.equal(bravo.supportsSinglePlayer, false);
   assert.equal(bravo.supportsMultiplayer, false);
   assert.equal(bravo.supportsCoop, false);
+  assert.deepEqual(bravo.screenshots, []);
+});
+
+test('screenshot metadata does not affect the membership catalog hash', () => {
+  const lists = [
+    list('ultimate', 'console', ['9PNJXVCVWD4K']),
+    list('ultimate', 'pc', []),
+    list('premium', 'console', []),
+    list('premium', 'pc', []),
+    list('essential', 'console', []),
+    list('essential', 'pc', [])
+  ];
+  const current = currentFromLists(lists, '2026-01-01T00:00:00.000Z');
+  const changedProducts = structuredClone(products);
+  changedProducts['9PNJXVCVWD4K'].LocalizedProperties[0].Images[1].Uri = '//store-images.s-microsoft.com/image/replaced-shot';
+  const changed = currentFromLists(lists, '2026-01-01T00:00:00.000Z', changedProducts);
+
+  assert.equal(changed.catalogHash, current.catalogHash);
+  assert.notDeepEqual(changed.games[0].screenshots, current.games[0].screenshots);
+});
+
+test('validateCatalog rejects malformed screenshot arrays and accepts legacy missing fields', () => {
+  const lists = [
+    list('ultimate', 'console', ['9PNJXVCVWD4K']),
+    list('ultimate', 'pc', []),
+    list('premium', 'console', []),
+    list('premium', 'pc', []),
+    list('essential', 'console', []),
+    list('essential', 'pc', [])
+  ];
+  const valid = currentFromLists(lists, '2026-01-01T00:00:00.000Z');
+
+  const legacy = structuredClone(valid);
+  delete legacy.games[0].screenshots;
+  assert.deepEqual(validateCatalog({ current: legacy }).errors, []);
+
+  const invalidCases = [
+    {
+      screenshots: 'https://example.test/shot.jpg',
+      error: /invalid screenshots: expected string array/
+    },
+    {
+      screenshots: [42],
+      error: /invalid screenshot: expected absolute HTTPS URL/
+    },
+    {
+      screenshots: ['not a URL'],
+      error: /invalid screenshot URL/
+    },
+    {
+      screenshots: ['http://example.test/shot.jpg'],
+      error: /invalid screenshot URL protocol/
+    },
+    {
+      screenshots: ['https://example.test/shot.jpg', 'https://example.test/shot.jpg'],
+      error: /duplicate screenshot URL/
+    },
+    {
+      screenshots: Array.from({ length: MAX_GAME_SCREENSHOTS + 1 }, (_, index) => `https://example.test/shot-${index}.jpg`),
+      error: new RegExp(`expected at most ${MAX_GAME_SCREENSHOTS}`)
+    }
+  ];
+
+  for (const invalidCase of invalidCases) {
+    const current = structuredClone(valid);
+    current.games[0].screenshots = invalidCase.screenshots;
+    assert.match(validateCatalog({ current }).errors.join('\n'), invalidCase.error);
+  }
 });
 
 test('history baseline is not treated as new, later runs track observed changes', () => {

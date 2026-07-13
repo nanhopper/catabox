@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import {
   DIFF_LABELS,
   GENERATED_PATHS,
+  MAX_GAME_SCREENSHOTS,
   PLATFORM_IDS,
   TIER_IDS,
   isMainModule,
@@ -93,6 +94,36 @@ function validateGameMetadata(current, errors) {
     }
     if ('playerModes' in game && (!Array.isArray(game.playerModes) || game.playerModes.some((mode) => typeof mode !== 'string'))) {
       add(errors, `game ${game.id} has invalid playerModes: expected string array`);
+    }
+    if ('screenshots' in game) {
+      if (!Array.isArray(game.screenshots)) {
+        add(errors, `game ${game.id} has invalid screenshots: expected string array`);
+      } else {
+        if (game.screenshots.length > MAX_GAME_SCREENSHOTS) {
+          add(errors, `game ${game.id} has invalid screenshots: expected at most ${MAX_GAME_SCREENSHOTS}`);
+        }
+        const uniqueScreenshots = new Set();
+        for (const screenshot of game.screenshots) {
+          if (typeof screenshot !== 'string') {
+            add(errors, `game ${game.id} has invalid screenshot: expected absolute HTTPS URL`);
+            continue;
+          }
+          let url;
+          try {
+            url = new URL(screenshot);
+          } catch {
+            add(errors, `game ${game.id} has invalid screenshot URL: ${screenshot}`);
+            continue;
+          }
+          if (url.protocol !== 'https:') {
+            add(errors, `game ${game.id} has invalid screenshot URL protocol: ${screenshot}`);
+          }
+          if (uniqueScreenshots.has(url.href)) {
+            add(errors, `game ${game.id} has duplicate screenshot URL: ${screenshot}`);
+          }
+          uniqueScreenshots.add(url.href);
+        }
+      }
     }
     for (const field of ['shortDescription']) {
       if (field in game && typeof game[field] !== 'string') {

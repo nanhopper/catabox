@@ -3,6 +3,7 @@ import {
   DEFAULT_LANGUAGE,
   DEFAULT_MARKET,
   DIFF_LABELS,
+  MAX_GAME_SCREENSHOTS,
   PLATFORM_IDS,
   PLATFORM_LABELS,
   PRODUCT_SWAP_MAP,
@@ -60,6 +61,68 @@ function pickImage(images, purposes) {
     }
   }
   return imageUrl(images.find((image) => image?.Uri));
+}
+
+function screenshotThumbnailUrl(image) {
+  const sourceUrl = imageUrl(image);
+  if (!sourceUrl) {
+    return null;
+  }
+  let url;
+  try {
+    url = new URL(sourceUrl);
+  } catch {
+    return null;
+  }
+  if (url.protocol === 'http:') {
+    url.protocol = 'https:';
+  }
+  if (url.protocol !== 'https:') {
+    return null;
+  }
+  if (url.hostname.toLocaleLowerCase('en-US') !== 'store-images.s-microsoft.com') {
+    return null;
+  }
+  url.searchParams.set('w', '640');
+  url.searchParams.set('h', '360');
+  url.searchParams.set('q', '80');
+  url.searchParams.set('format', 'jpg');
+  return url.href;
+}
+
+function screenshotIdentity(image) {
+  const hash = normalizeWhitespace(image?.UnscaledImageSHA256Hash);
+  if (hash) {
+    return `hash:${hash}`;
+  }
+  const sourceUrl = imageUrl(image);
+  return sourceUrl ? `url:${sourceUrl}` : null;
+}
+
+function screenshotsForProduct(images) {
+  if (!Array.isArray(images)) {
+    return [];
+  }
+  const screenshots = [];
+  const seen = new Set();
+  for (const image of images) {
+    if (String(image?.ImagePurpose ?? '').toLocaleLowerCase('en-US') !== 'screenshot') {
+      continue;
+    }
+    const identity = screenshotIdentity(image);
+    const thumbnailUrl = screenshotThumbnailUrl(image);
+    const thumbnailIdentity = thumbnailUrl ? `thumbnail:${thumbnailUrl}` : null;
+    if (!identity || !thumbnailUrl || seen.has(identity) || seen.has(thumbnailIdentity)) {
+      continue;
+    }
+    seen.add(identity);
+    seen.add(thumbnailIdentity);
+    screenshots.push(thumbnailUrl);
+    if (screenshots.length === MAX_GAME_SCREENSHOTS) {
+      break;
+    }
+  }
+  return screenshots;
 }
 
 function pickContentRating(product) {
@@ -264,6 +327,7 @@ function metadataForProduct(product, productId, market) {
     poster: pickImage(localized.Images, ['Poster', 'BoxArt', 'BrandedKeyArt', 'Tile']),
     boxArt: pickImage(localized.Images, ['BoxArt', 'Poster', 'Tile']),
     heroArt: pickImage(localized.Images, ['SuperHeroArt', 'TitledHeroArt', 'HeroArt', 'BrandedKeyArt']),
+    screenshots: screenshotsForProduct(localized.Images),
     shortDescription,
     description: normalizeWhitespace(firstValue(shortDescription, localized.ProductTitle)),
     releaseDate: releaseDateForProduct(product, market),
