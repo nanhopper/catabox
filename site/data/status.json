@@ -7,11 +7,17 @@
   "changed": false,
   "errors": [],
   "eventCounts": {},
+  "familyChanged": false,
+  "familyEventCounts": {},
+  "familyHash": "2db6fb26fbf7726a76321c531901615b078110daa1ef748ff3e451cd45c78754",
   "generatedAt": "2026-07-13T10:58:02.246Z",
   "language": "en-us",
   "lastGoodCatalogHash": "079d724863368e84a52297c915c97a1aee386ac453b0a93dc1c5686c470d31ab",
   "lastGoodGeneratedAt": "2026-07-13T08:28:27.446Z",
   "market": "FR",
+  "productChanged": false,
+  "productEventCounts": {},
+  "productTotal": 919,
   "sourceHealth": {
     "displayCatalog": {
       "missingProductIds": [],
@@ -71,5 +77,6 @@
     ]
   },
   "state": "success",
+  "total": 731,
   "warnings": []
 }

@@ -12,7 +12,7 @@ import {
 import { fetchAllSigls } from './fetch-sigls.mjs';
 import { fetchProducts, productIdsFromSiglsPayload } from './fetch-products.mjs';
 import { normalizeCatalog } from './normalize-catalog.mjs';
-import { updateHistory } from './update-history.mjs';
+import { readHistorySnapshots, updateHistory } from './update-history.mjs';
 import { validateCatalog, validateDeterministicJson } from './validate-data.mjs';
 import { renderSite } from './render-site.mjs';
 
@@ -41,10 +41,17 @@ function successStatus({ generatedAt, market, language, current, historyResult, 
   return {
     ...statusBase({ generatedAt, state: 'success', market, language, previousCurrent }),
     catalogHash: current.catalogHash,
+    familyHash: current.familyHash,
     catalogGeneratedAt: current.generatedAt,
     changed: historyResult.changed,
+    familyChanged: historyResult.familyChanged,
+    productChanged: historyResult.productChanged,
     baseline: historyResult.baseline,
     eventCounts: eventCounts(historyResult.events),
+    familyEventCounts: eventCounts(historyResult.familyEvents),
+    productEventCounts: eventCounts(historyResult.productEvents),
+    total: current.familyCounts.total,
+    productTotal: current.counts.total,
     warnings: [...warnings, ...validation.warnings],
     errors: [],
     sourceHealth: {
@@ -70,10 +77,17 @@ function failureStatus({ generatedAt, market, language, previousCurrent, error }
   return {
     ...statusBase({ generatedAt, state: 'failed', market, language, previousCurrent }),
     catalogHash: previousCurrent?.catalogHash ?? null,
+    familyHash: previousCurrent?.familyHash ?? null,
     catalogGeneratedAt: previousCurrent?.generatedAt ?? null,
     changed: false,
+    familyChanged: false,
+    productChanged: false,
     baseline: false,
     eventCounts: {},
+    familyEventCounts: {},
+    productEventCounts: {},
+    total: previousCurrent?.familyCounts?.total ?? 0,
+    productTotal: previousCurrent?.counts?.total ?? 0,
     warnings: [],
     errors: [error?.message ?? String(error)],
     sourceHealth: {
@@ -130,6 +144,7 @@ function parseCliArgs(argv) {
 export async function updateCatalog({ market = DEFAULT_MARKET, language = DEFAULT_LANGUAGE, generatedAt = new Date().toISOString() } = {}) {
   const previousCurrent = await readJsonIfExists(GENERATED_PATHS.current);
   const previousHistory = await readJsonIfExists(GENERATED_PATHS.history);
+  const previousSnapshots = await readHistorySnapshots(previousHistory);
   const sigls = await fetchAllSigls({ market, language, generatedAt });
   const productIds = productIdsFromSiglsPayload({ lists: sigls });
   const productResult = await fetchProducts(productIds, { market, language });
@@ -151,7 +166,7 @@ export async function updateCatalog({ market = DEFAULT_MARKET, language = DEFAUL
     throw new Error(`Catalog validation failed before history update:\n${preHistoryValidation.errors.join('\n')}`);
   }
 
-  const historyResult = updateHistory({ previousHistory, current, generatedAt });
+  const historyResult = updateHistory({ previousHistory, previousSnapshots, current, generatedAt });
   const validation = validateCatalog({ current, previousCurrent, history: historyResult.history });
   if (validation.errors.length > 0) {
     throw new Error(`Catalog validation failed:\n${validation.errors.join('\n')}`);
@@ -193,7 +208,9 @@ async function runCli() {
       state: result.status.state,
       generatedAt,
       catalogHash: result.current.catalogHash,
-      total: result.current.counts.total,
+      familyHash: result.current.familyHash,
+      total: result.current.familyCounts.total,
+      productTotal: result.current.counts.total,
       warnings: result.status.warnings
     }));
   } catch (error) {

@@ -15,7 +15,9 @@ The tracker is catalog-only: it does not use personal gamertags, libraries, play
 - Default market availability: `FR`
 - Default product names and metadata language: `en-us`
 
-The generated `site/data/current.json` includes tier/platform lists, enriched game metadata, catalog diffs, tier-combination segments, source health, and a deterministic catalog hash. Visual metadata includes up to eight deduplicated DisplayCatalog screenshot thumbnails per game; the browser requests those images only while the game's preview popup is open.
+The generated `site/data/current.json` retains one source record per Xbox product ID and adds a display layer of semantic game families. Families are grouped only when titles match after conservative, versioned normalization of punctuation, presentation marks, Roman numerals, and explicit terminal platform qualifiers. Editions, remasters, remakes, bundles, subtitles, and bare `Console` titles remain distinct. The current product and family models each include counts, diffs, tier-combination segments, and deterministic membership hashes.
+
+The site renders and counts game families first. A family with several PC, console, or generation-specific products exposes every Xbox product page in an accessible platform-aware disclosure; raw product IDs and metadata remain available for auditing. Visual metadata includes up to eight deduplicated DisplayCatalog screenshot thumbnails per family, loaded only while its preview popup is open.
 
 ## Data sources
 
@@ -53,13 +55,13 @@ Daily or wave-window checks can be useful around known Xbox catalog update windo
 
 ### GitHub Actions summaries
 
-Each update workflow run writes a GitHub Actions job summary with summary metrics, change counts, individual catalog events, source health, warnings, and errors. This uses GitHub's built-in workflow UI and does not require email credentials or repository secrets. Configure your personal GitHub notification settings to receive normal Actions status notifications for watched repositories.
+Each update workflow run writes a GitHub Actions job summary led by game-family totals and events, followed by raw product-listing audit detail, source health, warnings, and errors. This uses GitHub's built-in workflow UI and does not require email credentials or repository secrets. Configure your personal GitHub notification settings to receive normal Actions status notifications for watched repositories.
 
 ## History semantics
 
-The first successful run is a **baseline observation**. Games present in that first run are marked as first observed, but not as truly new.
+The first successful run is a **baseline observation**. Game families and products present in that first run are marked as first observed, but not as truly new.
 
-Later successful runs generate tracker-observed events:
+Later successful runs generate the following tracker-observed events at both family and product level:
 
 - `added`
 - `removed`
@@ -69,7 +71,7 @@ Later successful runs generate tracker-observed events:
 - `platform_added`
 - `platform_removed`
 
-Membership-only snapshots are written only for baseline or changed runs under `site/data/snapshots/`.
+User-facing history uses aggregate family membership. Replacing one product ID with another inside the same family does not emit a game removal/addition, while raw product history still records the SKU churn. Membership-only snapshots are written only for baseline or changed runs under `site/data/snapshots/`.
 
 ## Validation and safety
 
@@ -77,9 +79,11 @@ Membership-only snapshots are written only for baseline or changed runs under `s
 
 Validation also checks:
 
-- diff and segment IDs exist in `games`
+- product diff and segment IDs exist in `games`
+- every product belongs to exactly one deterministic family
+- family references, aggregates, counts, diffs, segments, and hashes reproduce exactly
 - tier counts match raw SIGLS lists
-- history events reference known tracked IDs
+- family and product history events reference known tracked IDs
 - generated JSON is deterministic
 - warnings for `Premium not Ultimate`, `Essential not Premium`, or `Essential not Ultimate`
 - warning for suspicious union-count swings above 20%
@@ -104,6 +108,7 @@ Useful scripts:
 | `npm run fetch` | Fetch and print SIGLS lists |
 | `npm run normalize` | Normalize saved fetch/product payloads |
 | `npm run history` | Update history from an existing `site/data/current.json` |
+| `npm run migrate:families` | Rebuild family data and backfill family history from checked-in snapshots |
 | `npm run summary:catalog` | Render the latest catalog update job summary |
 | `npm run build` | Render the static site shell into `site/` |
 | `npm run update` | Full fetch, normalize, validate, history, and build pipeline |
@@ -123,5 +128,7 @@ The update workflow commits only generated `site/` changes when those files chan
 
 - The public catalog endpoints are observed behavior and may change without notice.
 - DisplayCatalog metadata can lag or omit fields for some products; Catabox keeps IDs even when metadata is sparse.
+- Conservative exact family matching intentionally leaves spelling and word-boundary aliases unmerged rather than risk false positives.
+- Family IDs are title-derived, so a substantive upstream rename can produce family churn; product-level history remains authoritative.
 - Market availability defaults to France (`FR`) and product metadata language defaults to `en-us`.
 - The site has no user accounts and does not know whether a visitor owns, played, installed, or wishlisted a game.

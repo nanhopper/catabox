@@ -70,8 +70,10 @@ function eventScope(event) {
   return parts.join(' / ') || 'Catalog';
 }
 
-function latestEventsForStatus({ status, history, maxEvents }) {
-  const events = history?.events ?? [];
+function latestEventsForStatus({ status, history, maxEvents, scope = 'family' }) {
+  const events = scope === 'family'
+    ? history?.familyEvents ?? history?.events ?? []
+    : history?.events ?? [];
   const generatedAt = status?.catalogGeneratedAt ?? status?.generatedAt;
   const matchingEvents = generatedAt
     ? events.filter((event) => event.generatedAt === generatedAt)
@@ -97,16 +99,22 @@ function markdownTable(headers, rows, emptyText) {
 }
 
 function summaryRows({ status, history, repository }) {
-  const eventCount = eventTotal(status?.eventCounts);
+  const familyEventCounts = status?.familyEventCounts ?? status?.eventCounts;
+  const productEventCounts = status?.productEventCounts ?? (
+    status?.familyEventCounts == null ? status?.eventCounts : {}
+  );
   const observation = observationForStatus({ status, history });
   return [
     ['Repository', repository ?? process.env.GITHUB_REPOSITORY ?? 'Unknown'],
     ['Status', status?.state ?? 'unknown'],
     ['Generated at', formatDateTime(status?.catalogGeneratedAt ?? status?.generatedAt)],
-    ['Total games', formatNumber(observation?.total ?? status?.total ?? status?.sourceHealth?.displayCatalog?.returned ?? 0)],
-    ['Catalog changed', status?.changed ? 'Yes' : 'No'],
+    ['Game families', formatNumber(observation?.familyTotal ?? observation?.total ?? status?.total ?? 0)],
+    ['Product listings', formatNumber(observation?.productTotal ?? status?.productTotal ?? status?.sourceHealth?.displayCatalog?.returned ?? 0)],
+    ['Game catalog changed', (status?.familyChanged ?? status?.changed) ? 'Yes' : 'No'],
+    ['Product listings changed', (status?.productChanged ?? status?.changed) ? 'Yes' : 'No'],
     ['Baseline run', status?.baseline ? 'Yes' : 'No'],
-    ['Change events', pluralize(eventCount, 'event')],
+    ['Game change events', pluralize(eventTotal(familyEventCounts), 'event')],
+    ['Product-listing events', pluralize(eventTotal(productEventCounts), 'event')],
     ['Warnings', pluralize(status?.warnings?.length ?? 0, 'warning')],
     ['Errors', pluralize(status?.errors?.length ?? 0, 'error')]
   ];
@@ -147,11 +155,23 @@ export function buildCatalogSummary({
   repository = process.env.GITHUB_REPOSITORY,
   maxEvents = 50
 } = {}) {
-  const eventCount = eventTotal(status?.eventCounts);
+  const familyEventCounts = status?.familyEventCounts ?? status?.eventCounts;
+  const productEventCounts = status?.productEventCounts ?? (
+    status?.familyEventCounts == null ? status?.eventCounts : {}
+  );
+  const eventCount = eventTotal(familyEventCounts);
   const title = status?.state === 'success'
     ? `Catabox catalog update: ${status?.baseline ? 'baseline' : pluralize(eventCount, 'change')}`
     : `Catabox catalog update ${status?.state ?? 'unknown'}`;
-  const latestEvents = latestEventsForStatus({ status, history, maxEvents }).map((event) => [
+  const latestEvents = latestEventsForStatus({ status, history, maxEvents, scope: 'family' }).map((event) => [
+    eventLabel(event.type),
+    event.title ?? event.familyId ?? event.productId,
+    eventScope(event),
+    event.familyId ?? event.productId ?? '',
+    event.variantIds?.join(', ') ?? event.productId ?? '',
+    event.date ?? ''
+  ]);
+  const latestProductEvents = latestEventsForStatus({ status, history, maxEvents, scope: 'product' }).map((event) => [
     eventLabel(event.type),
     event.title ?? event.productId,
     eventScope(event),
@@ -170,11 +190,14 @@ export function buildCatalogSummary({
     runLink,
     '## Summary',
     markdownTable(['Metric', 'Value'], summaryRows({ status, history, repository }), 'No summary data was available.'),
-    '## Change counts',
-    markdownTable(['Change type', 'Count'], eventCountRows(status?.eventCounts), 'No catalog changes were detected in this run.'),
-    '## Changes',
-    markdownTable(['Type', 'Game', 'Tier / platform', 'Product ID', 'Date'], latestEvents, 'No individual change events were recorded for this run.'),
+    '## Game-family change counts',
+    markdownTable(['Change type', 'Count'], eventCountRows(familyEventCounts), 'No game-family changes were detected in this run.'),
+    '## Game-family changes',
+    markdownTable(['Type', 'Game', 'Tier / platform', 'Family ID', 'Product listings', 'Date'], latestEvents, 'No individual game-family events were recorded for this run.'),
     truncatedNotice,
+    '## Product-listing audit',
+    markdownTable(['Change type', 'Count'], eventCountRows(productEventCounts), 'No product-listing changes were detected in this run.'),
+    markdownTable(['Type', 'Product', 'Tier / platform', 'Product ID', 'Date'], latestProductEvents, 'No individual product-listing events were recorded for this run.'),
     '## Source health',
     markdownTable(['Source', 'Status', 'Returned', 'Requested/source count'], sourceRows(status), 'No source health data was available.'),
     '## Warnings',

@@ -10,6 +10,7 @@
     "validate": "node src/validate-data.mjs",
     "check": "npm run validate",
     "history": "node src/update-history.mjs",
+    "migrate:families": "node src/migrate-families.mjs",
     "summary:catalog": "node src/catalog-summary.mjs",
     "build": "node src/render-site.mjs",
     "update": "node src/update.mjs",

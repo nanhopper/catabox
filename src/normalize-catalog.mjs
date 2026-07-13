@@ -23,6 +23,11 @@ import {
   uniqueSorted,
   writeJsonFile
 } from './constants.mjs';
+import {
+  GAME_FAMILY_SCHEMA_VERSION,
+  buildFamilyCatalog,
+  segmentForTiers
+} from './game-families.mjs';
 
 function localizedProperties(product) {
   return product?.LocalizedProperties?.[0] ?? {};
@@ -351,31 +356,6 @@ function emptyRawLists() {
   );
 }
 
-function segmentForTiers(tiers) {
-  const hasUltimate = tiers.includes('ultimate');
-  const hasPremium = tiers.includes('premium');
-  const hasEssential = tiers.includes('essential');
-  if (hasUltimate && hasPremium && hasEssential) {
-    return 'allTiers';
-  }
-  if (hasUltimate && hasPremium) {
-    return 'ultimatePremium';
-  }
-  if (hasUltimate && hasEssential) {
-    return 'ultimateEssential';
-  }
-  if (hasPremium && hasEssential) {
-    return 'premiumEssential';
-  }
-  if (hasUltimate) {
-    return 'ultimateOnly';
-  }
-  if (hasPremium) {
-    return 'premiumOnly';
-  }
-  return 'essentialOnly';
-}
-
 function emptySegments() {
   return Object.fromEntries(SEGMENT_IDS.map((segmentId) => [segmentId, []]));
 }
@@ -489,6 +469,13 @@ export function normalizeCatalog({
   }
 
   const diffs = computeDiffs(tierSets);
+  const {
+    families,
+    familyHash,
+    familyCounts,
+    familyDiffs,
+    familySegments
+  } = buildFamilyCatalog(games);
   const catalogHash = hashObject({
     rawLists,
     games: games.map((game) => ({
@@ -505,6 +492,7 @@ export function normalizeCatalog({
   return {
     generatedAt,
     catalogHash,
+    familyHash,
     market,
     language,
     counts: {
@@ -515,6 +503,7 @@ export function normalizeCatalog({
       segments: segmentCounts(segments),
       diffs: Object.fromEntries(Object.entries(diffs).map(([key, ids]) => [key, ids.length]))
     },
+    familyCounts,
     labels: {
       tiers: TIER_LABELS,
       platforms: PLATFORM_LABELS,
@@ -524,14 +513,24 @@ export function normalizeCatalog({
     sourceLists: normalizeSourceLists(sigls),
     rawLists,
     games,
+    families,
     diffs,
+    familyDiffs,
     segments,
+    familySegments,
     metadata: {
       generatedBy: 'catabox',
       source: 'Xbox Game Pass public SIGLS plus Microsoft DisplayCatalog metadata',
       productSwapMap: PRODUCT_SWAP_MAP,
       productSource,
       missingProductIds,
+      familyGrouping: {
+        schemaVersion: GAME_FAMILY_SCHEMA_VERSION,
+        strategy: 'conservative-normalized-title',
+        productCount: games.length,
+        familyCount: families.length,
+        collapsedProductCount: games.length - families.length
+      },
       overlap: {
         ultimatePremium: intersectionSorted(rawLists.ultimate.all, rawLists.premium.all),
         ultimateEssential: intersectionSorted(rawLists.ultimate.all, rawLists.essential.all),

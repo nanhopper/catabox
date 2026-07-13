@@ -4,11 +4,24 @@ import { test } from 'node:test';
 import { buildCatalogSummary } from '../src/catalog-summary.mjs';
 import { MAX_GAME_SCREENSHOTS } from '../src/constants.mjs';
 import { parseSiglsResponse } from '../src/fetch-sigls.mjs';
+import {
+  GAME_FAMILY_SCHEMA_VERSION,
+  buildFamilyCatalog,
+  gameFamilyId,
+  gameFamilyKey,
+  stripPlatformQualifier
+} from '../src/game-families.mjs';
 import { normalizeCatalog } from '../src/normalize-catalog.mjs';
-import { updateHistory } from '../src/update-history.mjs';
+import {
+  backfillFamilyHistory,
+  membershipOnlySnapshot,
+  updateHistory
+} from '../src/update-history.mjs';
 import { validateCatalog } from '../src/validate-data.mjs';
 
 const products = JSON.parse(await readFile(new URL('./fixtures/products.json', import.meta.url), 'utf8'));
+const checkedInCurrent = JSON.parse(await readFile(new URL('../site/data/current.json', import.meta.url), 'utf8'));
+const reportTemplate = await readFile(new URL('../src/report-template.html', import.meta.url), 'utf8');
 
 function list(tier, platform, productIds) {
   return {
@@ -41,6 +54,30 @@ function currentFromLists(lists, generatedAt, productMap = products) {
     market: 'FR',
     language: 'en-us'
   });
+}
+
+function productFixture(id, title) {
+  const product = structuredClone(products.AAA);
+  product.ProductId = id;
+  product.LocalizedProperties[0].ProductTitle = title;
+  return product;
+}
+
+function catalogWithProducts(entries, memberships, generatedAt) {
+  const productMap = Object.fromEntries(entries.map(([id, title]) => [id, productFixture(id, title)]));
+  const idsByPlatform = memberships.reduce((groups, membership) => {
+    groups[membership.platform] ??= [];
+    groups[membership.platform].push(membership);
+    return groups;
+  }, {});
+  return currentFromLists([
+    list('ultimate', 'console', (idsByPlatform.console ?? []).map(({ id }) => id)),
+    list('ultimate', 'pc', (idsByPlatform.pc ?? []).map(({ id }) => id)),
+    list('premium', 'console', []),
+    list('premium', 'pc', []),
+    list('essential', 'console', []),
+    list('essential', 'pc', [])
+  ], generatedAt, productMap);
 }
 
 test('SIGLS parsing applies known product swaps', () => {
@@ -143,6 +180,143 @@ test('normalizeCatalog enriches DisplayCatalog metadata with availability, PEGI,
   assert.deepEqual(bravo.screenshots, []);
 });
 
+test('game family keys normalize only conservative title differences', () => {
+  const equivalentPairs = [
+    ['Assassin’s Creed Syndicate', "Assassin's Creed Syndicate"],
+    ['Avatar: Frontiers of Pandora™', 'Avatar - Frontiers of Pandora'],
+    ['Battlefield™ 1 Revolution', 'Battlefield 1 Revolution'],
+    ['Battlefield™ II Revolution', 'Battlefield 2 Revolution'],
+    ['Commandos: Origins', 'Commandos: Origins (Win)'],
+    ['Watch Dogs2', 'Watch Dogs II'],
+    ['Example Game', 'Example Game - Windows + Launcher'],
+    ['Example Game', 'Example Game - Win'],
+    ['Example Game', 'Example Game – Windows'],
+    ['Example Game', 'Example Game Xbox Series X|S'],
+    ['Example Game', 'Example Game PC Version']
+  ];
+  for (const [left, right] of equivalentPairs) {
+    assert.equal(gameFamilyKey(left), gameFamilyKey(right), `${left} should match ${right}`);
+  }
+
+  const distinctPairs = [
+    ['Football Manager 26', 'Football Manager 26 Console'],
+    ['Control', 'Control Ultimate Edition'],
+    ['Oblivion', 'Oblivion Remastered'],
+    ['Resident Evil 4', 'Resident Evil 4 Remake'],
+    ['Halo Infinite', 'Halo Infinite Campaign Bundle'],
+    ['Cities: Skylines', 'Cities: Skylines Xbox One Edition']
+  ];
+  for (const [left, right] of distinctPairs) {
+    assert.notEqual(gameFamilyKey(left), gameFamilyKey(right), `${left} should remain separate from ${right}`);
+  }
+
+  const key = gameFamilyKey('Commandos: Origins (Win)');
+  assert.equal(stripPlatformQualifier('Example Game – Windows'), 'Example Game');
+  assert.equal(gameFamilyId(key), gameFamilyId(key));
+  assert.match(gameFamilyId(key), /^family-[a-f0-9]{64}$/);
+});
+
+test('family aggregation preserves variants and unions membership metadata', () => {
+  const base = {
+    publisher: 'Publisher',
+    developer: 'Developer',
+    genres: [],
+    playerModes: [],
+    screenshots: [],
+    availableInFR: true,
+    supportsSinglePlayer: false,
+    supportsMultiplayer: false,
+    supportsOnlineMultiplayer: false,
+    supportsLocalMultiplayer: false,
+    supportsCoop: false,
+    supportsOnlineCoop: false,
+    supportsLocalCoop: false
+  };
+  const games = [
+    {
+      ...base,
+      id: 'CONSOLE',
+      title: 'Commandos: Origins',
+      url: 'https://www.xbox.com/games/store/commandos-origins/CONSOLE',
+      memberships: ['ultimate'],
+      platforms: ['console'],
+      platformByTier: { ultimate: ['console'] },
+      segment: 'ultimateOnly',
+      genres: ['Strategy'],
+      releaseDate: '2025-04-09',
+      supportsSinglePlayer: true
+    },
+    {
+      ...base,
+      id: 'PC',
+      title: 'Commandos: Origins (Win)',
+      url: 'https://www.xbox.com/games/store/commandos-origins-win/PC',
+      memberships: ['premium'],
+      platforms: ['pc'],
+      platformByTier: { premium: ['pc'] },
+      segment: 'premiumOnly',
+      genres: ['Simulation'],
+      releaseDate: '9998-12-31',
+      supportsOnlineCoop: true,
+      supportsCoop: true
+    },
+    {
+      ...base,
+      id: 'PC-ALT',
+      title: 'Commandos: Origins PC',
+      url: 'https://www.xbox.com/games/store/commandos-origins-pc/PC-ALT',
+      memberships: ['ultimate'],
+      platforms: ['pc'],
+      platformByTier: { ultimate: ['pc'] },
+      segment: 'ultimateOnly'
+    }
+  ];
+
+  const catalog = buildFamilyCatalog(games);
+  assert.equal(catalog.families.length, 1);
+  const [family] = catalog.families;
+  assert.equal(family.title, 'Commandos: Origins');
+  assert.equal(family.variantCount, 3);
+  assert.deepEqual(new Set(family.variantIds), new Set(['CONSOLE', 'PC', 'PC-ALT']));
+  assert.deepEqual(family.memberships, ['ultimate', 'premium']);
+  assert.deepEqual(family.platformByTier, {
+    ultimate: ['console', 'pc'],
+    premium: ['pc']
+  });
+  assert.deepEqual(family.platforms, ['console', 'pc']);
+  assert.deepEqual(family.genres, ['Simulation', 'Strategy']);
+  assert.equal(family.releaseDate, '2025-04-09');
+  assert.equal(family.supportsSinglePlayer, true);
+  assert.equal(family.supportsCoop, true);
+  assert.equal(catalog.familyCounts.total, 1);
+});
+
+test('checked-in catalog family references preserve every Xbox URL', () => {
+  const productsById = new Map(checkedInCurrent.games.map((game) => [game.id, game]));
+
+  assert.equal(checkedInCurrent.games.length, checkedInCurrent.counts.total);
+  assert.equal(checkedInCurrent.families.length, checkedInCurrent.familyCounts.total);
+  assert.equal(checkedInCurrent.metadata.familyGrouping.schemaVersion, GAME_FAMILY_SCHEMA_VERSION);
+  assert.equal(
+    checkedInCurrent.metadata.familyGrouping.collapsedProductCount,
+    checkedInCurrent.games.length - checkedInCurrent.families.length
+  );
+
+  for (const family of checkedInCurrent.families) {
+    assert.equal(family.variantCount, family.variantIds.length);
+    for (const productId of family.variantIds) {
+      const product = productsById.get(productId);
+      assert(product, `missing product ${productId}`);
+      assert.match(product.url, new RegExp(`/${productId}$`));
+    }
+  }
+
+  assert.match(reportTemplate, /<details class="variant-links">/);
+  assert.match(reportTemplate, /<summary>\$\{variants\.length\.toLocaleString\(\)\} Xbox listings<\/summary>/);
+  assert.match(reportTemplate, /Product ID \$\{escapeHtml\(variant\.id\)\}/);
+  assert.match(reportTemplate, /variantText = variantsFor\(game\)/);
+});
+
 test('screenshot metadata does not affect the membership catalog hash', () => {
   const lists = [
     list('ultimate', 'console', ['9PNJXVCVWD4K']),
@@ -158,6 +332,7 @@ test('screenshot metadata does not affect the membership catalog hash', () => {
   const changed = currentFromLists(lists, '2026-01-01T00:00:00.000Z', changedProducts);
 
   assert.equal(changed.catalogHash, current.catalogHash);
+  assert.equal(changed.familyHash, current.familyHash);
   assert.notDeepEqual(changed.games[0].screenshots, current.games[0].screenshots);
 });
 
@@ -253,6 +428,168 @@ test('history baseline is not treated as new, later runs track observed changes'
   assert.equal(observed.changed, true);
 });
 
+test('same-family SKU replacement stays visible only in product history', () => {
+  const first = catalogWithProducts(
+    [['SKU-OLD', 'Same Game']],
+    [{ id: 'SKU-OLD', platform: 'console' }],
+    '2026-02-01T00:00:00.000Z'
+  );
+  const baseline = updateHistory({ current: first, generatedAt: first.generatedAt });
+  const second = catalogWithProducts(
+    [['SKU-NEW', 'Same Game']],
+    [{ id: 'SKU-NEW', platform: 'console' }],
+    '2026-02-08T00:00:00.000Z'
+  );
+  const observed = updateHistory({
+    previousHistory: baseline.history,
+    current: second,
+    generatedAt: second.generatedAt
+  });
+
+  assert.deepEqual(observed.productEvents.map((event) => event.type).sort(), ['added', 'removed']);
+  assert.deepEqual(observed.familyEvents, []);
+  const familyId = second.families[0].id;
+  assert.deepEqual(observed.history.families[familyId].variantIds, ['SKU-NEW']);
+  assert.deepEqual(observed.history.families[familyId].allVariantIds, ['SKU-NEW', 'SKU-OLD']);
+  assert.equal(observed.history.observations.at(-1).familyChanged, false);
+  assert.equal(observed.history.observations.at(-1).productChanged, true);
+});
+
+test('family history reacts only to aggregate variant membership changes', () => {
+  const first = catalogWithProducts(
+    [['CONSOLE', 'Shared Game'], ['PC', 'Shared Game (Win)']],
+    [
+      { id: 'CONSOLE', platform: 'console' },
+      { id: 'PC', platform: 'pc' }
+    ],
+    '2026-03-01T00:00:00.000Z'
+  );
+  const baseline = updateHistory({ current: first, generatedAt: first.generatedAt });
+  const consoleOnly = catalogWithProducts(
+    [['CONSOLE', 'Shared Game']],
+    [{ id: 'CONSOLE', platform: 'console' }],
+    '2026-03-08T00:00:00.000Z'
+  );
+  const oneVariantLost = updateHistory({
+    previousHistory: baseline.history,
+    current: consoleOnly,
+    generatedAt: consoleOnly.generatedAt
+  });
+
+  assert(oneVariantLost.familyEvents.some((event) => event.type === 'platform_removed' && event.platform === 'pc'));
+  assert(!oneVariantLost.familyEvents.some((event) => ['added', 'removed'].includes(event.type)));
+
+  const empty = catalogWithProducts([], [], '2026-03-15T00:00:00.000Z');
+  const finalVariantLost = updateHistory({
+    previousHistory: oneVariantLost.history,
+    current: empty,
+    generatedAt: empty.generatedAt
+  });
+  assert.equal(finalVariantLost.familyEvents.filter((event) => event.type === 'removed').length, 1);
+});
+
+test('legacy snapshots backfill family history without false additions', () => {
+  const first = catalogWithProducts(
+    [['SKU-OLD', 'Same Game']],
+    [{ id: 'SKU-OLD', platform: 'console' }],
+    '2026-04-01T00:00:00.000Z'
+  );
+  const baseline = updateHistory({ current: first, generatedAt: first.generatedAt });
+  const second = catalogWithProducts(
+    [['SKU-NEW', 'Same Game']],
+    [{ id: 'SKU-NEW', platform: 'console' }],
+    '2026-04-08T00:00:00.000Z'
+  );
+  const observed = updateHistory({
+    previousHistory: baseline.history,
+    current: second,
+    generatedAt: second.generatedAt
+  });
+  const legacyHistory = structuredClone(observed.history);
+  delete legacyHistory.families;
+  delete legacyHistory.familyEvents;
+  delete legacyHistory.familyHash;
+  delete legacyHistory.familySchemaVersion;
+  for (const observation of legacyHistory.observations) {
+    observation.total = observation.productTotal;
+    observation.counts = observation.productCounts;
+    observation.eventCounts = observation.productEventCounts;
+    delete observation.familyTotal;
+    delete observation.familyCounts;
+    delete observation.familyEventCounts;
+    delete observation.familyHash;
+  }
+  for (const snapshotEntry of legacyHistory.snapshots) {
+    snapshotEntry.total = snapshotEntry.productTotal;
+    delete snapshotEntry.familyTotal;
+    delete snapshotEntry.productTotal;
+    delete snapshotEntry.familyHash;
+    delete snapshotEntry.familyCounts;
+    delete snapshotEntry.productCounts;
+  }
+  const legacySnapshots = [
+    membershipOnlySnapshot(first, first.generatedAt),
+    membershipOnlySnapshot(second, second.generatedAt)
+  ].map((snapshot) => {
+    delete snapshot.families;
+    delete snapshot.familyHash;
+    delete snapshot.familyCounts;
+    delete snapshot.familyTotal;
+    return snapshot;
+  });
+
+  backfillFamilyHistory({ history: legacyHistory, snapshots: legacySnapshots });
+
+  assert.equal(legacyHistory.familySchemaVersion, GAME_FAMILY_SCHEMA_VERSION);
+  assert.equal(legacyHistory.familyHistorySource, 'snapshots');
+  assert.equal(Object.keys(legacyHistory.families).length, 1);
+  assert.deepEqual(legacyHistory.familyEvents, []);
+  assert(legacyHistory.observations.every((observation) => observation.familyTotal === 1));
+  assert(legacyHistory.observations.every((observation) => observation.productTotal === 1));
+  assert(legacyHistory.snapshots.every((entry) => entry.familyTotal === 1));
+  assert(legacyHistory.snapshots.every((entry) => entry.productTotal === 1));
+  assert(legacyHistory.snapshots.every((entry) => entry.familyCounts?.total === 1));
+  assert(legacyHistory.snapshots.every((entry) => entry.productCounts?.total === 1));
+});
+
+test('legacy history without snapshots seeds families without false events', () => {
+  const current = catalogWithProducts(
+    [['CONSOLE', 'Shared Game'], ['PC', 'Shared Game (Win)']],
+    [
+      { id: 'CONSOLE', platform: 'console' },
+      { id: 'PC', platform: 'pc' }
+    ],
+    '2026-04-15T00:00:00.000Z'
+  );
+  const baseline = updateHistory({ current, generatedAt: current.generatedAt });
+  const legacyHistory = structuredClone(baseline.history);
+  delete legacyHistory.families;
+  delete legacyHistory.familyEvents;
+  delete legacyHistory.familyHash;
+  delete legacyHistory.familySchemaVersion;
+  legacyHistory.snapshots = [];
+  for (const observation of legacyHistory.observations) {
+    observation.total = observation.productTotal;
+    observation.counts = observation.productCounts;
+    observation.eventCounts = observation.productEventCounts;
+    delete observation.familyTotal;
+    delete observation.familyCounts;
+    delete observation.familyEventCounts;
+    delete observation.familyHash;
+  }
+
+  backfillFamilyHistory({ history: legacyHistory });
+
+  assert.equal(legacyHistory.familyHistorySource, 'legacy-active-products');
+  assert.equal(Object.keys(legacyHistory.families).length, 1);
+  assert.deepEqual(legacyHistory.familyEvents, []);
+  assert.equal(legacyHistory.observations[0].familyTotal, 1);
+  assert.equal(legacyHistory.observations[0].productTotal, 2);
+  assert.deepEqual(legacyHistory.observations[0].familyEventCounts, {});
+  assert.equal(legacyHistory.observations[0].familyChanged, true);
+  assert.equal(legacyHistory.observations[0].productChanged, true);
+});
+
 test('catalog action summary renders latest changes', () => {
   const status = {
     state: 'success',
@@ -324,4 +661,49 @@ test('catalog action summary renders latest changes', () => {
   assert.match(summary, /Ultimate \/ Console/);
   assert.match(summary, /DisplayCatalog metadata/);
   assert.doesNotMatch(summary, /Old game/);
+});
+
+test('catalog action summary leads with families and retains product audit events', () => {
+  const generatedAt = '2026-05-01T00:00:00.000Z';
+  const status = {
+    state: 'success',
+    generatedAt,
+    catalogGeneratedAt: generatedAt,
+    familyChanged: true,
+    productChanged: true,
+    familyEventCounts: { added: 1 },
+    productEventCounts: { added: 2 },
+    total: 731,
+    productTotal: 919,
+    warnings: [],
+    errors: []
+  };
+  const history = {
+    familyEvents: [{
+      generatedAt,
+      date: '2026-05-01',
+      type: 'added',
+      familyId: 'family-example',
+      variantIds: ['SKU-A', 'SKU-B'],
+      title: 'Example Game'
+    }],
+    events: [{
+      generatedAt,
+      date: '2026-05-01',
+      type: 'added',
+      productId: 'SKU-A',
+      title: 'Example Game PC'
+    }],
+    observations: [{
+      generatedAt,
+      familyTotal: 731,
+      productTotal: 919
+    }]
+  };
+
+  const summary = buildCatalogSummary({ status, history });
+  assert.match(summary, /\| Game families \| 731 \|/);
+  assert.match(summary, /\| Product listings \| 919 \|/);
+  assert.match(summary, /## Game-family changes[\s\S]*family-example[\s\S]*SKU-A, SKU-B/);
+  assert.match(summary, /## Product-listing audit[\s\S]*SKU-A/);
 });
