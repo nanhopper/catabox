@@ -340,6 +340,79 @@ test('screenshot metadata does not affect the membership catalog hash', () => {
   assert.notDeepEqual(changed.games[0].screenshots, current.games[0].screenshots);
 });
 
+test('preview slideshow starts each frame delay after the displayed image is ready', async () => {
+  const loaderStart = reportTemplate.indexOf('function loadPreviewFrameElement');
+  const loaderEnd = reportTemplate.indexOf('function previewImageFingerprint', loaderStart);
+  const scheduleStart = reportTemplate.indexOf('function schedulePreviewAdvanceAfterPaint');
+  const advanceStart = reportTemplate.indexOf('function advancePreviewFrame');
+  const initialStart = reportTemplate.indexOf('function loadInitialPreviewFrame');
+  const initialEnd = reportTemplate.indexOf('function placeGamePreview');
+  assert(loaderStart >= 0 && loaderEnd > loaderStart);
+  assert(scheduleStart >= 0 && advanceStart > scheduleStart);
+  assert(initialStart > advanceStart && initialEnd > initialStart);
+
+  const loadPreviewFrameElement = Function(
+    `"use strict"; return (${reportTemplate.slice(loaderStart, loaderEnd).trim()});`
+  )();
+  const listeners = new Map();
+  let resolveDecode;
+  const frame = {
+    complete: false,
+    naturalWidth: 0,
+    addEventListener(type, listener) {
+      listeners.set(type, listener);
+    },
+    removeEventListener(type, listener) {
+      if (listeners.get(type) === listener) {
+        listeners.delete(type);
+      }
+    },
+    decode() {
+      return new Promise((resolve) => {
+        resolveDecode = resolve;
+      });
+    }
+  };
+  let ready = false;
+  loadPreviewFrameElement(frame, 'https://example.test/frame.jpg', 'auto', () => {
+    ready = true;
+  }, assert.fail);
+  assert.equal(ready, false);
+  frame.complete = true;
+  frame.naturalWidth = 1920;
+  listeners.get('load')();
+  assert.equal(ready, false);
+  resolveDecode();
+  await Promise.resolve();
+  assert.equal(ready, true);
+  assert.equal(listeners.size, 0);
+
+  const animationFrames = [];
+  const scheduledGenerations = [];
+  const schedulePreviewAdvanceAfterPaint = Function(
+    'requestAnimationFrame',
+    'schedulePreviewAdvance',
+    `"use strict"; return (${reportTemplate.slice(scheduleStart, advanceStart).trim()});`
+  )(
+    (callback) => animationFrames.push(callback),
+    (generation) => scheduledGenerations.push(generation)
+  );
+  schedulePreviewAdvanceAfterPaint(7);
+  assert.deepEqual(scheduledGenerations, []);
+  animationFrames.shift()();
+  assert.deepEqual(scheduledGenerations, []);
+  animationFrames.shift()();
+  assert.deepEqual(scheduledGenerations, [7]);
+
+  const advanceSource = reportTemplate.slice(advanceStart, initialStart);
+  const initialSource = reportTemplate.slice(initialStart, initialEnd);
+  assert.match(advanceSource, /loadPreviewFrameElement\(incoming, candidate\.url, 'auto'/);
+  assert.match(advanceSource, /schedulePreviewAdvanceAfterPaint\(generation\)/);
+  assert.match(initialSource, /loadPreviewFrameElement\(frame, url, 'high'/);
+  assert.match(initialSource, /schedulePreviewAdvanceAfterPaint\(generation\)/);
+  assert.doesNotMatch(advanceSource, /incoming\.src = candidate\.url/);
+});
+
 test('validateCatalog rejects malformed screenshot arrays and accepts legacy missing fields', () => {
   const lists = [
     list('ultimate', 'console', ['9PNJXVCVWD4K']),

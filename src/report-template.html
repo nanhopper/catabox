@@ -1399,6 +1399,7 @@
       preview: {
         generation: 0,
         timer: 0,
+        activation: null,
         frameIndex: -1,
         activeLayer: 0,
         failedUrls: new Set(),
@@ -2185,8 +2186,8 @@
       const hasScreenshots = Array.isArray(game.screenshots) && game.screenshots.length > 0;
       return `
         <div class="game-preview-media${hasScreenshots ? '' : ' hidden'}" aria-hidden="true">
-          <img class="game-preview-frame" data-preview-frame="0" alt="" decoding="async">
-          <img class="game-preview-frame" data-preview-frame="1" alt="" decoding="async">
+          <img class="game-preview-frame" data-preview-frame="0" alt="" crossorigin="anonymous" decoding="async">
+          <img class="game-preview-frame" data-preview-frame="1" alt="" crossorigin="anonymous" decoding="async">
         </div>
         <strong>${escapeHtml(game.title)}</strong>
         <p id="gamePreviewDescription">${escapeHtml(descriptionForGame(game))}</p>
@@ -2215,6 +2216,7 @@
       }
       app.preview.loadingImages.clear();
       app.preview.generation += 1;
+      app.preview.activation = null;
       app.preview.frameIndex = -1;
       app.preview.activeLayer = 0;
       app.preview.failedUrls = new Set();
@@ -2268,6 +2270,57 @@
         }
       };
       image.src = url;
+    }
+
+    function loadPreviewFrameElement(frame, url, priority, onReady, onError) {
+      let settled = false;
+      let decoding = false;
+      const release = () => {
+        frame.removeEventListener('load', handleLoad);
+        frame.removeEventListener('error', handleError);
+      };
+      const finish = (callback) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        release();
+        callback();
+      };
+      const decode = () => {
+        if (settled || decoding) {
+          return;
+        }
+        decoding = true;
+        if (typeof frame.decode === 'function') {
+          frame.decode().then(
+            () => finish(onReady),
+            () => finish(frame.complete && frame.naturalWidth > 0 ? onReady : onError)
+          );
+        } else {
+          finish(onReady);
+        }
+      };
+      function handleLoad() {
+        decode();
+      }
+      function handleError() {
+        finish(onError);
+      }
+      frame.crossOrigin = 'anonymous';
+      frame.fetchPriority = priority;
+      frame.addEventListener('load', handleLoad);
+      frame.addEventListener('error', handleError);
+      frame.src = url;
+      if (frame.complete) {
+        queueMicrotask(() => {
+          if (frame.naturalWidth > 0) {
+            decode();
+          } else {
+            finish(onError);
+          }
+        });
+      }
     }
 
     function previewImageFingerprint(image) {
@@ -2382,9 +2435,18 @@
       app.preview.timer = setTimeout(() => advancePreviewFrame(generation), delay);
     }
 
+    function schedulePreviewAdvanceAfterPaint(generation) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => schedulePreviewAdvance(generation));
+      });
+    }
+
     function advancePreviewFrame(generation) {
       app.preview.timer = 0;
       if (!isCurrentPreview(generation) || !canRotatePreview()) {
+        return;
+      }
+      if (app.preview.activation) {
         return;
       }
       if (!app.preview.nextFrame) {
@@ -2404,18 +2466,40 @@
       if (!(outgoing instanceof HTMLImageElement) || !(incoming instanceof HTMLImageElement)) {
         return;
       }
-      incoming.src = candidate.url;
-      incoming.classList.add('is-active');
-      outgoing.classList.remove('is-active');
-      app.preview.frameIndex = candidate.index;
-      app.preview.activeLayer = incomingLayer;
-      app.preview.acceptedUrls.add(candidate.url);
-      if (candidate.fingerprint) {
-        app.preview.fingerprints.push(candidate.fingerprint);
-      }
-      app.preview.nextFrame = null;
-      prepareNextPreviewFrame(generation);
-      schedulePreviewAdvance(generation);
+      const activation = { type: 'advance', candidate };
+      app.preview.activation = activation;
+      loadPreviewFrameElement(incoming, candidate.url, 'auto', () => {
+        if (app.preview.activation !== activation) {
+          return;
+        }
+        app.preview.activation = null;
+        if (!isCurrentPreview(generation) || !canRotatePreview() || app.preview.nextFrame !== candidate) {
+          return;
+        }
+        incoming.classList.add('is-active');
+        outgoing.classList.remove('is-active');
+        app.preview.frameIndex = candidate.index;
+        app.preview.activeLayer = incomingLayer;
+        app.preview.acceptedUrls.add(candidate.url);
+        if (candidate.fingerprint) {
+          app.preview.fingerprints.push(candidate.fingerprint);
+        }
+        app.preview.nextFrame = null;
+        prepareNextPreviewFrame(generation);
+        schedulePreviewAdvanceAfterPaint(generation);
+      }, () => {
+        if (app.preview.activation !== activation) {
+          return;
+        }
+        app.preview.activation = null;
+        if (!isCurrentPreview(generation)) {
+          return;
+        }
+        app.preview.failedUrls.add(candidate.url);
+        app.preview.nextFrame = null;
+        prepareNextPreviewFrame(generation);
+        schedulePreviewAdvance(generation, previewFrameRetryMs);
+      });
     }
 
     function loadInitialPreviewFrame(game, generation, startIndex = 0, attempts = 0) {
@@ -2438,17 +2522,37 @@
         if (!(frame instanceof HTMLImageElement)) {
           return;
         }
-        frame.src = url;
-        frame.classList.add('is-active');
-        app.preview.frameIndex = index;
-        app.preview.activeLayer = 0;
-        app.preview.acceptedUrls.add(url);
-        const fingerprint = previewImageFingerprint(image);
-        if (fingerprint) {
-          app.preview.fingerprints.push(fingerprint);
-        }
-        prepareNextPreviewFrame(generation);
-        schedulePreviewAdvance(generation);
+        const activation = { type: 'initial', url };
+        app.preview.activation = activation;
+        loadPreviewFrameElement(frame, url, 'high', () => {
+          if (app.preview.activation !== activation) {
+            return;
+          }
+          app.preview.activation = null;
+          if (!isCurrentPreview(generation)) {
+            return;
+          }
+          frame.classList.add('is-active');
+          app.preview.frameIndex = index;
+          app.preview.activeLayer = 0;
+          app.preview.acceptedUrls.add(url);
+          const fingerprint = previewImageFingerprint(image);
+          if (fingerprint) {
+            app.preview.fingerprints.push(fingerprint);
+          }
+          prepareNextPreviewFrame(generation);
+          schedulePreviewAdvanceAfterPaint(generation);
+        }, () => {
+          if (app.preview.activation !== activation) {
+            return;
+          }
+          app.preview.activation = null;
+          if (!isCurrentPreview(generation)) {
+            return;
+          }
+          app.preview.failedUrls.add(url);
+          loadInitialPreviewFrame(game, generation, startIndex, attempts + 1);
+        });
       }, () => {
         app.preview.failedUrls.add(url);
         loadInitialPreviewFrame(game, generation, startIndex, attempts + 1);
@@ -2922,12 +3026,18 @@
         });
       }
       document.addEventListener('visibilitychange', () => {
+        if (app.preview.activation?.type === 'advance') {
+          app.preview.activation = null;
+        }
         clearPreviewTimer();
         if (document.hidden || !app.previewGame) return;
         prepareNextPreviewFrame(app.preview.generation);
         schedulePreviewAdvance(app.preview.generation);
       });
       reducedMotionQuery.addEventListener('change', () => {
+        if (app.preview.activation?.type === 'advance') {
+          app.preview.activation = null;
+        }
         clearPreviewTimer();
         if (reducedMotionQuery.matches || !app.previewGame) return;
         prepareNextPreviewFrame(app.preview.generation);
