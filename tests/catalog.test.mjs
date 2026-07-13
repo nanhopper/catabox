@@ -312,8 +312,12 @@ test('checked-in catalog family references preserve every Xbox URL', () => {
   }
 
   assert.match(reportTemplate, /<details class="variant-links">/);
-  assert.match(reportTemplate, /<summary>\$\{variants\.length\.toLocaleString\(\)\} Xbox listings<\/summary>/);
-  assert.match(reportTemplate, /Product ID \$\{escapeHtml\(variant\.id\)\}/);
+  assert.match(reportTemplate, /<summary>Open on Xbox<\/summary>/);
+  assert.match(reportTemplate, /<a class="xbox-link" href="\$\{escapeHtml\(variants\[0\]\.url\)\}">Open on Xbox<\/a>/);
+  assert.match(reportTemplate, /<a href="\$\{escapeHtml\(variant\.url\)\}">\$\{escapeHtml\(variant\.title\)\}<\/a>/);
+  assert.doesNotMatch(reportTemplate, /variant-link-meta|Product ID \$\{escapeHtml\(variant\.id\)\}/);
+  assert.match(reportTemplate, /resultsSummary\.textContent = `\$\{rows\.length\.toLocaleString\(\)\} of \$\{sourceRows\.length\.toLocaleString\(\)\} games`/);
+  assert.doesNotMatch(reportTemplate, /listingCount|\['Product listings', app\.current\.counts\.total\]/);
   assert.match(reportTemplate, /variantText = variantsFor\(game\)/);
 });
 
