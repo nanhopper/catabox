@@ -18,6 +18,75 @@
             "Uri": "//example.test/forza-poster.jpg",
             "Width": 100,
             "Height": 150
+          },
+          {
+            "ImagePurpose": "Screenshot",
+            "Uri": "//store-images.s-microsoft.com/image/shot-a",
+            "UnscaledImageSHA256Hash": "hash-a"
+          },
+          {
+            "ImagePurpose": "Screenshot",
+            "Uri": "//store-images.s-microsoft.com/image/shot-a-platform-copy",
+            "UnscaledImageSHA256Hash": "hash-a"
+          },
+          {
+            "ImagePurpose": "Screenshot",
+            "Uri": "//store-images.s-microsoft.com/image/shot-b"
+          },
+          {
+            "ImagePurpose": "Screenshot",
+            "Uri": "//store-images.s-microsoft.com/image/shot-b",
+            "UnscaledImageSHA256Hash": "hash-b-copy"
+          },
+          {
+            "ImagePurpose": "Screenshot",
+            "Uri": "http://store-images.s-microsoft.com/image/shot-c",
+            "UnscaledImageSHA256Hash": "hash-c"
+          },
+          {
+            "ImagePurpose": "screenshot",
+            "Uri": "//store-images.s-microsoft.com/image/shot-d",
+            "UnscaledImageSHA256Hash": "hash-d"
+          },
+          {
+            "ImagePurpose": "Screenshot",
+            "Uri": "//example.test/full-size-shot.jpg",
+            "UnscaledImageSHA256Hash": "ignored-host"
+          },
+          {
+            "ImagePurpose": "Hero",
+            "Uri": "//store-images.s-microsoft.com/image/not-a-screenshot",
+            "UnscaledImageSHA256Hash": "ignored-purpose"
+          },
+          {
+            "ImagePurpose": "Screenshot",
+            "Uri": "//store-images.s-microsoft.com/image/shot-e",
+            "UnscaledImageSHA256Hash": "hash-e"
+          },
+          {
+            "ImagePurpose": "Screenshot",
+            "Uri": "//store-images.s-microsoft.com/image/shot-f",
+            "UnscaledImageSHA256Hash": "hash-f"
+          },
+          {
+            "ImagePurpose": "Screenshot",
+            "Uri": "//store-images.s-microsoft.com/image/shot-g",
+            "UnscaledImageSHA256Hash": "hash-g"
+          },
+          {
+            "ImagePurpose": "Screenshot",
+            "Uri": "//store-images.s-microsoft.com/image/shot-h",
+            "UnscaledImageSHA256Hash": "hash-h"
+          },
+          {
+            "ImagePurpose": "Screenshot",
+            "Uri": "//store-images.s-microsoft.com/image/shot-i",
+            "UnscaledImageSHA256Hash": "hash-i"
+          },
+          {
+            "ImagePurpose": "Screenshot",
+            "Uri": "//store-images.s-microsoft.com/image/shot-j",
+            "UnscaledImageSHA256Hash": "hash-j"
           }
         ]
       }

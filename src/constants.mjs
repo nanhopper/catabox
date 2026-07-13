@@ -10,6 +10,7 @@ export const USER_AGENT = 'catabox/1.0 (+https://github.com/nanhopper/catabox)';
 export const SIGLS_ENDPOINT = 'https://catalog.gamepass.com/sigls/v3';
 export const DISPLAY_CATALOG_ENDPOINT = 'https://displaycatalog.mp.microsoft.com/v7.0/products';
 export const DISPLAY_CATALOG_MS_CV = 'DGU1mcuYo0WMMp+F.1';
+export const MAX_GAME_SCREENSHOTS = 8;
 
 export const TIERS = [
   {

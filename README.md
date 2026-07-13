@@ -15,7 +15,7 @@ The tracker is catalog-only: it does not use personal gamertags, libraries, play
 - Default market availability: `FR`
 - Default product names and metadata language: `en-us`
 
-The generated `site/data/current.json` includes tier/platform lists, enriched game metadata, catalog diffs, tier-combination segments, source health, and a deterministic catalog hash.
+The generated `site/data/current.json` includes tier/platform lists, enriched game metadata, catalog diffs, tier-combination segments, source health, and a deterministic catalog hash. Visual metadata includes up to eight deduplicated DisplayCatalog screenshot thumbnails per game; the browser requests those images only while the game's preview popup is open.
 
 ## Data sources
 

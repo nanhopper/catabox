@@ -684,10 +684,12 @@
       background: var(--panel);
     }
 
-    .description-tooltip {
+    .game-preview-tooltip {
       position: fixed;
       z-index: 50;
-      width: min(22rem, 80vw);
+      width: min(26rem, calc(100vw - 1.5rem));
+      max-height: calc(100vh - 1.5rem);
+      overflow: hidden;
       padding: 0.85rem;
       border: 1px solid color-mix(in srgb, var(--accent-2) 34%, var(--line));
       border-radius: 0.9rem;
@@ -696,18 +698,44 @@
       pointer-events: none;
     }
 
-    .description-tooltip strong {
+    .game-preview-media {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+      border: 1px solid color-mix(in srgb, var(--text) 12%, var(--line));
+      border-radius: 0.6rem;
+      background:
+        linear-gradient(120deg, color-mix(in srgb, var(--panel-2) 86%, black), #0d1520);
+    }
+
+    .game-preview-frame {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0;
+      transition: opacity 160ms ease;
+    }
+
+    .game-preview-frame.is-active {
+      opacity: 1;
+    }
+
+    .game-preview-tooltip strong {
       display: block;
       margin-bottom: 0.35rem;
     }
 
-    .description-tooltip p {
+    .game-preview-tooltip p {
       margin: 0;
       color: var(--muted);
       font-size: 0.92rem;
     }
 
-    [data-description-game] {
+    [data-preview-game] {
       cursor: help;
     }
 
@@ -947,6 +975,12 @@
 
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .game-preview-frame {
+        transition: none;
+      }
+    }
+
   </style>
 </head>
 <body>
@@ -1159,7 +1193,7 @@
 
     </div>
 
-    <div id="descriptionTooltip" class="description-tooltip hidden" role="tooltip"></div>
+    <div id="gamePreviewTooltip" class="game-preview-tooltip hidden" role="tooltip" aria-hidden="true"></div>
 
     <section id="cards" class="cards" aria-label="Filtered game cards"></section>
     <section id="tableSection" class="table-wrap hidden" aria-labelledby="tableTitle">
@@ -1298,7 +1332,17 @@
         direction: 'asc'
       },
       lastFocused: null,
-      tooltipGame: null,
+      previewGame: null,
+      previewDescribedElement: null,
+      preview: {
+        generation: 0,
+        timer: 0,
+        frameIndex: -1,
+        activeLayer: 0,
+        failedUrls: new Set(),
+        nextFrame: null,
+        loadingImages: new Set()
+      },
       imageObserver: null,
       viewportImageFrame: 0
     };
@@ -1326,8 +1370,11 @@
     const filterDrawer = document.getElementById('filterDrawer');
     const filterDrawerPanel = filterDrawer.querySelector('.filter-drawer-panel');
     const filterDrawerControls = document.getElementById('filterDrawerControls');
-    const descriptionTooltip = document.getElementById('descriptionTooltip');
+    const gamePreviewTooltip = document.getElementById('gamePreviewTooltip');
     const mobileQuery = matchMedia('(max-width: 720px)');
+    const reducedMotionQuery = matchMedia('(prefers-reduced-motion: reduce)');
+    const previewFrameDelayMs = 800;
+    const previewFrameRetryMs = 100;
 
     function escapeHtml(value) {
       return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -1803,6 +1850,7 @@
           poster: null,
           boxArt: null,
           heroArt: null,
+          screenshots: [],
           description: '',
           shortDescription: '',
           releaseDate: null,
@@ -1963,17 +2011,214 @@
       return game.shortDescription || game.description || 'No short description metadata.';
     }
 
-    function tooltipHtml(game) {
+    function previewHtml(game) {
+      const hasScreenshots = Array.isArray(game.screenshots) && game.screenshots.length > 0;
       return `
+        <div class="game-preview-media${hasScreenshots ? '' : ' hidden'}" aria-hidden="true">
+          <img class="game-preview-frame" data-preview-frame="0" alt="" decoding="async">
+          <img class="game-preview-frame" data-preview-frame="1" alt="" decoding="async">
+        </div>
         <strong>${escapeHtml(game.title)}</strong>
-        <p>${escapeHtml(descriptionForGame(game))}</p>
+        <p id="gamePreviewDescription">${escapeHtml(descriptionForGame(game))}</p>
       `;
     }
 
-    function placeTooltip(clientX, clientY) {
+    function previewScreenshots(game = app.previewGame) {
+      return Array.isArray(game?.screenshots)
+        ? game.screenshots.filter((url) => typeof url === 'string' && url)
+        : [];
+    }
+
+    function clearPreviewTimer() {
+      if (app.preview.timer) {
+        clearTimeout(app.preview.timer);
+        app.preview.timer = 0;
+      }
+    }
+
+    function resetPreviewSlideshow() {
+      clearPreviewTimer();
+      for (const image of app.preview.loadingImages) {
+        image.onload = null;
+        image.onerror = null;
+        image.removeAttribute('src');
+      }
+      app.preview.loadingImages.clear();
+      app.preview.generation += 1;
+      app.preview.frameIndex = -1;
+      app.preview.activeLayer = 0;
+      app.preview.failedUrls = new Set();
+      app.preview.nextFrame = null;
+    }
+
+    function isCurrentPreview(generation) {
+      return generation === app.preview.generation
+        && app.previewGame
+        && !gamePreviewTooltip.classList.contains('hidden');
+    }
+
+    function previewFrame(layer) {
+      return gamePreviewTooltip.querySelector(`[data-preview-frame="${layer}"]`);
+    }
+
+    function collapsePreviewMedia() {
+      gamePreviewTooltip.querySelector('.game-preview-media')?.classList.add('hidden');
+    }
+
+    function loadPreviewImage(url, priority, generation, onReady, onError) {
+      const image = new Image();
+      image.decoding = 'async';
+      image.fetchPriority = priority;
+      app.preview.loadingImages.add(image);
+      const release = () => {
+        image.onload = null;
+        image.onerror = null;
+        app.preview.loadingImages.delete(image);
+      };
+      image.onload = () => {
+        const finish = () => {
+          release();
+          if (isCurrentPreview(generation)) {
+            onReady();
+          }
+        };
+        if (typeof image.decode === 'function') {
+          image.decode().then(finish, finish);
+        } else {
+          finish();
+        }
+      };
+      image.onerror = () => {
+        release();
+        if (isCurrentPreview(generation)) {
+          onError();
+        }
+      };
+      image.src = url;
+    }
+
+    function nextPreviewFrameIndex(screenshots, currentIndex) {
+      for (let offset = 1; offset < screenshots.length; offset += 1) {
+        const index = (currentIndex + offset) % screenshots.length;
+        if (!app.preview.failedUrls.has(screenshots[index])) {
+          return index;
+        }
+      }
+      return -1;
+    }
+
+    function canRotatePreview() {
+      return Boolean(app.previewGame)
+        && !document.hidden
+        && !reducedMotionQuery.matches
+        && !gamePreviewTooltip.classList.contains('hidden');
+    }
+
+    function prepareNextPreviewFrame(generation) {
+      if (!isCurrentPreview(generation) || !canRotatePreview() || app.preview.nextFrame || app.preview.frameIndex < 0) {
+        return;
+      }
+      const screenshots = previewScreenshots();
+      const index = nextPreviewFrameIndex(screenshots, app.preview.frameIndex);
+      if (index < 0) {
+        return;
+      }
+      const candidate = {
+        index,
+        url: screenshots[index],
+        ready: false
+      };
+      app.preview.nextFrame = candidate;
+      loadPreviewImage(candidate.url, 'auto', generation, () => {
+        if (app.preview.nextFrame === candidate) {
+          candidate.ready = true;
+        }
+      }, () => {
+        if (app.preview.nextFrame !== candidate) {
+          return;
+        }
+        app.preview.failedUrls.add(candidate.url);
+        app.preview.nextFrame = null;
+        prepareNextPreviewFrame(generation);
+      });
+    }
+
+    function schedulePreviewAdvance(generation, delay = previewFrameDelayMs) {
+      clearPreviewTimer();
+      if (!isCurrentPreview(generation) || !canRotatePreview()) {
+        return;
+      }
+      app.preview.timer = setTimeout(() => advancePreviewFrame(generation), delay);
+    }
+
+    function advancePreviewFrame(generation) {
+      app.preview.timer = 0;
+      if (!isCurrentPreview(generation) || !canRotatePreview()) {
+        return;
+      }
+      if (!app.preview.nextFrame) {
+        prepareNextPreviewFrame(generation);
+      }
+      const candidate = app.preview.nextFrame;
+      if (!candidate) {
+        return;
+      }
+      if (!candidate.ready) {
+        schedulePreviewAdvance(generation, previewFrameRetryMs);
+        return;
+      }
+      const outgoing = previewFrame(app.preview.activeLayer);
+      const incomingLayer = app.preview.activeLayer === 0 ? 1 : 0;
+      const incoming = previewFrame(incomingLayer);
+      if (!(outgoing instanceof HTMLImageElement) || !(incoming instanceof HTMLImageElement)) {
+        return;
+      }
+      incoming.src = candidate.url;
+      incoming.classList.add('is-active');
+      outgoing.classList.remove('is-active');
+      app.preview.frameIndex = candidate.index;
+      app.preview.activeLayer = incomingLayer;
+      app.preview.nextFrame = null;
+      prepareNextPreviewFrame(generation);
+      schedulePreviewAdvance(generation);
+    }
+
+    function loadInitialPreviewFrame(game, generation, startIndex = 0, attempts = 0) {
+      const screenshots = previewScreenshots(game);
+      if (!isCurrentPreview(generation) || screenshots.length === 0) {
+        return;
+      }
+      if (attempts >= screenshots.length) {
+        collapsePreviewMedia();
+        return;
+      }
+      const index = (startIndex + attempts) % screenshots.length;
+      const url = screenshots[index];
+      if (app.preview.failedUrls.has(url)) {
+        loadInitialPreviewFrame(game, generation, startIndex, attempts + 1);
+        return;
+      }
+      loadPreviewImage(url, 'high', generation, () => {
+        const frame = previewFrame(0);
+        if (!(frame instanceof HTMLImageElement)) {
+          return;
+        }
+        frame.src = url;
+        frame.classList.add('is-active');
+        app.preview.frameIndex = index;
+        app.preview.activeLayer = 0;
+        prepareNextPreviewFrame(generation);
+        schedulePreviewAdvance(generation);
+      }, () => {
+        app.preview.failedUrls.add(url);
+        loadInitialPreviewFrame(game, generation, startIndex, attempts + 1);
+      });
+    }
+
+    function placeGamePreview(clientX, clientY) {
       const margin = 12;
       const offset = 18;
-      const rect = descriptionTooltip.getBoundingClientRect();
+      const rect = gamePreviewTooltip.getBoundingClientRect();
       let left = clientX + offset;
       let top = clientY + offset;
       if (left + rect.width + margin > innerWidth) {
@@ -1982,24 +2227,35 @@
       if (top + rect.height + margin > innerHeight) {
         top = clientY - rect.height - offset;
       }
-      descriptionTooltip.style.left = `${Math.max(margin, left)}px`;
-      descriptionTooltip.style.top = `${Math.max(margin, top)}px`;
+      gamePreviewTooltip.style.left = `${Math.max(margin, left)}px`;
+      gamePreviewTooltip.style.top = `${Math.max(margin, top)}px`;
     }
 
-    function showDescriptionTooltip(game, clientX, clientY) {
-      app.tooltipGame = game;
-      descriptionTooltip.innerHTML = tooltipHtml(game);
-      descriptionTooltip.classList.remove('hidden');
-      placeTooltip(clientX, clientY);
+    function showGamePreview(game, clientX, clientY, describedElement = null) {
+      resetPreviewSlideshow();
+      app.previewDescribedElement?.removeAttribute('aria-describedby');
+      app.previewDescribedElement = describedElement instanceof HTMLElement ? describedElement : null;
+      app.previewGame = game;
+      gamePreviewTooltip.innerHTML = previewHtml(game);
+      gamePreviewTooltip.classList.remove('hidden');
+      gamePreviewTooltip.setAttribute('aria-hidden', 'false');
+      app.previewDescribedElement?.setAttribute('aria-describedby', 'gamePreviewDescription');
+      placeGamePreview(clientX, clientY);
+      loadInitialPreviewFrame(game, app.preview.generation);
     }
 
-    function hideDescriptionTooltip() {
-      app.tooltipGame = null;
-      descriptionTooltip.classList.add('hidden');
+    function hideGamePreview() {
+      resetPreviewSlideshow();
+      app.previewDescribedElement?.removeAttribute('aria-describedby');
+      app.previewDescribedElement = null;
+      app.previewGame = null;
+      gamePreviewTooltip.classList.add('hidden');
+      gamePreviewTooltip.setAttribute('aria-hidden', 'true');
+      gamePreviewTooltip.replaceChildren();
     }
 
-    function gameFromDescriptionTarget(target) {
-      const productId = target?.getAttribute('data-description-game');
+    function gameFromPreviewTarget(target) {
+      const productId = target?.getAttribute('data-preview-game');
       return productId ? findGameById(productId) : null;
     }
 
@@ -2095,7 +2351,7 @@
     function renderCard(game) {
       const article = document.createElement('article');
       article.className = 'card';
-      article.dataset.descriptionGame = game.id;
+      article.dataset.previewGame = game.id;
       const image = cardImage(game);
       const modes = playerModeLabels(game);
       article.innerHTML = `
@@ -2116,7 +2372,7 @@
 
     function renderTableRow(game) {
       const row = document.createElement('tr');
-      row.dataset.descriptionGame = game.id;
+      row.dataset.previewGame = game.id;
       const image = thumbnailImage(game);
       row.innerHTML = `
         <td>
@@ -2154,6 +2410,7 @@
     }
 
     function renderResults() {
+      hideGamePreview();
       const sourceRows = allRowsForState();
       const rows = sourceRows.filter(matchesFilters).sort(compareRows);
       app.rows = rows;
@@ -2380,34 +2637,46 @@
       toolbarTopButton.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
       for (const container of [cards, tableBody]) {
         container.addEventListener('mouseover', (event) => {
-          const target = closestFromEvent(event, '[data-description-game]');
+          const target = closestFromEvent(event, '[data-preview-game]');
           if (!target || (event.relatedTarget instanceof Node && target.contains(event.relatedTarget))) return;
-          const game = gameFromDescriptionTarget(target);
+          const game = gameFromPreviewTarget(target);
           if (!game) return;
-          showDescriptionTooltip(game, event.clientX, event.clientY);
+          showGamePreview(game, event.clientX, event.clientY);
         });
         container.addEventListener('mousemove', (event) => {
-          if (!app.tooltipGame || descriptionTooltip.classList.contains('hidden')) return;
-          placeTooltip(event.clientX, event.clientY);
+          if (!app.previewGame || gamePreviewTooltip.classList.contains('hidden')) return;
+          placeGamePreview(event.clientX, event.clientY);
         });
         container.addEventListener('mouseout', (event) => {
-          const target = closestFromEvent(event, '[data-description-game]');
+          const target = closestFromEvent(event, '[data-preview-game]');
           if (!target || (event.relatedTarget instanceof Node && target.contains(event.relatedTarget))) return;
-          hideDescriptionTooltip();
+          hideGamePreview();
         });
         container.addEventListener('focusin', (event) => {
-          const target = closestFromEvent(event, '[data-description-game]');
-          const game = gameFromDescriptionTarget(target);
+          const target = closestFromEvent(event, '[data-preview-game]');
+          const game = gameFromPreviewTarget(target);
           if (!game || !target) return;
           const point = pointForElement(target);
-          showDescriptionTooltip(game, point.x, point.y);
+          showGamePreview(game, point.x, point.y, event.target);
         });
         container.addEventListener('focusout', (event) => {
-          if (closestFromEvent(event, '[data-description-game]')) {
-            hideDescriptionTooltip();
+          if (closestFromEvent(event, '[data-preview-game]')) {
+            hideGamePreview();
           }
         });
       }
+      document.addEventListener('visibilitychange', () => {
+        clearPreviewTimer();
+        if (document.hidden || !app.previewGame) return;
+        prepareNextPreviewFrame(app.preview.generation);
+        schedulePreviewAdvance(app.preview.generation);
+      });
+      reducedMotionQuery.addEventListener('change', () => {
+        clearPreviewTimer();
+        if (reducedMotionQuery.matches || !app.previewGame) return;
+        prepareNextPreviewFrame(app.preview.generation);
+        schedulePreviewAdvance(app.preview.generation);
+      });
       document.getElementById('filterDrawerClose').addEventListener('click', () => closeFilterDrawer());
       document.getElementById('filterDrawerApply').addEventListener('click', () => closeFilterDrawer());
       document.getElementById('filterDrawerClear').addEventListener('click', resetFilters);
@@ -2445,12 +2714,12 @@
         }
       });
       addEventListener('scroll', () => {
-        hideDescriptionTooltip();
+        hideGamePreview();
         updateToolbarVisibility();
         scheduleViewportImageLoad();
       }, { passive: true });
       addEventListener('resize', () => {
-        hideDescriptionTooltip();
+        hideGamePreview();
         updateToolbarVisibility();
         scheduleViewportImageLoad();
         if (!mobileQuery.matches && !filterDrawer.classList.contains('hidden')) {

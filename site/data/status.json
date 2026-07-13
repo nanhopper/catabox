@@ -1,21 +1,16 @@
 {
-  "actionRunNumber": "2",
-  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/29235549457",
+  "actionRunNumber": null,
+  "actionRunUrl": null,
   "baseline": false,
-  "catalogGeneratedAt": "2026-07-13T08:28:27.446Z",
+  "catalogGeneratedAt": "2026-07-13T10:58:02.246Z",
   "catalogHash": "079d724863368e84a52297c915c97a1aee386ac453b0a93dc1c5686c470d31ab",
-  "changed": true,
+  "changed": false,
   "errors": [],
-  "eventCounts": {
-    "added": 5,
-    "platform_added": 2,
-    "removed": 1,
-    "tier_added": 1
-  },
-  "generatedAt": "2026-07-13T08:28:27.446Z",
+  "eventCounts": {},
+  "generatedAt": "2026-07-13T10:58:02.246Z",
   "language": "en-us",
-  "lastGoodCatalogHash": "78a849da5191de10a608d6cf022e18ea2cf88eeda6d93df7e85d2411b8e0edf9",
-  "lastGoodGeneratedAt": "2026-07-08T11:06:25.500Z",
+  "lastGoodCatalogHash": "079d724863368e84a52297c915c97a1aee386ac453b0a93dc1c5686c470d31ab",
+  "lastGoodGeneratedAt": "2026-07-13T08:28:27.446Z",
   "market": "FR",
   "sourceHealth": {
     "displayCatalog": {
