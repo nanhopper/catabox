@@ -9,7 +9,7 @@ import {
   stableStringify,
   writeJsonFile
 } from './constants.mjs';
-import { fetchAllSigls } from './fetch-sigls.mjs';
+import { fetchAllLeavingSoon, fetchAllSigls } from './fetch-sigls.mjs';
 import { fetchProducts, productIdsFromSiglsPayload } from './fetch-products.mjs';
 import { normalizeCatalog } from './normalize-catalog.mjs';
 import { readHistorySnapshots, updateHistory } from './update-history.mjs';
@@ -37,7 +37,7 @@ function statusBase({ generatedAt, state, market, language, previousCurrent }) {
   };
 }
 
-function successStatus({ generatedAt, market, language, current, historyResult, warnings, validation, sigls, productResult, previousCurrent }) {
+function successStatus({ generatedAt, market, language, current, historyResult, warnings, validation, sigls, leavingSoonLists, productResult, previousCurrent }) {
   return {
     ...statusBase({ generatedAt, state: 'success', market, language, previousCurrent }),
     catalogHash: current.catalogHash,
@@ -52,11 +52,19 @@ function successStatus({ generatedAt, market, language, current, historyResult, 
     productEventCounts: eventCounts(historyResult.productEvents),
     total: current.familyCounts.total,
     productTotal: current.counts.total,
+    leavingSoonTotal: current.familyCounts.leavingSoon,
     warnings: [...warnings, ...validation.warnings],
     errors: [],
     sourceHealth: {
       sigls: sigls.map((source) => ({
         tier: source.tier,
+        platform: source.platform,
+        status: source.status,
+        count: source.count,
+        sourceCount: source.sourceCount,
+        url: source.url
+      })),
+      leavingSoon: leavingSoonLists.map((source) => ({
         platform: source.platform,
         status: source.status,
         count: source.count,
@@ -88,10 +96,12 @@ function failureStatus({ generatedAt, market, language, previousCurrent, error }
     productEventCounts: {},
     total: previousCurrent?.familyCounts?.total ?? 0,
     productTotal: previousCurrent?.counts?.total ?? 0,
+    leavingSoonTotal: previousCurrent?.familyCounts?.leavingSoon ?? 0,
     warnings: [],
     errors: [error?.message ?? String(error)],
     sourceHealth: {
       sigls: [],
+      leavingSoon: [],
       displayCatalog: {
         status: 'not-run',
         requested: 0,
@@ -145,7 +155,10 @@ export async function updateCatalog({ market = DEFAULT_MARKET, language = DEFAUL
   const previousCurrent = await readJsonIfExists(GENERATED_PATHS.current);
   const previousHistory = await readJsonIfExists(GENERATED_PATHS.history);
   const previousSnapshots = await readHistorySnapshots(previousHistory);
-  const sigls = await fetchAllSigls({ market, language, generatedAt });
+  const [sigls, leavingSoonLists] = await Promise.all([
+    fetchAllSigls({ market, language, generatedAt }),
+    fetchAllLeavingSoon({ market, language, generatedAt })
+  ]);
   const productIds = productIdsFromSiglsPayload({ lists: sigls });
   const productResult = await fetchProducts(productIds, { market, language });
   const warnings = [];
@@ -155,6 +168,7 @@ export async function updateCatalog({ market = DEFAULT_MARKET, language = DEFAUL
 
   const current = normalizeCatalog({
     sigls,
+    leavingSoonLists,
     products: productResult.products,
     productSource: productResult.source,
     generatedAt,
@@ -181,6 +195,7 @@ export async function updateCatalog({ market = DEFAULT_MARKET, language = DEFAUL
     warnings,
     validation,
     sigls,
+    leavingSoonLists,
     productResult,
     previousCurrent
   });

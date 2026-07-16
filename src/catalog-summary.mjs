@@ -110,6 +110,7 @@ function summaryRows({ status, history, repository }) {
     ['Generated at', formatDateTime(status?.catalogGeneratedAt ?? status?.generatedAt)],
     ['Game families', formatNumber(observation?.familyTotal ?? observation?.total ?? status?.total ?? 0)],
     ['Product listings', formatNumber(observation?.productTotal ?? status?.productTotal ?? status?.sourceHealth?.displayCatalog?.returned ?? 0)],
+    ['Leaving soon', formatNumber(status?.leavingSoonTotal ?? 0)],
     ['Game catalog changed', (status?.familyChanged ?? status?.changed) ? 'Yes' : 'No'],
     ['Product listings changed', (status?.productChanged ?? status?.changed) ? 'Yes' : 'No'],
     ['Baseline run', status?.baseline ? 'Yes' : 'No'],
@@ -135,11 +136,18 @@ function sourceRows(status) {
     formatNumber(source.sourceCount)
   ]);
   const displayCatalog = status?.sourceHealth?.displayCatalog;
+  const leavingSoonRows = (status?.sourceHealth?.leavingSoon ?? []).map((source) => [
+    `Leaving soon / ${platformLabel(source.platform)}`,
+    source.status ?? 'unknown',
+    formatNumber(source.count),
+    formatNumber(source.sourceCount)
+  ]);
   if (!displayCatalog) {
-    return siglRows;
+    return [...siglRows, ...leavingSoonRows];
   }
   return [
     ...siglRows,
+    ...leavingSoonRows,
     [
       'DisplayCatalog metadata',
       displayCatalog.status ?? 'unknown',

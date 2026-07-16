@@ -176,6 +176,9 @@ function buildFamily(key, members) {
     Object.values(platformByTier).some((tierPlatforms) => tierPlatforms.includes(platformId))
   );
   const title = stripPlatformQualifier(representative.title);
+  const leavingSoonPlatforms = PLATFORM_IDS.filter((platformId) =>
+    variants.some((variant) => variant.leavingSoonPlatforms?.includes(platformId))
+  );
   const family = {
     id: gameFamilyId(key),
     familyKey: key,
@@ -199,6 +202,8 @@ function buildFamily(key, members) {
     description: firstValue(variants, 'description'),
     releaseDate: familyReleaseDate(variants),
     availableInFR: familyAvailability(variants),
+    leavingSoon: leavingSoonPlatforms.length > 0,
+    leavingSoonPlatforms,
     playerModes: uniqueStrings(variants.flatMap((variant) => variant.playerModes ?? [])),
     memberships,
     platformByTier,
@@ -297,6 +302,13 @@ export function buildMembershipSummary(items) {
               items.filter((item) => item.platformByTier?.[tierId]?.includes(platformId)).length
             ])
           )
+        ])
+      ),
+      leavingSoon: items.filter((item) => item.leavingSoon === true).length,
+      leavingSoonPlatforms: Object.fromEntries(
+        PLATFORM_IDS.map((platformId) => [
+          platformId,
+          items.filter((item) => item.leavingSoonPlatforms?.includes(platformId)).length
         ])
       ),
       segments: Object.fromEntries(
