@@ -8,6 +8,7 @@ export const DEFAULT_LANGUAGE = 'en-us';
 export const USER_AGENT = 'catabox/1.0 (+https://github.com/nanhopper/catabox)';
 
 export const SIGLS_ENDPOINT = 'https://catalog.gamepass.com/sigls/v3';
+export const SIGLS_COLLECTION_ENDPOINT = 'https://catalog.gamepass.com/sigls/v2';
 export const DISPLAY_CATALOG_ENDPOINT = 'https://displaycatalog.mp.microsoft.com/v7.0/products';
 export const DISPLAY_CATALOG_MS_CV = 'DGU1mcuYo0WMMp+F.1';
 export const MAX_GAME_SCREENSHOTS = 8;
@@ -43,6 +44,19 @@ export const PLATFORMS = [
     id: 'pc',
     label: 'PC',
     platformContext: 'pc'
+  }
+];
+
+export const LEAVING_SOON_COLLECTIONS = [
+  {
+    platform: 'console',
+    platformLabel: 'Console',
+    siglId: '393f05bf-e596-4ef6-9487-6d4fa0eab987'
+  },
+  {
+    platform: 'pc',
+    platformLabel: 'PC',
+    siglId: 'cc7fc951-d00f-410e-9e02-5e4628e04163'
   }
 ];
 
@@ -106,6 +120,14 @@ export function getPlatform(platformId) {
   return platform;
 }
 
+export function getLeavingSoonCollection(platformId) {
+  const collection = LEAVING_SOON_COLLECTIONS.find((item) => item.platform === platformId);
+  if (!collection) {
+    throw new Error(`Unknown leaving-soon platform: ${platformId}`);
+  }
+  return collection;
+}
+
 export function buildSiglsUrl({
   tierId,
   platformId,
@@ -122,6 +144,20 @@ export function buildSiglsUrl({
     subscriptionContext: tier.subscriptionContext
   });
   return `${SIGLS_ENDPOINT}?${params.toString()}`;
+}
+
+export function buildLeavingSoonUrl({
+  platformId,
+  market = DEFAULT_MARKET,
+  language = DEFAULT_LANGUAGE
+}) {
+  const collection = getLeavingSoonCollection(platformId);
+  const params = new URLSearchParams({
+    id: collection.siglId,
+    language,
+    market
+  });
+  return `${SIGLS_COLLECTION_ENDPOINT}?${params.toString()}`;
 }
 
 export function buildDisplayCatalogUrl({

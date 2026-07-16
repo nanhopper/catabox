@@ -391,6 +391,23 @@ function normalizeSourceLists(sigls) {
   }));
 }
 
+function normalizeLeavingSoonSourceLists(lists) {
+  return lists.map((list) => ({
+    kind: 'leavingSoon',
+    platform: list.platform,
+    platformLabel: list.platformLabel ?? PLATFORM_LABELS[list.platform],
+    siglId: list.siglId,
+    title: list.title ?? null,
+    description: list.description ?? null,
+    count: list.productIds?.length ?? 0,
+    sourceCount: list.sourceProductIds?.length ?? list.productIds?.length ?? 0,
+    status: list.status ?? 'ok',
+    fetchedAt: list.fetchedAt ?? null,
+    url: list.url,
+    swapsApplied: list.swapsApplied ?? []
+  }));
+}
+
 function platformCounts(games) {
   return Object.fromEntries(
     PLATFORM_IDS.map((platformId) => [platformId, games.filter((game) => game.platforms.includes(platformId)).length])
@@ -412,6 +429,7 @@ function segmentCounts(segments) {
 
 export function normalizeCatalog({
   sigls,
+  leavingSoonLists = [],
   products = {},
   productSource = null,
   generatedAt = new Date().toISOString(),
@@ -439,6 +457,22 @@ export function normalizeCatalog({
 
   const tierSets = Object.fromEntries(TIER_IDS.map((tierId) => [tierId, new Set(rawLists[tierId].all)]));
   const allProductIds = uniqueSorted(TIER_IDS.flatMap((tierId) => rawLists[tierId].all));
+  const allProductIdSet = new Set(allProductIds);
+  const leavingSoon = {
+    all: [],
+    console: [],
+    pc: [],
+    unmatched: Object.fromEntries(PLATFORM_IDS.map((platformId) => [platformId, []]))
+  };
+  for (const list of leavingSoonLists) {
+    if (!PLATFORM_IDS.includes(list.platform)) {
+      throw new Error(`Unknown platform in leaving-soon SIGLS list: ${list.platform}`);
+    }
+    const sourceIds = uniqueSorted(list.productIds ?? []);
+    leavingSoon[list.platform] = sourceIds.filter((id) => allProductIdSet.has(id));
+    leavingSoon.unmatched[list.platform] = sourceIds.filter((id) => !allProductIdSet.has(id));
+  }
+  leavingSoon.all = uniqueSorted(PLATFORM_IDS.flatMap((platformId) => leavingSoon[platformId]));
   const segments = emptySegments();
   const games = allProductIds.map((productId) => {
     const memberships = TIER_IDS.filter((tierId) => tierSets[tierId].has(productId));
@@ -449,11 +483,14 @@ export function normalizeCatalog({
       ]).filter(([, platforms]) => platforms.length > 0)
     );
     const platforms = uniqueSorted(Object.values(platformByTier).flat()).map((platformId) => platformId.toLowerCase());
+    const leavingSoonPlatforms = PLATFORM_IDS.filter((platformId) => leavingSoon[platformId].includes(productId));
     const segment = segmentForTiers(memberships);
     const metadata = metadataForProduct(products[productId], productId, market);
     const game = {
       id: productId,
       ...metadata,
+      leavingSoon: leavingSoonPlatforms.length > 0,
+      leavingSoonPlatforms,
       memberships,
       platformByTier,
       platforms,
@@ -500,6 +537,10 @@ export function normalizeCatalog({
       tiers: Object.fromEntries(TIER_IDS.map((tierId) => [tierId, rawLists[tierId].all.length])),
       platforms: platformCounts(games),
       tierPlatforms: tierPlatformCounts(rawLists),
+      leavingSoon: leavingSoon.all.length,
+      leavingSoonPlatforms: Object.fromEntries(
+        PLATFORM_IDS.map((platformId) => [platformId, leavingSoon[platformId].length])
+      ),
       segments: segmentCounts(segments),
       diffs: Object.fromEntries(Object.entries(diffs).map(([key, ids]) => [key, ids.length]))
     },
@@ -511,7 +552,9 @@ export function normalizeCatalog({
       diffs: DIFF_LABELS
     },
     sourceLists: normalizeSourceLists(sigls),
+    leavingSoonSourceLists: normalizeLeavingSoonSourceLists(leavingSoonLists),
     rawLists,
+    leavingSoon,
     games,
     families,
     diffs,
@@ -576,6 +619,7 @@ async function runCli() {
   const productsPayload = JSON.parse(await readFile(args.products, 'utf8'));
   const current = normalizeCatalog({
     sigls: siglsPayload.lists ?? siglsPayload,
+    leavingSoonLists: siglsPayload.leavingSoonLists ?? [],
     products: productsPayload.products ?? productsPayload,
     productSource: productsPayload.source ?? null,
     market: args.market,

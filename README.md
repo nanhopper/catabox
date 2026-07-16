@@ -12,6 +12,7 @@ The tracker is catalog-only: it does not use personal gamertags, libraries, play
 
 - Xbox Game Pass **Ultimate**, **Premium**, and **Essential**
 - **Console** (`ConsoleGen8;ConsoleGen9`) and **PC** (`pc`)
+- Official **Leaving soon** announcements for Console and PC
 - Default market availability: `FR`
 - Default product names and metadata language: `en-us`
 
@@ -27,8 +28,14 @@ Catabox uses the public Xbox catalog endpoints from a GitHub Actions Node job:
   `https://catalog.gamepass.com/sigls/v3?id=<tier-sigl-guid>&language=en-us&market=FR&platformContext=<ConsoleGen8;ConsoleGen9|pc>&subscriptionContext=<tier-product-id>`
 - DisplayCatalog product metadata:
   `https://displaycatalog.mp.microsoft.com/v7.0/products?bigIds=<comma-separated-product-ids>&market=FR&languages=en-us&MS-CV=DGU1mcuYo0WMMp+F.1`
+- Leaving soon (Console):
+  `https://catalog.gamepass.com/sigls/v2?id=393f05bf-e596-4ef6-9487-6d4fa0eab987&language=en-us&market=FR`
+- Leaving soon (PC):
+  `https://catalog.gamepass.com/sigls/v2?id=cc7fc951-d00f-410e-9e02-5e4628e04163&language=en-us&market=FR`
 
 Observed SIGLS behavior: each request returns one list header followed by product IDs that appear to represent the catalog membership for that subscription context and platform context in the requested market. Catabox treats those lists as source-of-truth observations, not as a contractual Microsoft API guarantee.
+
+The two Leaving soon collections are current, platform-specific announcements. Catabox shows a badge but does not infer an exact departure date: DisplayCatalog offer `EndDate` values are undocumented and can describe purchase, trial, pricing, delisting, or subscription windows rather than a Game Pass removal. A leaving-soon ID absent from the current tier catalog is reported as a warning and does not create a game.
 
 Known tier constants:
 
@@ -53,6 +60,8 @@ The default workflow is weekly plus manual runs:
 
 Daily or wave-window checks can be useful around known Xbox catalog update windows, but they are intentionally not enabled by default to keep the tracker low-noise and low-cost.
 
+Because updates are weekly, a newly published Leaving soon announcement can take up to a week to appear on Catabox.
+
 ### GitHub Actions summaries
 
 Each update workflow run writes a GitHub Actions job summary led by game-family totals and events, followed by raw product-listing audit detail, source health, warnings, and errors. This uses GitHub's built-in workflow UI and does not require email credentials or repository secrets. Configure your personal GitHub notification settings to receive normal Actions status notifications for watched repositories.
@@ -73,6 +82,8 @@ Later successful runs generate the following tracker-observed events at both fam
 
 User-facing history uses aggregate family membership. Replacing one product ID with another inside the same family does not emit a game removal/addition, while raw product history still records the SKU churn. Membership-only snapshots are written only for baseline or changed runs under `site/data/snapshots/`.
 
+Leaving soon is a current annotation, not a history event. When a game actually leaves a tracked tier, the normal `removed`, `tier_removed`, or `platform_removed` event records that observed catalog change.
+
 ## Validation and safety
 
 `npm run update` fails if a required SIGLS request fails. On failure, `site/data/current.json`, `site/data/history.json`, and the generated site remain last-good; `site/data/status.json` records the failed run so the site can show a banner.
@@ -87,6 +98,7 @@ Validation also checks:
 - generated JSON is deterministic
 - warnings for `Premium not Ultimate`, `Essential not Premium`, or `Essential not Ultimate`
 - warning for suspicious union-count swings above 20%
+- leaving-soon source shape, platform annotations, counts, and unmatched product IDs
 
 ## Local development
 

@@ -32,7 +32,9 @@ function validateRequiredShape(current, errors) {
     'familyCounts',
     'labels',
     'sourceLists',
+    'leavingSoonSourceLists',
     'rawLists',
+    'leavingSoon',
     'games',
     'families',
     'diffs',
@@ -67,6 +69,64 @@ function validateSources(current, errors) {
       } else if (source.status !== 'ok') {
         add(errors, `SIGLS source list for ${tierId}/${platformId} is not ok`);
       }
+    }
+  }
+  const leavingSoonSources = current.leavingSoonSourceLists ?? [];
+  if (leavingSoonSources.length !== PLATFORM_IDS.length) {
+    add(errors, `Expected ${PLATFORM_IDS.length} leaving-soon SIGLS source lists, found ${leavingSoonSources.length}`);
+  }
+  for (const platformId of PLATFORM_IDS) {
+    const source = leavingSoonSources.find((item) => item.platform === platformId);
+    if (!source) {
+      add(errors, `Missing leaving-soon SIGLS source list for ${platformId}`);
+    } else if (source.status !== 'ok') {
+      add(errors, `Leaving-soon SIGLS source list for ${platformId} is not ok`);
+    }
+  }
+}
+
+function validateLeavingSoon(current, errors) {
+  const games = Array.isArray(current.games) ? current.games : [];
+  const gameIds = new Set(games.map((game) => game.id));
+  const leavingSoon = current.leavingSoon ?? {};
+  const expectedAll = [...new Set(PLATFORM_IDS.flatMap((platformId) => leavingSoon[platformId] ?? []))].sort();
+  if (stableStringify(leavingSoon.all ?? []) !== stableStringify(expectedAll)) {
+    add(errors, 'leavingSoon.all does not match the platform union');
+  }
+  for (const platformId of PLATFORM_IDS) {
+    const ids = leavingSoon[platformId] ?? [];
+    const unmatched = leavingSoon.unmatched?.[platformId] ?? [];
+    const source = (current.leavingSoonSourceLists ?? []).find((item) => item.platform === platformId);
+    if (source && source.count !== ids.length + unmatched.length) {
+      add(errors, `Leaving-soon source count for ${platformId} does not match matched and unmatched IDs`);
+    }
+    for (const id of ids) {
+      if (!gameIds.has(id)) {
+        add(errors, `leavingSoon.${platformId} references missing game ${id}`);
+      }
+    }
+    for (const id of unmatched) {
+      if (gameIds.has(id)) {
+        add(errors, `leavingSoon.unmatched.${platformId} contains current game ${id}`);
+      }
+    }
+  }
+  for (const game of games) {
+    const expectedPlatforms = PLATFORM_IDS.filter((platformId) => (leavingSoon[platformId] ?? []).includes(game.id));
+    if (stableStringify(game.leavingSoonPlatforms ?? []) !== stableStringify(expectedPlatforms)) {
+      add(errors, `game ${game.id} has incorrect leavingSoonPlatforms`);
+    }
+    if (game.leavingSoon !== (expectedPlatforms.length > 0)) {
+      add(errors, `game ${game.id} has incorrect leavingSoon flag`);
+    }
+  }
+  if (current.counts?.leavingSoon !== expectedAll.length) {
+    add(errors, `counts.leavingSoon (${current.counts?.leavingSoon}) does not match leaving-soon union (${expectedAll.length})`);
+  }
+  for (const platformId of PLATFORM_IDS) {
+    const expected = (leavingSoon[platformId] ?? []).length;
+    if (current.counts?.leavingSoonPlatforms?.[platformId] !== expected) {
+      add(errors, `counts.leavingSoonPlatforms.${platformId} does not match leaving-soon list (${expected})`);
     }
   }
 }
@@ -158,13 +218,19 @@ function validateGameMetadata(current, errors) {
   ];
   for (const [kind, items] of collections) {
     for (const game of items) {
-      for (const field of ['availableInFR', 'supportsSinglePlayer', 'supportsMultiplayer', 'supportsOnlineMultiplayer', 'supportsLocalMultiplayer', 'supportsCoop', 'supportsOnlineCoop', 'supportsLocalCoop']) {
+      for (const field of ['availableInFR', 'leavingSoon', 'supportsSinglePlayer', 'supportsMultiplayer', 'supportsOnlineMultiplayer', 'supportsLocalMultiplayer', 'supportsCoop', 'supportsOnlineCoop', 'supportsLocalCoop']) {
         if (field in game && typeof game[field] !== 'boolean') {
           add(errors, `${kind} ${game.id} has invalid ${field}: expected boolean`);
         }
       }
       if ('playerModes' in game && (!Array.isArray(game.playerModes) || game.playerModes.some((mode) => typeof mode !== 'string'))) {
         add(errors, `${kind} ${game.id} has invalid playerModes: expected string array`);
+      }
+      if ('leavingSoonPlatforms' in game && (
+        !Array.isArray(game.leavingSoonPlatforms)
+        || game.leavingSoonPlatforms.some((platformId) => !PLATFORM_IDS.includes(platformId))
+      )) {
+        add(errors, `${kind} ${game.id} has invalid leavingSoonPlatforms`);
       }
       if ('screenshots' in game) {
         if (!Array.isArray(game.screenshots)) {
@@ -242,6 +308,13 @@ function validateWarnings(current, previousCurrent, warnings) {
     if (count > 0) {
       add(warnings, `${DIFF_LABELS[diffId]} is non-zero (${count}). This may be expected if public SIGLS behavior changes.`);
     }
+  }
+  const unmatchedCount = PLATFORM_IDS.reduce(
+    (total, platformId) => total + (current.leavingSoon?.unmatched?.[platformId]?.length ?? 0),
+    0
+  );
+  if (unmatchedCount > 0) {
+    add(warnings, `${unmatchedCount} leaving-soon product IDs were not present in the current tier catalog.`);
   }
   const previousTotal = previousCurrent?.counts?.total;
   const currentTotal = current.counts?.total;
@@ -350,6 +423,7 @@ export function validateCatalog({ current, previousCurrent = null, history = nul
   validateRequiredShape(current, errors);
   validateSources(current, errors);
   validateCounts(current, errors);
+  validateLeavingSoon(current, errors);
   validateFamilyReferences(current, errors);
   validateFamilies(current, errors);
   validateGameMetadata(current, errors);

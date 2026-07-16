@@ -1,11 +1,14 @@
 import {
   DEFAULT_LANGUAGE,
   DEFAULT_MARKET,
+  LEAVING_SOON_COLLECTIONS,
   PLATFORM_IDS,
   TIER_IDS,
   USER_AGENT,
   applyProductSwap,
+  buildLeavingSoonUrl,
   buildSiglsUrl,
+  getLeavingSoonCollection,
   getPlatform,
   getTier,
   stableStringify,
@@ -91,6 +94,39 @@ export async function fetchSiglsList({
   };
 }
 
+export async function fetchLeavingSoonList({
+  platformId,
+  market = DEFAULT_MARKET,
+  language = DEFAULT_LANGUAGE,
+  generatedAt = new Date().toISOString(),
+  fetchImpl
+}) {
+  const collection = getLeavingSoonCollection(platformId);
+  const url = buildLeavingSoonUrl({ platformId, market, language });
+  const payload = await requestJson(url, { fetchImpl });
+  const parsed = parseSiglsResponse(payload);
+  if (parsed.header?.siglId !== collection.siglId) {
+    throw new Error(`Leaving-soon SIGLS source identity mismatch for ${platformId}`);
+  }
+  return {
+    kind: 'leavingSoon',
+    platform: collection.platform,
+    platformLabel: collection.platformLabel,
+    siglId: collection.siglId,
+    url,
+    title: parsed.header?.title ?? null,
+    description: parsed.header?.description ?? null,
+    fetchedAt: generatedAt,
+    fetchedDate: todayFromIso(generatedAt),
+    status: 'ok',
+    count: parsed.productIds.length,
+    sourceCount: parsed.sourceProductIds.length,
+    productIds: parsed.productIds,
+    sourceProductIds: parsed.sourceProductIds,
+    swapsApplied: parsed.swapsApplied
+  };
+}
+
 export async function fetchAllSigls({
   market = DEFAULT_MARKET,
   language = DEFAULT_LANGUAGE,
@@ -104,6 +140,25 @@ export async function fetchAllSigls({
     }
   }
   return Promise.all(jobs);
+}
+
+export function fetchAllLeavingSoon({
+  market = DEFAULT_MARKET,
+  language = DEFAULT_LANGUAGE,
+  generatedAt = new Date().toISOString(),
+  fetchImpl
+} = {}) {
+  return Promise.all(
+    LEAVING_SOON_COLLECTIONS.map((collection) =>
+      fetchLeavingSoonList({
+        platformId: collection.platform,
+        market,
+        language,
+        generatedAt,
+        fetchImpl
+      })
+    )
+  );
 }
 
 function parseCliArgs(argv) {
@@ -130,16 +185,24 @@ function parseCliArgs(argv) {
 async function runCli() {
   const args = parseCliArgs(process.argv.slice(2));
   const generatedAt = new Date().toISOString();
-  const lists = await fetchAllSigls({
-    market: args.market,
-    language: args.language,
-    generatedAt
-  });
+  const [lists, leavingSoonLists] = await Promise.all([
+    fetchAllSigls({
+      market: args.market,
+      language: args.language,
+      generatedAt
+    }),
+    fetchAllLeavingSoon({
+      market: args.market,
+      language: args.language,
+      generatedAt
+    })
+  ]);
   const payload = {
     generatedAt,
     market: args.market,
     language: args.language,
-    lists
+    lists,
+    leavingSoonLists
   };
   if (args.out) {
     await writeJsonFile(args.out, payload);

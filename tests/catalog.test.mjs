@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { test } from 'node:test';
 import { buildCatalogSummary } from '../src/catalog-summary.mjs';
-import { MAX_GAME_SCREENSHOTS } from '../src/constants.mjs';
-import { parseSiglsResponse } from '../src/fetch-sigls.mjs';
+import { MAX_GAME_SCREENSHOTS, buildLeavingSoonUrl } from '../src/constants.mjs';
+import { fetchLeavingSoonList, parseSiglsResponse } from '../src/fetch-sigls.mjs';
 import {
   GAME_FAMILY_SCHEMA_VERSION,
   buildFamilyCatalog,
@@ -45,9 +45,36 @@ function list(tier, platform, productIds) {
   };
 }
 
-function currentFromLists(lists, generatedAt, productMap = products) {
+function leavingList(platform, productIds) {
+  const siglId = platform === 'console'
+    ? '393f05bf-e596-4ef6-9487-6d4fa0eab987'
+    : 'cc7fc951-d00f-410e-9e02-5e4628e04163';
+  return {
+    kind: 'leavingSoon',
+    platform,
+    platformLabel: platform,
+    siglId,
+    url: `https://example.test/leaving/${platform}`,
+    title: 'Leaving soon',
+    description: 'fixture',
+    fetchedAt: '2026-01-01T00:00:00.000Z',
+    status: 'ok',
+    sourceCount: productIds.length,
+    count: productIds.length,
+    productIds,
+    sourceProductIds: productIds,
+    swapsApplied: []
+  };
+}
+
+function emptyLeavingSoonLists() {
+  return [leavingList('console', []), leavingList('pc', [])];
+}
+
+function currentFromLists(lists, generatedAt, productMap = products, leavingSoonLists = emptyLeavingSoonLists()) {
   return normalizeCatalog({
     sigls: lists,
+    leavingSoonLists,
     products: productMap,
     productSource: { endpoint: 'fixture' },
     generatedAt,
@@ -87,6 +114,38 @@ test('SIGLS parsing applies known product swaps', () => {
   ]);
   assert.deepEqual(parsed.productIds, ['9PNJXVCVWD4K']);
   assert.deepEqual(parsed.swapsApplied, [{ from: '9PNQKHFLD2WQ', to: '9PNJXVCVWD4K' }]);
+});
+
+test('leaving-soon SIGLS fetching uses the platform collection and validates its identity', async () => {
+  const url = buildLeavingSoonUrl({ platformId: 'console', market: 'FR', language: 'en-us' });
+  assert.match(url, /^https:\/\/catalog\.gamepass\.com\/sigls\/v2\?/);
+  assert.match(url, /id=393f05bf-e596-4ef6-9487-6d4fa0eab987/);
+  const fetched = await fetchLeavingSoonList({
+    platformId: 'console',
+    market: 'FR',
+    language: 'en-us',
+    generatedAt: '2026-01-01T00:00:00.000Z',
+    fetchImpl: async () => ({
+      ok: true,
+      json: async () => [
+        { siglId: '393f05bf-e596-4ef6-9487-6d4fa0eab987', title: 'Leaving soon' },
+        { id: 'AAA' }
+      ]
+    })
+  });
+  assert.deepEqual(fetched.productIds, ['AAA']);
+  assert.equal(fetched.platform, 'console');
+
+  await assert.rejects(
+    fetchLeavingSoonList({
+      platformId: 'console',
+      fetchImpl: async () => ({
+        ok: true,
+        json: async () => [{ siglId: 'wrong-source', title: 'Leaving soon' }]
+      })
+    }),
+    /source identity mismatch/
+  );
 });
 
 test('normalizeCatalog computes tier segments and diffs without hierarchy assumptions', () => {
@@ -180,6 +239,38 @@ test('normalizeCatalog enriches DisplayCatalog metadata with availability, PEGI,
   assert.deepEqual(bravo.screenshots, []);
 });
 
+test('normalizeCatalog annotates official leaving-soon platforms and warns about unmatched IDs', () => {
+  const current = currentFromLists([
+    list('ultimate', 'console', ['AAA', 'BBB']),
+    list('ultimate', 'pc', ['AAA', 'BBB']),
+    list('premium', 'console', []),
+    list('premium', 'pc', []),
+    list('essential', 'console', []),
+    list('essential', 'pc', [])
+  ], '2026-01-01T00:00:00.000Z', products, [
+    leavingList('console', ['AAA', 'MISSING']),
+    leavingList('pc', ['AAA', 'BBB'])
+  ]);
+
+  assert.deepEqual(current.leavingSoon, {
+    all: ['AAA', 'BBB'],
+    console: ['AAA'],
+    pc: ['AAA', 'BBB'],
+    unmatched: {
+      console: ['MISSING'],
+      pc: []
+    }
+  });
+  assert.deepEqual(current.games.find((game) => game.id === 'AAA').leavingSoonPlatforms, ['console', 'pc']);
+  assert.equal(current.games.find((game) => game.id === 'BBB').leavingSoon, true);
+  assert.equal(current.counts.leavingSoon, 2);
+  assert.deepEqual(current.counts.leavingSoonPlatforms, { console: 1, pc: 2 });
+  const validation = validateCatalog({ current });
+  assert.deepEqual(validation.errors, []);
+  assert.equal(validation.warnings.filter((warning) => warning.includes('leaving-soon product IDs')).length, 1);
+  assert.match(validation.warnings.join('\n'), /1 leaving-soon product IDs/);
+});
+
 test('game family keys normalize only conservative title differences', () => {
   const equivalentPairs = [
     ['Assassin’s Creed Syndicate', "Assassin's Creed Syndicate"],
@@ -224,6 +315,8 @@ test('family aggregation preserves variants and unions membership metadata', () 
     playerModes: [],
     screenshots: [],
     availableInFR: true,
+    leavingSoon: false,
+    leavingSoonPlatforms: [],
     supportsSinglePlayer: false,
     supportsMultiplayer: false,
     supportsOnlineMultiplayer: false,
@@ -244,6 +337,8 @@ test('family aggregation preserves variants and unions membership metadata', () 
       segment: 'ultimateOnly',
       genres: ['Strategy'],
       releaseDate: '2025-04-09',
+      leavingSoon: true,
+      leavingSoonPlatforms: ['console'],
       supportsSinglePlayer: true
     },
     {
@@ -257,6 +352,8 @@ test('family aggregation preserves variants and unions membership metadata', () 
       segment: 'premiumOnly',
       genres: ['Simulation'],
       releaseDate: '9998-12-31',
+      leavingSoon: true,
+      leavingSoonPlatforms: ['pc'],
       supportsOnlineCoop: true,
       supportsCoop: true
     },
@@ -284,6 +381,8 @@ test('family aggregation preserves variants and unions membership metadata', () 
     premium: ['pc']
   });
   assert.deepEqual(family.platforms, ['console', 'pc']);
+  assert.equal(family.leavingSoon, true);
+  assert.deepEqual(family.leavingSoonPlatforms, ['console', 'pc']);
   assert.deepEqual(family.genres, ['Simulation', 'Strategy']);
   assert.equal(family.releaseDate, '2025-04-09');
   assert.equal(family.supportsSinglePlayer, true);
@@ -319,6 +418,9 @@ test('checked-in catalog family references preserve every Xbox URL', () => {
   assert.match(reportTemplate, /resultsSummary\.textContent = `\$\{rows\.length\.toLocaleString\(\)\} of \$\{sourceRows\.length\.toLocaleString\(\)\} games`/);
   assert.doesNotMatch(reportTemplate, /listingCount|\['Product listings', app\.current\.counts\.total\]/);
   assert.match(reportTemplate, /variantText = variantsFor\(game\)/);
+  assert.match(reportTemplate, /id="leavingStatus"/);
+  assert.match(reportTemplate, /class="badge leaving-soon"/);
+  assert.match(reportTemplate, /<th scope="col">Leaving<\/th>/);
 });
 
 test('screenshot metadata does not affect the membership catalog hash', () => {
@@ -334,9 +436,17 @@ test('screenshot metadata does not affect the membership catalog hash', () => {
   const changedProducts = structuredClone(products);
   changedProducts['9PNJXVCVWD4K'].LocalizedProperties[0].Images[1].Uri = '//store-images.s-microsoft.com/image/replaced-shot';
   const changed = currentFromLists(lists, '2026-01-01T00:00:00.000Z', changedProducts);
+  const leavingChanged = currentFromLists(
+    lists,
+    '2026-01-01T00:00:00.000Z',
+    products,
+    [leavingList('console', ['9PNJXVCVWD4K']), leavingList('pc', [])]
+  );
 
   assert.equal(changed.catalogHash, current.catalogHash);
   assert.equal(changed.familyHash, current.familyHash);
+  assert.equal(leavingChanged.catalogHash, current.catalogHash);
+  assert.equal(leavingChanged.familyHash, current.familyHash);
   assert.notDeepEqual(changed.games[0].screenshots, current.games[0].screenshots);
 });
 
@@ -681,6 +791,7 @@ test('catalog action summary renders latest changes', () => {
     warnings: ['DisplayCatalog metadata lagged for one product.'],
     errors: [],
     actionRunUrl: 'https://github.com/example/catabox/actions/runs/123',
+    leavingSoonTotal: 1,
     sourceHealth: {
       sigls: [
         {
@@ -689,6 +800,14 @@ test('catalog action summary renders latest changes', () => {
           status: 'ok',
           count: 2,
           sourceCount: 2
+        }
+      ],
+      leavingSoon: [
+        {
+          platform: 'console',
+          status: 'ok',
+          count: 1,
+          sourceCount: 1
         }
       ],
       displayCatalog: {
@@ -737,6 +856,8 @@ test('catalog action summary renders latest changes', () => {
   assert.match(summary, /A&B <Game>/);
   assert.match(summary, /Ultimate \/ Console/);
   assert.match(summary, /DisplayCatalog metadata/);
+  assert.match(summary, /\| Leaving soon \| 1 \|/);
+  assert.match(summary, /Leaving soon \/ Console/);
   assert.doesNotMatch(summary, /Old game/);
 });
 

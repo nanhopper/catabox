@@ -461,6 +461,13 @@
       border-color: color-mix(in srgb, var(--danger) 60%, var(--line));
     }
 
+    .badge.leaving-soon {
+      color: #fff2bd;
+      background: color-mix(in srgb, var(--warn) 24%, var(--chip));
+      border-color: color-mix(in srgb, var(--warn) 65%, var(--line));
+      font-weight: 700;
+    }
+
     .warning {
       color: #fff2bd;
       background: color-mix(in srgb, var(--warn) 18%, var(--chip));
@@ -1114,6 +1121,18 @@
           </div>
         </div>
         <div class="filter-field">
+          <span id="leavingStatusLabel">Leaving status</span>
+          <div class="multi-select" data-filter-id="leavingStatus">
+            <select id="leavingStatus" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
+              <option value="">Any leaving status</option>
+              <option value="leavingSoon">Leaving soon</option>
+              <option value="notAnnounced">Not announced</option>
+            </select>
+            <button id="leavingStatusButton" class="multi-select-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="leavingStatusMenu" aria-labelledby="leavingStatusLabel leavingStatusButton"></button>
+            <div id="leavingStatusMenu" class="multi-select-menu hidden" role="group" aria-labelledby="leavingStatusLabel"></div>
+          </div>
+        </div>
+        <div class="filter-field">
           <span id="genreLabel">Genre</span>
           <div class="multi-select" data-filter-id="genre">
             <select id="genre" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
@@ -1280,6 +1299,7 @@
               </button>
             </th>
             <th scope="col">PEGI</th>
+            <th scope="col">Leaving</th>
             <th scope="col">Observed badges</th>
           </tr>
         </thead>
@@ -1351,6 +1371,7 @@
       tier: '',
       tierComparison: '',
       platform: '',
+      leavingStatus: '',
       genre: '',
       publisher: '',
       frAvailability: '',
@@ -1364,6 +1385,7 @@
     const filterLabels = {
       tier: 'Tier',
       platform: 'Platform',
+      leavingStatus: 'Leaving status',
       genre: 'Genre',
       publisher: 'Publisher',
       frAvailability: 'French availability',
@@ -1964,6 +1986,8 @@
           shortDescription: '',
           releaseDate: null,
           availableInFR: false,
+          leavingSoon: false,
+          leavingSoonPlatforms: [],
           pegiRating: null,
           supportsSinglePlayer: false,
           supportsMultiplayer: false,
@@ -2035,6 +2059,12 @@
       });
     }
 
+    function isLeavingSoonForSelectedPlatforms(game) {
+      const platforms = selectedValues('platform');
+      if (platforms.length === 0) return game.leavingSoon === true;
+      return platforms.some((platformId) => game.leavingSoonPlatforms?.includes(platformId));
+    }
+
     function matchesFilters(game) {
       const query = controls.search.value.trim().toLocaleLowerCase();
       if (query) {
@@ -2047,6 +2077,11 @@
       if (!selectedValuesMatch('tier', (value) => game.memberships.includes(value))) return false;
       if (!matchesTierComparison(game)) return false;
       if (!selectedValuesMatch('platform', (value) => game.platforms.includes(value))) return false;
+      if (!selectedValuesMatch('leavingStatus', (value) => {
+        if (value === 'leavingSoon') return isLeavingSoonForSelectedPlatforms(game);
+        if (value === 'notAnnounced') return !isLeavingSoonForSelectedPlatforms(game);
+        return false;
+      })) return false;
       if (!selectedValuesMatch('genre', (value) => (game.genres ?? []).includes(value))) return false;
       if (!selectedValuesMatch('publisher', (value) => game.publisher === value)) return false;
       if (!selectedValuesMatch('frAvailability', (value) => {
@@ -2140,6 +2175,19 @@
       const badges = badgesFor(game);
       if (badges.length === 0) return '<span class="muted">No tracker-observed change</span>';
       return `<span class="chips">${badges.map((badge) => `<span class="badge ${escapeHtml(badge.className)}">${escapeHtml(badge.text)}</span>`).join('')}</span>`;
+    }
+
+    function leavingSoonLabel(game) {
+      const platforms = PLATFORMS.filter((platformId) => game.leavingSoonPlatforms?.includes(platformId));
+      if (platforms.length === 0) return '';
+      return `Leaving soon · ${platforms.map((platformId) => labelFor('platforms', platformId)).join(' + ')}`;
+    }
+
+    function leavingSoonBadge(game, emptyText = '') {
+      const label = leavingSoonLabel(game);
+      return label
+        ? `<span class="badge leaving-soon">${escapeHtml(label)}</span>`
+        : emptyText;
     }
 
     function cardImage(game) {
@@ -2702,6 +2750,7 @@
         ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
         <div class="card-body">
           <h3>${titleHtml(game)}</h3>
+          ${leavingSoonBadge(game)}
           ${variantLinksHtml(game)}
           <p>${escapeHtml(game.publisher || 'Unknown publisher')}</p>
           ${chipList(game.memberships, (tier) => labelFor('tiers', tier))}
@@ -2736,6 +2785,7 @@
         <td>${escapeHtml(game.publisher || '')}</td>
         <td>${escapeHtml(game.releaseDate ?? '')}</td>
         <td>${escapeHtml(game.pegiRating ?? '')}</td>
+        <td>${leavingSoonBadge(game, '<span class="muted">Not announced</span>')}</td>
         <td>${badgeList(game)}</td>
       `;
       return row;
@@ -2781,7 +2831,8 @@
         ['Games', counts.total],
         ['Ultimate', counts.tiers.ultimate],
         ['Premium', counts.tiers.premium],
-        ['Essential', counts.tiers.essential]
+        ['Essential', counts.tiers.essential],
+        ['Leaving soon', counts.leavingSoon ?? 0]
       ];
       const diffCards = [
         ['Premium not Ultimate', counts.diffs.premiumNotUltimate],
@@ -2814,6 +2865,7 @@
         <span><strong>${escapeHtml(state)}</strong> · Updated ${escapeHtml(formatDate(generatedAt))}</span>
       `;
       const sigls = status?.sourceHealth?.sigls ?? [];
+      const leavingSoonSources = status?.sourceHealth?.leavingSoon ?? [];
       const warnings = status?.warnings ?? [];
       const errors = status?.errors ?? [];
       const display = status?.sourceHealth?.displayCatalog ?? {};
@@ -2846,6 +2898,10 @@
         <div>
           <strong>SIGLS sources</strong>
           <p>${sigls.length ? sigls.map((source) => `${source.tier}/${source.platform}: ${source.count}`).join('<br>') : 'No source details'}</p>
+        </div>
+        <div>
+          <strong>Leaving-soon sources</strong>
+          <p>${leavingSoonSources.length ? leavingSoonSources.map((source) => `${labelFor('platforms', source.platform)}: ${source.count}`).join('<br>') : 'No source details'}</p>
         </div>
         <div>
           <strong>Warnings/errors</strong>
