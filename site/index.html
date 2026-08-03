@@ -2182,7 +2182,7 @@
       if (platforms.length === 0) return '';
       return `Leaving soon · ${platforms.map((platformId) => {
         const date = game.leavingSoonDates?.[platformId];
-        return `${labelFor('platforms', platformId)}${date ? ` (${formatDate(date)})` : ''}`;
+        return `${labelFor('platforms', platformId)} (${date ? formatDate(date) : 'date not published'})`;
       }).join(' + ')}`;
     }
 
