@@ -427,6 +427,7 @@ test('checked-in catalog family references preserve every Xbox URL', () => {
   assert.match(reportTemplate, /variantText = variantsFor\(game\)/);
   assert.match(reportTemplate, /id="leavingStatus"/);
   assert.match(reportTemplate, /class="badge leaving-soon"/);
+  assert.match(reportTemplate, /date \? formatDate\(date\) : 'date not published'/);
   assert.match(reportTemplate, /<th scope="col">Leaving<\/th>/);
 });
 
