@@ -179,15 +179,6 @@ function buildFamily(key, members) {
   const leavingSoonPlatforms = PLATFORM_IDS.filter((platformId) =>
     variants.some((variant) => variant.leavingSoonPlatforms?.includes(platformId))
   );
-  const leavingSoonDates = Object.fromEntries(
-    leavingSoonPlatforms.flatMap((platformId) => {
-      const date = variants
-        .map((variant) => variant.leavingSoonDates?.[platformId])
-        .filter(Boolean)
-        .sort()[0];
-      return date ? [[platformId, date]] : [];
-    })
-  );
   const family = {
     id: gameFamilyId(key),
     familyKey: key,
@@ -213,7 +204,6 @@ function buildFamily(key, members) {
     availableInFR: familyAvailability(variants),
     leavingSoon: leavingSoonPlatforms.length > 0,
     leavingSoonPlatforms,
-    leavingSoonDates,
     playerModes: uniqueStrings(variants.flatMap((variant) => variant.playerModes ?? [])),
     memberships,
     platformByTier,

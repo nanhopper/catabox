@@ -35,7 +35,7 @@ Catabox uses the public Xbox catalog endpoints from a GitHub Actions Node job:
 
 Observed SIGLS behavior: each request returns one list header followed by product IDs that appear to represent the catalog membership for that subscription context and platform context in the requested market. Catabox treats those lists as source-of-truth observations, not as a contractual Microsoft API guarantee.
 
-The two Leaving soon collections are current, platform-specific announcements. When those collections provide an explicit leaving date, Catabox shows it in the game badge and update summary; it does not infer one from DisplayCatalog offer `EndDate` values, which are undocumented and can describe purchase, trial, pricing, delisting, or subscription windows rather than a Game Pass removal. A leaving-soon ID absent from the current tier catalog is reported as a warning and does not create a game.
+The two Leaving soon collections are current, platform-specific announcements. Catabox shows a badge but does not infer an exact departure date: DisplayCatalog offer `EndDate` values are undocumented and can describe purchase, trial, pricing, delisting, or subscription windows rather than a Game Pass removal. A leaving-soon ID absent from the current tier catalog is reported as a warning and does not create a game.
 
 Known tier constants:
 

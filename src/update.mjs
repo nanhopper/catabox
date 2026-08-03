@@ -48,11 +48,7 @@ function leavingSoonAdditions(current, previousCurrent) {
       familyId: family.id,
       title: family.title,
       variantIds: family.variantIds,
-      platforms,
-      dates: Object.fromEntries(
-        platforms.filter((platform) => family.leavingSoonDates?.[platform])
-          .map((platform) => [platform, family.leavingSoonDates[platform]])
-      )
+      platforms
     }];
   });
 }
