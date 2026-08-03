@@ -792,6 +792,11 @@ test('catalog action summary renders latest changes', () => {
     errors: [],
     actionRunUrl: 'https://github.com/example/catabox/actions/runs/123',
     leavingSoonTotal: 1,
+    leavingSoonAdded: [{
+      familyId: 'family-new',
+      title: 'A&B <Game>',
+      platforms: ['console']
+    }],
     sourceHealth: {
       sigls: [
         {
@@ -858,6 +863,7 @@ test('catalog action summary renders latest changes', () => {
   assert.match(summary, /DisplayCatalog metadata/);
   assert.match(summary, /\| Leaving soon \| 1 \|/);
   assert.match(summary, /Leaving soon \/ Console/);
+  assert.match(summary, /## Newly announced as Leaving Soon[\s\S]*A&B <Game>[\s\S]*Console/);
   assert.doesNotMatch(summary, /Old game/);
 });
 
