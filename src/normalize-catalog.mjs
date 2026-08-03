@@ -404,7 +404,6 @@ function normalizeLeavingSoonSourceLists(lists) {
     status: list.status ?? 'ok',
     fetchedAt: list.fetchedAt ?? null,
     url: list.url,
-    leavingDates: list.leavingDates ?? {},
     swapsApplied: list.swapsApplied ?? []
   }));
 }
@@ -463,7 +462,6 @@ export function normalizeCatalog({
     all: [],
     console: [],
     pc: [],
-    dates: Object.fromEntries(PLATFORM_IDS.map((platformId) => [platformId, {}])),
     unmatched: Object.fromEntries(PLATFORM_IDS.map((platformId) => [platformId, []]))
   };
   for (const list of leavingSoonLists) {
@@ -473,11 +471,6 @@ export function normalizeCatalog({
     const sourceIds = uniqueSorted(list.productIds ?? []);
     leavingSoon[list.platform] = sourceIds.filter((id) => allProductIdSet.has(id));
     leavingSoon.unmatched[list.platform] = sourceIds.filter((id) => !allProductIdSet.has(id));
-    leavingSoon.dates[list.platform] = Object.fromEntries(
-      leavingSoon[list.platform]
-        .filter((id) => list.leavingDates?.[id])
-        .map((id) => [id, list.leavingDates[id]])
-    );
   }
   leavingSoon.all = uniqueSorted(PLATFORM_IDS.flatMap((platformId) => leavingSoon[platformId]));
   const segments = emptySegments();
@@ -491,11 +484,6 @@ export function normalizeCatalog({
     );
     const platforms = uniqueSorted(Object.values(platformByTier).flat()).map((platformId) => platformId.toLowerCase());
     const leavingSoonPlatforms = PLATFORM_IDS.filter((platformId) => leavingSoon[platformId].includes(productId));
-    const leavingSoonDates = Object.fromEntries(
-      leavingSoonPlatforms
-        .filter((platformId) => leavingSoon.dates[platformId]?.[productId])
-        .map((platformId) => [platformId, leavingSoon.dates[platformId][productId]])
-    );
     const segment = segmentForTiers(memberships);
     const metadata = metadataForProduct(products[productId], productId, market);
     const game = {
@@ -503,7 +491,6 @@ export function normalizeCatalog({
       ...metadata,
       leavingSoon: leavingSoonPlatforms.length > 0,
       leavingSoonPlatforms,
-      leavingSoonDates,
       memberships,
       platformByTier,
       platforms,

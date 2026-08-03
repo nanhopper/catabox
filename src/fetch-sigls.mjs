@@ -13,7 +13,6 @@ import {
   getTier,
   stableStringify,
   todayFromIso,
-  toIsoDate,
   isMainModule,
   writeJsonFile
 } from './constants.mjs';
@@ -58,29 +57,6 @@ export function parseSiglsResponse(payload) {
     productIds: [...new Set(productIds)].sort(),
     swapsApplied
   };
-}
-
-function parseLeavingSoonDates(payload) {
-  const dates = {};
-  for (const entry of payload.slice(1)) {
-    const sourceId = typeof entry?.id === 'string' ? entry.id.trim().toUpperCase() : '';
-    if (!sourceId) continue;
-    const value = [
-      entry.leavingDate,
-      entry.LeavingDate,
-      entry.removalDate,
-      entry.RemovalDate,
-      entry.departureDate,
-      entry.DepartureDate,
-      entry.endDate,
-      entry.EndDate
-    ].find((candidate) => typeof candidate === 'string' && candidate.trim());
-    const date = toIsoDate(value);
-    if (date) {
-      dates[applyProductSwap(sourceId)] = date;
-    }
-  }
-  return dates;
 }
 
 export async function fetchSiglsList({
@@ -147,7 +123,6 @@ export async function fetchLeavingSoonList({
     sourceCount: parsed.sourceProductIds.length,
     productIds: parsed.productIds,
     sourceProductIds: parsed.sourceProductIds,
-    leavingDates: parseLeavingSoonDates(payload),
     swapsApplied: parsed.swapsApplied
   };
 }

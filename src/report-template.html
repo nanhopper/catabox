@@ -2180,10 +2180,7 @@
     function leavingSoonLabel(game) {
       const platforms = PLATFORMS.filter((platformId) => game.leavingSoonPlatforms?.includes(platformId));
       if (platforms.length === 0) return '';
-      return `Leaving soon · ${platforms.map((platformId) => {
-        const date = game.leavingSoonDates?.[platformId];
-        return `${labelFor('platforms', platformId)} (${date ? formatDate(date) : 'date not published'})`;
-      }).join(' + ')}`;
+      return `Leaving soon · ${platforms.map((platformId) => labelFor('platforms', platformId)).join(' + ')}`;
     }
 
     function leavingSoonBadge(game, emptyText = '') {

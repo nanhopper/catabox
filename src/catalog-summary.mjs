@@ -157,14 +157,6 @@ function sourceRows(status) {
   ];
 }
 
-function leavingSoonRows(status) {
-  return (status?.leavingSoonAdded ?? []).map((game) => [
-    game.title ?? game.familyId ?? '',
-    (game.platforms ?? []).map(platformLabel).join(' + '),
-    (game.platforms ?? []).map((platform) => game.dates?.[platform] ?? 'Not provided').join(' + ')
-  ]);
-}
-
 export function buildCatalogSummary({
   status,
   history = null,
@@ -211,8 +203,6 @@ export function buildCatalogSummary({
     '## Game-family changes',
     markdownTable(['Type', 'Game', 'Tier / platform', 'Family ID', 'Product listings', 'Date'], latestEvents, 'No individual game-family events were recorded for this run.'),
     truncatedNotice,
-    '## Newly announced as Leaving Soon',
-    markdownTable(['Game', 'Platform', 'Leaving date'], leavingSoonRows(status), 'No games were newly added to the Leaving Soon lists in this run.'),
     '## Product-listing audit',
     markdownTable(['Change type', 'Count'], eventCountRows(productEventCounts), 'No product-listing changes were detected in this run.'),
     markdownTable(['Type', 'Product', 'Tier / platform', 'Product ID', 'Date'], latestProductEvents, 'No individual product-listing events were recorded for this run.'),
