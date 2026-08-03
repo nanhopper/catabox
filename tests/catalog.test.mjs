@@ -45,7 +45,7 @@ function list(tier, platform, productIds) {
   };
 }
 
-function leavingList(platform, productIds) {
+function leavingList(platform, productIds, leavingDates = {}) {
   const siglId = platform === 'console'
     ? '393f05bf-e596-4ef6-9487-6d4fa0eab987'
     : 'cc7fc951-d00f-410e-9e02-5e4628e04163';
@@ -63,6 +63,7 @@ function leavingList(platform, productIds) {
     count: productIds.length,
     productIds,
     sourceProductIds: productIds,
+    leavingDates,
     swapsApplied: []
   };
 }
@@ -129,11 +130,12 @@ test('leaving-soon SIGLS fetching uses the platform collection and validates its
       ok: true,
       json: async () => [
         { siglId: '393f05bf-e596-4ef6-9487-6d4fa0eab987', title: 'Leaving soon' },
-        { id: 'AAA' }
+        { id: 'AAA', leavingDate: '2026-01-15T10:00:00Z' }
       ]
     })
   });
   assert.deepEqual(fetched.productIds, ['AAA']);
+  assert.deepEqual(fetched.leavingDates, { AAA: '2026-01-15' });
   assert.equal(fetched.platform, 'console');
 
   await assert.rejects(
@@ -248,7 +250,7 @@ test('normalizeCatalog annotates official leaving-soon platforms and warns about
     list('essential', 'console', []),
     list('essential', 'pc', [])
   ], '2026-01-01T00:00:00.000Z', products, [
-    leavingList('console', ['AAA', 'MISSING']),
+    leavingList('console', ['AAA', 'MISSING'], { AAA: '2026-01-15' }),
     leavingList('pc', ['AAA', 'BBB'])
   ]);
 
@@ -256,12 +258,17 @@ test('normalizeCatalog annotates official leaving-soon platforms and warns about
     all: ['AAA', 'BBB'],
     console: ['AAA'],
     pc: ['AAA', 'BBB'],
+    dates: {
+      console: { AAA: '2026-01-15' },
+      pc: {}
+    },
     unmatched: {
       console: ['MISSING'],
       pc: []
     }
   });
   assert.deepEqual(current.games.find((game) => game.id === 'AAA').leavingSoonPlatforms, ['console', 'pc']);
+  assert.deepEqual(current.games.find((game) => game.id === 'AAA').leavingSoonDates, { console: '2026-01-15' });
   assert.equal(current.games.find((game) => game.id === 'BBB').leavingSoon, true);
   assert.equal(current.counts.leavingSoon, 2);
   assert.deepEqual(current.counts.leavingSoonPlatforms, { console: 1, pc: 2 });
@@ -792,6 +799,12 @@ test('catalog action summary renders latest changes', () => {
     errors: [],
     actionRunUrl: 'https://github.com/example/catabox/actions/runs/123',
     leavingSoonTotal: 1,
+    leavingSoonAdded: [{
+      familyId: 'family-new',
+      title: 'A&B <Game>',
+      platforms: ['console'],
+      dates: { console: '2026-01-15' }
+    }],
     sourceHealth: {
       sigls: [
         {
@@ -858,6 +871,7 @@ test('catalog action summary renders latest changes', () => {
   assert.match(summary, /DisplayCatalog metadata/);
   assert.match(summary, /\| Leaving soon \| 1 \|/);
   assert.match(summary, /Leaving soon \/ Console/);
+  assert.match(summary, /## Newly announced as Leaving Soon[\s\S]*A&B <Game>[\s\S]*2026-01-15/);
   assert.doesNotMatch(summary, /Old game/);
 });
 

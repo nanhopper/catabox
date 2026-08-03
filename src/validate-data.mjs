@@ -110,6 +110,14 @@ function validateLeavingSoon(current, errors) {
         add(errors, `leavingSoon.unmatched.${platformId} contains current game ${id}`);
       }
     }
+    for (const [id, date] of Object.entries(leavingSoon.dates?.[platformId] ?? {})) {
+      if (!ids.includes(id)) {
+        add(errors, `leavingSoon.dates.${platformId} references non-leaving game ${id}`);
+      }
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+        add(errors, `leavingSoon.dates.${platformId}.${id} has invalid date`);
+      }
+    }
   }
   for (const game of games) {
     const expectedPlatforms = PLATFORM_IDS.filter((platformId) => (leavingSoon[platformId] ?? []).includes(game.id));
@@ -118,6 +126,13 @@ function validateLeavingSoon(current, errors) {
     }
     if (game.leavingSoon !== (expectedPlatforms.length > 0)) {
       add(errors, `game ${game.id} has incorrect leavingSoon flag`);
+    }
+    const expectedDates = Object.fromEntries(
+      expectedPlatforms.filter((platformId) => leavingSoon.dates?.[platformId]?.[game.id])
+        .map((platformId) => [platformId, leavingSoon.dates[platformId][game.id]])
+    );
+    if (stableStringify(game.leavingSoonDates ?? {}) !== stableStringify(expectedDates)) {
+      add(errors, `game ${game.id} has incorrect leavingSoonDates`);
     }
   }
   if (current.counts?.leavingSoon !== expectedAll.length) {

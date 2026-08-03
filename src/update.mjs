@@ -37,6 +37,26 @@ function statusBase({ generatedAt, state, market, language, previousCurrent }) {
   };
 }
 
+function leavingSoonAdditions(current, previousCurrent) {
+  if (!previousCurrent) return [];
+  const previousFamilies = new Map((previousCurrent.families ?? []).map((family) => [family.id, family]));
+  return (current.families ?? []).flatMap((family) => {
+    const previousPlatforms = new Set(previousFamilies.get(family.id)?.leavingSoonPlatforms ?? []);
+    const platforms = (family.leavingSoonPlatforms ?? []).filter((platform) => !previousPlatforms.has(platform));
+    if (platforms.length === 0) return [];
+    return [{
+      familyId: family.id,
+      title: family.title,
+      variantIds: family.variantIds,
+      platforms,
+      dates: Object.fromEntries(
+        platforms.filter((platform) => family.leavingSoonDates?.[platform])
+          .map((platform) => [platform, family.leavingSoonDates[platform]])
+      )
+    }];
+  });
+}
+
 function successStatus({ generatedAt, market, language, current, historyResult, warnings, validation, sigls, leavingSoonLists, productResult, previousCurrent }) {
   return {
     ...statusBase({ generatedAt, state: 'success', market, language, previousCurrent }),
@@ -53,6 +73,7 @@ function successStatus({ generatedAt, market, language, current, historyResult, 
     total: current.familyCounts.total,
     productTotal: current.counts.total,
     leavingSoonTotal: current.familyCounts.leavingSoon,
+    leavingSoonAdded: leavingSoonAdditions(current, previousCurrent),
     warnings: [...warnings, ...validation.warnings],
     errors: [],
     sourceHealth: {

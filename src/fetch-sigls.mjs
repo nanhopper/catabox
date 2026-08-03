@@ -13,6 +13,7 @@ import {
   getTier,
   stableStringify,
   todayFromIso,
+  toIsoDate,
   isMainModule,
   writeJsonFile
 } from './constants.mjs';
@@ -37,6 +38,29 @@ export async function requestJson(url, { fetchImpl = globalThis.fetch, timeoutMs
 export function parseSiglsResponse(payload) {
   if (!Array.isArray(payload)) {
     throw new Error('SIGLS response was not an array');
+  }
+
+  function parseLeavingSoonDates(payload) {
+    const dates = {};
+    for (const entry of payload.slice(1)) {
+      const sourceId = typeof entry?.id === 'string' ? entry.id.trim().toUpperCase() : '';
+      if (!sourceId) continue;
+      const value = [
+        entry.leavingDate,
+        entry.LeavingDate,
+        entry.removalDate,
+        entry.RemovalDate,
+        entry.departureDate,
+        entry.DepartureDate,
+        entry.endDate,
+        entry.EndDate
+      ].find((candidate) => typeof candidate === 'string' && candidate.trim());
+      const date = toIsoDate(value);
+      if (date) {
+        dates[applyProductSwap(sourceId)] = date;
+      }
+    }
+    return dates;
   }
   const [header = {}, ...entries] = payload;
   const sourceProductIds = entries
@@ -90,6 +114,7 @@ export async function fetchSiglsList({
     sourceCount: parsed.sourceProductIds.length,
     productIds: parsed.productIds,
     sourceProductIds: parsed.sourceProductIds,
+    leavingDates: parseLeavingSoonDates(payload),
     swapsApplied: parsed.swapsApplied
   };
 }
