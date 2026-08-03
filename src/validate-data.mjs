@@ -189,9 +189,11 @@ function validateFamilies(current, errors) {
   const expected = buildFamilyCatalog(games);
   const expectedFamilies = expected.families;
   const includeScreenshots = games.every((game) => 'screenshots' in game);
+  const includeLeavingSoonDates = games.every((game) => 'leavingSoonDates' in game);
   const comparable = (family) => {
     const value = { ...family };
     if (!includeScreenshots) delete value.screenshots;
+    if (!includeLeavingSoonDates) delete value.leavingSoonDates;
     return value;
   };
   if (stableStringify(families.map(comparable)) !== stableStringify(expectedFamilies.map(comparable))) {
