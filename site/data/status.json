@@ -1,35 +1,24 @@
 {
-  "actionRunNumber": "6",
-  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/30798448908",
+  "actionRunNumber": "7",
+  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/30854767798",
   "baseline": false,
-  "catalogGeneratedAt": "2026-08-03T08:43:32.140Z",
+  "catalogGeneratedAt": "2026-08-03T21:28:42.480Z",
   "catalogHash": "2f04aacaa523a415ab32b431001905ab5d03efd1fb9213d266245635f1a97760",
-  "changed": true,
+  "changed": false,
   "errors": [],
-  "eventCounts": {
-    "added": 4,
-    "platform_added": 3,
-    "removed": 8
-  },
-  "familyChanged": true,
-  "familyEventCounts": {
-    "added": 4,
-    "platform_added": 3,
-    "removed": 8
-  },
+  "eventCounts": {},
+  "familyChanged": false,
+  "familyEventCounts": {},
   "familyHash": "2a633c9ce6c593f590eb5d4776a82ecc5f94ec0944981fe6b6f38a4640ca577d",
-  "generatedAt": "2026-08-03T08:43:32.140Z",
+  "generatedAt": "2026-08-03T21:28:42.480Z",
   "language": "en-us",
-  "lastGoodCatalogHash": "116c10132a93fc6a8c271ee80658a5b172503179964d78aecc23ed91d2bf247b",
-  "lastGoodGeneratedAt": "2026-07-27T08:48:35.888Z",
+  "lastGoodCatalogHash": "2f04aacaa523a415ab32b431001905ab5d03efd1fb9213d266245635f1a97760",
+  "lastGoodGeneratedAt": "2026-08-03T08:43:32.140Z",
+  "leavingSoonAdded": [],
   "leavingSoonTotal": 4,
   "market": "FR",
-  "productChanged": true,
-  "productEventCounts": {
-    "added": 4,
-    "platform_added": 3,
-    "removed": 9
-  },
+  "productChanged": false,
+  "productEventCounts": {},
   "productTotal": 907,
   "sourceHealth": {
     "displayCatalog": {
