@@ -1,59 +1,115 @@
 {
-  "actionRunNumber": "9",
-  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/31999397976",
+  "actionRunNumber": "10",
+  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/32695225110",
   "baseline": false,
-  "catalogGeneratedAt": "2026-08-17T05:52:01.652Z",
-  "catalogHash": "7a8c25ca61b80ba366e02f9d570e02b629bf5e060dd13967f1a32381b7e9cb93",
+  "catalogGeneratedAt": "2026-08-24T05:55:09.458Z",
+  "catalogHash": "02f57b6acf21416a1e449af1c35102345543cdecaf53e85f3468587ee8219e85",
   "changed": true,
   "errors": [],
   "eventCounts": {
-    "added": 4,
-    "platform_added": 10,
-    "removed": 4,
+    "added": 1,
+    "platform_added": 9,
+    "removed": 1,
     "tier_added": 4
   },
   "familyChanged": true,
   "familyEventCounts": {
-    "added": 4,
-    "platform_added": 10,
-    "removed": 4,
+    "added": 1,
+    "platform_added": 9,
+    "removed": 1,
     "tier_added": 4
   },
-  "familyHash": "46483f21067aadcc12e9dc7eb85251d7a10e1d96ab82ee3f751814825eb7bbff",
-  "generatedAt": "2026-08-17T05:52:01.652Z",
+  "familyHash": "f0d02427d49bcc2f309668b83e30e01f5bc649354ebb3945c5232b592e6f2826",
+  "generatedAt": "2026-08-24T05:55:09.458Z",
   "language": "en-us",
-  "lastGoodCatalogHash": "b38aea6b6c65cd23953098ad24e1cfe888e13c236032018b4a084614c2ffa7e5",
-  "lastGoodGeneratedAt": "2026-08-10T06:43:04.253Z",
-  "leavingSoonAdded": [],
-  "leavingSoonTotal": 0,
+  "lastGoodCatalogHash": "7a8c25ca61b80ba366e02f9d570e02b629bf5e060dd13967f1a32381b7e9cb93",
+  "lastGoodGeneratedAt": "2026-08-17T05:52:01.652Z",
+  "leavingSoonAdded": [
+    {
+      "familyId": "family-c6682b6ca62a2d8190fd453c896d39fe31ab4b96b47c19d18dce0809e7951545",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Another Crab's Treasure",
+      "variantIds": [
+        "9P97ZTRTH25W"
+      ]
+    },
+    {
+      "familyId": "family-9a175657615eb285d70554ae7d5cb51084bee0947327f3ebffe2c0c94ad1d70f",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "I Am Your Beast",
+      "variantIds": [
+        "9PF9FQGH89WM"
+      ]
+    },
+    {
+      "familyId": "family-9144f8270c2a72c2378304a8799d26c37bead97b672bc6d68efb977bd5b45dbb",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Neon Abyss",
+      "variantIds": [
+        "9NC781DK18GN",
+        "9PLWSGHFQ4PS"
+      ]
+    },
+    {
+      "familyId": "family-1cd6e9d93003469be3b1cd26f6cd0693e5de524e63aed20d819a6a7b26af667e",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "One Lonely Outpost",
+      "variantIds": [
+        "9NRCM30L6GRQ"
+      ]
+    },
+    {
+      "familyId": "family-5d1c491e7c65d38c11bbb84f5938ab17a310a270ce2f9268e5d1d389249f20a8",
+      "platforms": [
+        "console"
+      ],
+      "title": "The Witcher 3: Wild Hunt – Complete Edition",
+      "variantIds": [
+        "C261457LCNMJ"
+      ]
+    }
+  ],
+  "leavingSoonTotal": 5,
   "market": "FR",
   "productChanged": true,
   "productEventCounts": {
-    "added": 6,
+    "added": 2,
     "platform_added": 8,
-    "removed": 6,
+    "removed": 1,
     "tier_added": 4
   },
-  "productTotal": 908,
+  "productTotal": 909,
   "sourceHealth": {
     "displayCatalog": {
       "missingProductIds": [],
-      "requested": 908,
-      "returned": 908,
+      "requested": 909,
+      "returned": 909,
       "status": "ok"
     },
     "leavingSoon": [
       {
-        "count": 0,
+        "count": 5,
         "platform": "console",
-        "sourceCount": 0,
+        "sourceCount": 5,
         "status": "ok",
         "url": "https://catalog.gamepass.com/sigls/v2?id=393f05bf-e596-4ef6-9487-6d4fa0eab987&language=en-us&market=FR"
       },
       {
-        "count": 0,
+        "count": 4,
         "platform": "pc",
-        "sourceCount": 0,
+        "sourceCount": 4,
         "status": "ok",
         "url": "https://catalog.gamepass.com/sigls/v2?id=cc7fc951-d00f-410e-9e02-5e4628e04163&language=en-us&market=FR"
       }
@@ -68,25 +124,25 @@
         "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0khs0"
       },
       {
-        "count": 597,
+        "count": 598,
         "platform": "pc",
-        "sourceCount": 597,
+        "sourceCount": 598,
         "status": "ok",
         "tier": "ultimate",
         "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0khs0"
       },
       {
-        "count": 436,
+        "count": 440,
         "platform": "console",
-        "sourceCount": 436,
+        "sourceCount": 440,
         "status": "ok",
         "tier": "premium",
         "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0p85b"
       },
       {
-        "count": 407,
+        "count": 411,
         "platform": "pc",
-        "sourceCount": 407,
+        "sourceCount": 411,
         "status": "ok",
         "tier": "premium",
         "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0p85b"
