@@ -423,6 +423,23 @@ test('checked-in catalog family references preserve every Xbox URL', () => {
   assert.match(reportTemplate, /<th scope="col">Leaving<\/th>/);
 });
 
+test('card genres render as accented chips above the publisher line', () => {
+  const cardStart = reportTemplate.indexOf('function renderCard(game)');
+  const cardEnd = reportTemplate.indexOf('function renderTableRow(game)', cardStart);
+  assert(cardStart >= 0 && cardEnd > cardStart, 'renderCard should exist before renderTableRow');
+  const cardSource = reportTemplate.slice(cardStart, cardEnd);
+
+  const genrePosition = cardSource.indexOf('${cardGenres(game)}');
+  const publisherPosition = cardSource.indexOf('game.publisher');
+  assert(genrePosition >= 0, 'card should render genre chips');
+  assert(genrePosition < publisherPosition, 'genre chips should appear before the publisher line');
+  assert.doesNotMatch(cardSource, /game\.genres \?\? \[\]\)\.slice\(0, 3\)\.join/);
+
+  assert.match(reportTemplate, /class="chip-genre"/);
+  assert.match(reportTemplate, /--accent-3:/);
+  assert.match(reportTemplate, /<td class="genre-col">\$\{genreChipList\(game\.genres \?\? \[\]\)\}<\/td>/);
+});
+
 test('screenshot metadata does not affect the membership catalog hash', () => {
   const lists = [
     list('ultimate', 'console', ['9PNJXVCVWD4K']),
