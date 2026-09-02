@@ -17,6 +17,7 @@
       --line: #2a394c;
       --accent: #7ee787;
       --accent-2: #58a6ff;
+      --accent-3: #ff9d3f;
       --warn: #f2cc60;
       --danger: #ff7b72;
       --chip: #22324a;
@@ -434,7 +435,8 @@
     }
 
     .chip,
-    .badge {
+    .badge,
+    .chip-genre {
       display: inline-flex;
       align-items: center;
       gap: 0.25rem;
@@ -448,6 +450,26 @@
 
     .badge {
       background: color-mix(in srgb, var(--accent-2) 20%, var(--chip));
+    }
+
+    .chip-genre {
+      color: #fff0dd;
+      font-weight: 700;
+      background: color-mix(in srgb, var(--accent-3) 30%, var(--chip));
+      border-color: color-mix(in srgb, var(--accent-3) 65%, var(--line));
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent-3) 20%, transparent);
+    }
+
+    .chip-genre.is-empty {
+      color: var(--muted);
+      font-weight: 400;
+      background: var(--chip);
+      border-color: var(--line);
+      box-shadow: none;
+    }
+
+    .genre-col {
+      min-width: 11rem;
     }
 
     code {
@@ -1290,7 +1312,7 @@
             <th scope="col">Tiers</th>
             <th scope="col">Platforms</th>
             <th scope="col">Tier coverage</th>
-            <th scope="col">Genre</th>
+            <th scope="col" class="genre-col">Genre</th>
             <th scope="col">Publisher</th>
             <th scope="col" aria-sort="none">
               <button class="sort-button" type="button" data-sort-key="release">
@@ -2112,6 +2134,21 @@
       return `<span class="chips">${values.map((value) => `<span class="chip">${escapeHtml(labeler(value))}</span>`).join('')}</span>`;
     }
 
+    function genreChipList(genres, limit = 0) {
+      const shown = limit > 0 ? genres.slice(0, limit) : genres;
+      const chips = shown.map((genre) => `<span class="chip-genre">${escapeHtml(genre)}</span>`);
+      const overflow = genres.length - shown.length;
+      if (overflow > 0) chips.push(`<span class="chip-genre" title="${escapeHtml(genres.slice(limit).join(', '))}">+${overflow}</span>`);
+      return `<span class="chips">${chips.join('')}</span>`;
+    }
+
+    function cardGenres(game) {
+      const genres = game.genres ?? [];
+      return genres.length === 0
+        ? '<span class="chips"><span class="chip-genre is-empty">No genre metadata</span></span>'
+        : genreChipList(genres, 3);
+    }
+
     function variantPlatformLabel(variant) {
       const platforms = variant.platforms ?? [];
       return platforms.length
@@ -2750,13 +2787,13 @@
         ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
         <div class="card-body">
           <h3>${titleHtml(game)}</h3>
+          ${cardGenres(game)}
           ${leavingSoonBadge(game)}
           ${variantLinksHtml(game)}
           <p>${escapeHtml(game.publisher || 'Unknown publisher')}</p>
           ${chipList(game.memberships, (tier) => labelFor('tiers', tier))}
           ${chipList(game.platforms, (platform) => labelFor('platforms', platform))}
           ${chipList([releaseLabel(game), pegiLabel(game), frAvailabilityLabel(game)])}
-          <p>${escapeHtml((game.genres ?? []).slice(0, 3).join(', ') || 'No genre metadata')}</p>
           ${modes.length ? chipList(modes.slice(0, 4)) : ''}
           ${badgeList(game)}
         </div>
@@ -2781,7 +2818,7 @@
         <td>${chipList(game.memberships, (tier) => labelFor('tiers', tier))}</td>
         <td>${chipList(game.platforms, (platform) => labelFor('platforms', platform))}</td>
         <td>${escapeHtml(labelFor('segments', game.segment))}</td>
-        <td>${escapeHtml((game.genres ?? []).join(', '))}</td>
+        <td class="genre-col">${genreChipList(game.genres ?? [])}</td>
         <td>${escapeHtml(game.publisher || '')}</td>
         <td>${escapeHtml(game.releaseDate ?? '')}</td>
         <td>${escapeHtml(game.pegiRating ?? '')}</td>
