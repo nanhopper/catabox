@@ -1,127 +1,229 @@
 {
-  "actionRunNumber": "11",
-  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/33387837295",
+  "actionRunNumber": "12",
+  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/34111124424",
   "baseline": false,
-  "catalogGeneratedAt": "2026-08-31T11:37:38.907Z",
-  "catalogHash": "8fbf5d5db02a44dca010fdef41f00c076e70359e3ddf1c480333fb876ede8552",
+  "catalogGeneratedAt": "2026-09-07T10:22:55.031Z",
+  "catalogHash": "ff1213a0765933eb714eae420ca1d63772faa9fe15fc07b3fafb14512dc65cab",
   "changed": true,
   "errors": [],
   "eventCounts": {
-    "added": 3,
-    "platform_added": 4,
-    "tier_added": 2
+    "added": 5,
+    "platform_added": 3,
+    "removed": 10,
+    "tier_added": 1
   },
   "familyChanged": true,
   "familyEventCounts": {
-    "added": 3,
-    "platform_added": 4,
-    "tier_added": 2
+    "added": 5,
+    "platform_added": 3,
+    "removed": 10,
+    "tier_added": 1
   },
-  "familyHash": "76f4bce8dc4558cf67b1b64d2c224536468da8b56c5df4e32702264527e814da",
-  "generatedAt": "2026-08-31T11:37:38.907Z",
+  "familyHash": "bd1a34b235f25236bf7f9588866f6385ec0c2c7a2f8face796dd017517b8ed79",
+  "generatedAt": "2026-09-07T10:22:55.031Z",
   "language": "en-us",
-  "lastGoodCatalogHash": "02f57b6acf21416a1e449af1c35102345543cdecaf53e85f3468587ee8219e85",
-  "lastGoodGeneratedAt": "2026-08-24T05:55:09.458Z",
+  "lastGoodCatalogHash": "8fbf5d5db02a44dca010fdef41f00c076e70359e3ddf1c480333fb876ede8552",
+  "lastGoodGeneratedAt": "2026-08-31T11:37:38.907Z",
   "leavingSoonAdded": [
     {
-      "familyId": "family-f9b167ae0acf72a884b9a04972bbb50a3b65cc99e77b96e2b307509a3271490a",
+      "familyId": "family-7d2fdff3755174b6fc21554c8e18885d0278f44cbab85e36ff5bf3be939b9e37",
       "platforms": [
-        "console"
+        "console",
+        "pc"
       ],
-      "title": "NBA 2K26",
+      "title": "Commandos: Origins",
       "variantIds": [
-        "9PP9PFSCJTWR",
-        "9NFKCJNBR34N"
+        "9NNRCR6MBNDR",
+        "9PDH7X3J5CZT"
       ]
     },
     {
-      "familyId": "family-78fd8c5b49cea170d241a24b1f89d1f1eb280b5d78e84c36e5309fe366ec1701",
+      "familyId": "family-16e3a5b2bfff7b1bdd6713f6e1d5bda566e7363351016359942227915b859851",
+      "platforms": [
+        "console"
+      ],
+      "title": "Cricket 24",
+      "variantIds": [
+        "9PPN49GPNH5M"
+      ]
+    },
+    {
+      "familyId": "family-78b2dc31090b17720271fe4c5bc78f7db79c0b7018a7f70cfc844b5d1a2177bb",
       "platforms": [
         "pc"
       ],
-      "title": "NBA 2K26 Standard Edition",
+      "title": "Cricket 24: The Official Game Of The Ashes",
       "variantIds": [
-        "9N2FJQC9NTX6"
+        "9NKF2SZ630ZH"
+      ]
+    },
+    {
+      "familyId": "family-eec37234b7ea90cef7104af7427ee0bfb0109e031bdef7d4e16c6bb52e423227",
+      "platforms": [
+        "console"
+      ],
+      "title": "Cyberpunk 2077",
+      "variantIds": [
+        "BX3M8L83BBRW"
+      ]
+    },
+    {
+      "familyId": "family-88d4a964957364133e8aacfec5d9d0842aa21f98728b2d710ba9c0d957870f10",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Dead Cells",
+      "variantIds": [
+        "9NKVX66J0ZSK",
+        "BQSCNS1T8PHQ"
+      ]
+    },
+    {
+      "familyId": "family-cbd257c8a63a92cf08454b46f8fef9277da85296f3e35215e56ab03b44be6be1",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Deep Rock Galactic: Survivor",
+      "variantIds": [
+        "9PHGQPRBBSXK"
+      ]
+    },
+    {
+      "familyId": "family-6492a162b6c1ba3d41f750615b17fb8c1eda9b7273d4088504fb201b9e733ad5",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Frostpunk 2",
+      "variantIds": [
+        "9N0KN24FWP6B"
+      ]
+    },
+    {
+      "familyId": "family-72dd245e412ec7d62818dc143989130e7d5fbaa2be246df645bd1d5bf6f220fc",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "MULLET MADJACK",
+      "variantIds": [
+        "9PG8TV30NN9H"
+      ]
+    },
+    {
+      "familyId": "family-813ec9461ff357a7912707751e40977204ed9dcfcdcca8630139c55f039743ac",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Spiritfarer®: Farewell Edition",
+      "variantIds": [
+        "9NG5L58FD3X5"
+      ]
+    },
+    {
+      "familyId": "family-9db978aa3efc2d1cc8ea61765748dff8d13e980a0ef2a2f859cf6cfd6e9215c7",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Superliminal",
+      "variantIds": [
+        "9NVR4ZQKNBSB"
+      ]
+    },
+    {
+      "familyId": "family-822015472ac3e7c28f2a569f9d7083377b504fe35139b141372440c18b29ab46",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Train Sim World® 5: Standard Edition",
+      "variantIds": [
+        "9N9FR8CSZP56"
       ]
     }
   ],
-  "leavingSoonTotal": 7,
+  "leavingSoonTotal": 11,
   "market": "FR",
   "productChanged": true,
   "productEventCounts": {
-    "added": 3,
-    "platform_added": 4,
+    "added": 2,
+    "platform_added": 6,
+    "removed": 9,
     "tier_added": 2
   },
-  "productTotal": 912,
+  "productTotal": 905,
   "sourceHealth": {
     "displayCatalog": {
       "missingProductIds": [],
-      "requested": 912,
-      "returned": 912,
+      "requested": 905,
+      "returned": 905,
       "status": "ok"
     },
     "leavingSoon": [
       {
-        "count": 7,
+        "count": 10,
         "platform": "console",
-        "sourceCount": 7,
+        "sourceCount": 10,
         "status": "ok",
         "url": "https://catalog.gamepass.com/sigls/v2?id=393f05bf-e596-4ef6-9487-6d4fa0eab987&language=en-us&market=FR"
       },
       {
-        "count": 5,
+        "count": 9,
         "platform": "pc",
-        "sourceCount": 5,
+        "sourceCount": 9,
         "status": "ok",
         "url": "https://catalog.gamepass.com/sigls/v2?id=cc7fc951-d00f-410e-9e02-5e4628e04163&language=en-us&market=FR"
       }
     ],
     "sigls": [
       {
-        "count": 630,
+        "count": 627,
         "platform": "console",
-        "sourceCount": 630,
+        "sourceCount": 627,
         "status": "ok",
         "tier": "ultimate",
         "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0khs0"
       },
       {
-        "count": 601,
+        "count": 598,
         "platform": "pc",
-        "sourceCount": 601,
+        "sourceCount": 598,
         "status": "ok",
         "tier": "ultimate",
         "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0khs0"
       },
       {
-        "count": 443,
+        "count": 439,
         "platform": "console",
-        "sourceCount": 443,
+        "sourceCount": 439,
         "status": "ok",
         "tier": "premium",
         "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0p85b"
       },
       {
-        "count": 414,
+        "count": 412,
         "platform": "pc",
-        "sourceCount": 414,
+        "sourceCount": 412,
         "status": "ok",
         "tier": "premium",
         "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0p85b"
       },
       {
-        "count": 94,
+        "count": 93,
         "platform": "console",
-        "sourceCount": 94,
+        "sourceCount": 93,
         "status": "ok",
         "tier": "essential",
         "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0k5dj"
       },
       {
-        "count": 87,
+        "count": 86,
         "platform": "pc",
-        "sourceCount": 87,
+        "sourceCount": 86,
         "status": "ok",
         "tier": "essential",
         "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0k5dj"
@@ -129,6 +231,6 @@
     ]
   },
   "state": "success",
-  "total": 732,
+  "total": 727,
   "warnings": []
 }
