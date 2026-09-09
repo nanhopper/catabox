@@ -4,10 +4,20 @@ import {
   GENERATED_PATHS,
   MAX_GAME_SCREENSHOTS,
   PLATFORM_IDS,
+  RECOMMENDATION_ALGORITHM,
+  RECOMMENDATION_LIST_LIMIT,
+  RECOMMENDATION_SCHEMA_VERSION,
   TIER_IDS,
   isMainModule,
   stableStringify
 } from './constants.mjs';
+import {
+  RECOMMENDATION_REASON_CODES,
+  buildRecommendations,
+  playerModeSignals,
+  reasonCodesForFeatures,
+  recommendationFeatures
+} from './build-recommendations.mjs';
 import {
   GAME_FAMILY_SCHEMA_VERSION,
   buildFamilyCatalog
@@ -432,6 +442,144 @@ export function validateCatalog({ current, previousCurrent = null, history = nul
   return { errors, warnings };
 }
 
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+export function validateRecommendations({ current, recommendations }) {
+  const errors = [];
+  if (!current) {
+    return ['current catalog is missing'];
+  }
+  if (!isPlainObject(recommendations)) {
+    return ['recommendations artifact is missing or invalid'];
+  }
+  if (recommendations.schemaVersion !== RECOMMENDATION_SCHEMA_VERSION) {
+    add(errors, `recommendations.schemaVersion must be ${RECOMMENDATION_SCHEMA_VERSION}`);
+  }
+  if (recommendations.algorithm !== RECOMMENDATION_ALGORITHM) {
+    add(errors, `recommendations.algorithm must be ${RECOMMENDATION_ALGORITHM}`);
+  }
+  for (const field of ['generatedAt', 'catalogHash', 'familyHash']) {
+    if (recommendations[field] !== current[field]) {
+      add(errors, `recommendations.${field} does not match current.${field}`);
+    }
+  }
+  if (!isPlainObject(recommendations.items)) {
+    add(errors, 'recommendations.items must be an object');
+    return errors;
+  }
+
+  const families = Array.isArray(current.families) ? current.families : [];
+  const familiesById = new Map(families.map((family) => [family.id, family]));
+  const featuresById = new Map(families.map((family) => [family.id, recommendationFeatures(family)]));
+  const expectedSourceIds = [...familiesById.keys()].sort();
+  const actualSourceIds = Object.keys(recommendations.items).sort();
+  if (stableStringify(actualSourceIds) !== stableStringify(expectedSourceIds)) {
+    add(errors, 'recommendations.items must cover every current family ID exactly');
+  }
+
+  for (const sourceId of actualSourceIds) {
+    const source = familiesById.get(sourceId);
+    const lists = recommendations.items[sourceId];
+    if (!source) continue;
+    if (!isPlainObject(lists)) {
+      add(errors, `recommendations.items.${sourceId} must be an object`);
+      continue;
+    }
+    const listNames = Object.keys(lists).sort();
+    if (stableStringify(listNames) !== stableStringify(['discover', 'sameMode', 'similar'])) {
+      add(errors, `recommendations.items.${sourceId} must contain similar, discover, and sameMode lists`);
+    }
+    for (const listName of ['similar', 'discover', 'sameMode']) {
+      const candidates = lists[listName];
+      if (!Array.isArray(candidates)) {
+        add(errors, `recommendations.items.${sourceId}.${listName} must be an array`);
+        continue;
+      }
+      if (candidates.length > RECOMMENDATION_LIST_LIMIT) {
+        add(errors, `recommendations.items.${sourceId}.${listName} exceeds ${RECOMMENDATION_LIST_LIMIT} candidates`);
+      }
+      if (listName === 'sameMode' && playerModeSignals(source).size === 0 && candidates.length > 0) {
+        add(errors, `recommendations.items.${sourceId}.sameMode must be empty without a source mode signal`);
+      }
+      const seen = new Set();
+      let previous = null;
+      for (const [index, candidate] of candidates.entries()) {
+        const path = `recommendations.items.${sourceId}.${listName}[${index}]`;
+        if (!isPlainObject(candidate)) {
+          add(errors, `${path} must be an object`);
+          continue;
+        }
+        if (typeof candidate.id !== 'string' || !familiesById.has(candidate.id)) {
+          add(errors, `${path} references unknown family ${candidate.id}`);
+        }
+        if (candidate.id === sourceId) {
+          add(errors, `${path} must not recommend its source family`);
+        }
+        if (seen.has(candidate.id)) {
+          add(errors, `${path} duplicates family ${candidate.id}`);
+        }
+        seen.add(candidate.id);
+        if (typeof candidate.score !== 'number'
+          || !Number.isFinite(candidate.score)
+          || candidate.score < 0
+          || candidate.score > 1) {
+          add(errors, `${path}.score must be a finite number from 0 to 1`);
+        }
+        if (previous && typeof candidate.score === 'number' && Number.isFinite(candidate.score)) {
+          if (candidate.score > previous.score
+            || (candidate.score === previous.score && compareRecommendationIds(candidate.id, previous.id) < 0)) {
+            add(errors, `${path} is not sorted by descending score and family ID`);
+          }
+        }
+        previous = candidate;
+        if (!Array.isArray(candidate.reasons) || candidate.reasons.length === 0) {
+          add(errors, `${path}.reasons must be a non-empty array`);
+          continue;
+        }
+        if (new Set(candidate.reasons).size !== candidate.reasons.length) {
+          add(errors, `${path}.reasons contains duplicates`);
+        }
+        for (const reason of candidate.reasons) {
+          if (!RECOMMENDATION_REASON_CODES.has(reason)) {
+            add(errors, `${path} has invalid reason code ${reason}`);
+          }
+        }
+        const target = familiesById.get(candidate.id);
+        if (target) {
+          const expectedReasons = reasonCodesForFeatures(
+            featuresById.get(sourceId),
+            featuresById.get(candidate.id)
+          );
+          if (stableStringify(candidate.reasons) !== stableStringify(expectedReasons)) {
+            add(errors, `${path}.reasons do not match source and target metadata`);
+          }
+          if (listName === 'sameMode') {
+            const sourceModes = featuresById.get(sourceId).modes;
+            const targetModes = featuresById.get(candidate.id).modes;
+            if (![...sourceModes].some((mode) => targetModes.has(mode))) {
+              add(errors, `${path} does not share a real player-mode signal`);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (errors.length === 0) {
+    const expected = buildRecommendations({ current });
+    if (stableStringify(recommendations) !== stableStringify(expected)) {
+      add(errors, 'recommendations artifact does not match the deterministic recommendation build');
+    }
+  }
+  return errors;
+}
+
+function compareRecommendationIds(left, right) {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 export async function validateDeterministicJson(filePaths) {
   const errors = [];
   for (const filePath of filePaths) {
@@ -457,6 +605,7 @@ function parseCliArgs(argv) {
   const args = {
     current: GENERATED_PATHS.current,
     history: GENERATED_PATHS.history,
+    recommendations: GENERATED_PATHS.recommendations,
     previous: null
   };
   for (let index = 0; index < argv.length; index += 1) {
@@ -465,6 +614,8 @@ function parseCliArgs(argv) {
       args.current = argv[++index];
     } else if (arg === '--history') {
       args.history = argv[++index];
+    } else if (arg === '--recommendations') {
+      args.recommendations = argv[++index];
     } else if (arg === '--previous') {
       args.previous = argv[++index];
     } else {
@@ -489,9 +640,16 @@ async function runCli() {
   const args = parseCliArgs(process.argv.slice(2));
   const current = await readJson(args.current, true);
   const history = await readJson(args.history);
+  const recommendations = await readJson(args.recommendations, true);
   const previousCurrent = args.previous ? await readJson(args.previous) : null;
   const result = validateCatalog({ current, previousCurrent, history });
-  result.errors.push(...await validateDeterministicJson([args.current, args.history, GENERATED_PATHS.status]));
+  result.errors.push(...validateRecommendations({ current, recommendations }));
+  result.errors.push(...await validateDeterministicJson([
+    args.current,
+    args.history,
+    args.recommendations,
+    GENERATED_PATHS.status
+  ]));
   for (const warning of result.warnings) {
     console.warn(`warning: ${warning}`);
   }

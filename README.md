@@ -6,7 +6,7 @@ Catabox is a zero-COGS static Xbox Game Pass catalog tracker. It publishes a Git
 
 Catabox is an unofficial fan-made tracker and is not affiliated with, endorsed by, or sponsored by Xbox or Microsoft.
 
-The tracker is catalog-only: it does not use personal gamertags, libraries, played history, installed games, analytics, a server, a proxy, a database, paid storage, or runtime secrets.
+The tracker does not use personal gamertags, linked libraries, installed-game data, analytics, a server, a proxy, a database, paid storage, or runtime secrets. Optional recommendation preferences, likes, saves, played markers, and dismissals stay in the visitor's browser and can be reset or exported.
 
 ## What it tracks
 
@@ -19,6 +19,12 @@ The tracker is catalog-only: it does not use personal gamertags, libraries, play
 The generated `site/data/current.json` retains one source record per Xbox product ID and adds a display layer of semantic game families. Families are grouped only when titles match after conservative, versioned normalization of punctuation, presentation marks, Roman numerals, and explicit terminal platform qualifiers. Editions, remasters, remakes, bundles, subtitles, and bare `Console` titles remain distinct. The current product and family models each include counts, diffs, tier-combination segments, and deterministic membership hashes.
 
 The site renders and counts game families first. A family with several PC, console, or generation-specific products exposes every Xbox product page in an accessible platform-aware disclosure; raw product IDs and metadata remain available for auditing. Visual metadata includes up to eight deduplicated DisplayCatalog screenshot thumbnails per family, loaded only while its preview popup is open.
+
+## Recommendations
+
+The weekly catalog build generates deterministic, explainable recommendation candidates from title and description similarity, genres, publishers and developers, player modes, release era, tiers, and platforms. The public site combines those candidates with active filters and optional browser-local taste preferences.
+
+Catabox does not upload recommendation interactions. Likes, saves, played markers, dismissals, preferred genres, platforms, tiers, player modes, and discovery style remain in `localStorage` on the current browser. The recommendation controls can reset the profile or export/import it as JSON.
 
 ## Data sources
 
@@ -120,6 +126,7 @@ Useful scripts:
 | `npm run fetch` | Fetch and print SIGLS lists |
 | `npm run normalize` | Normalize saved fetch/product payloads |
 | `npm run history` | Update history from an existing `site/data/current.json` |
+| `npm run recommendations` | Rebuild deterministic recommendation candidates from `site/data/current.json` |
 | `npm run migrate:families` | Rebuild family data and backfill family history from checked-in snapshots |
 | `npm run summary:catalog` | Render the latest catalog update job summary |
 | `npm run build` | Render the static site shell into `site/` |
@@ -143,4 +150,4 @@ The update workflow commits only generated `site/` changes when those files chan
 - Conservative exact family matching intentionally leaves spelling and word-boundary aliases unmerged rather than risk false positives.
 - Family IDs are title-derived, so a substantive upstream rename can produce family churn; product-level history remains authoritative.
 - Market availability defaults to France (`FR`) and product metadata language defaults to `en-us`.
-- The site has no user accounts and does not know whether a visitor owns, played, installed, or wishlisted a game.
+- The site has no user accounts, cross-device sync, linked Xbox library, or knowledge of installed games. Played and saved markers are optional browser-local notes supplied by the visitor.

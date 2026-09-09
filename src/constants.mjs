@@ -12,6 +12,9 @@ export const SIGLS_COLLECTION_ENDPOINT = 'https://catalog.gamepass.com/sigls/v2'
 export const DISPLAY_CATALOG_ENDPOINT = 'https://displaycatalog.mp.microsoft.com/v7.0/products';
 export const DISPLAY_CATALOG_MS_CV = 'DGU1mcuYo0WMMp+F.1';
 export const MAX_GAME_SCREENSHOTS = 8;
+export const RECOMMENDATION_SCHEMA_VERSION = 1;
+export const RECOMMENDATION_ALGORITHM = 'hybrid-tfidf-mmr-v1';
+export const RECOMMENDATION_LIST_LIMIT = 12;
 
 export const TIERS = [
   {
@@ -97,6 +100,7 @@ export const GENERATED_PATHS = {
   snapshotsDir: 'site/data/snapshots',
   current: 'site/data/current.json',
   history: 'site/data/history.json',
+  recommendations: 'site/data/recommendations.json',
   status: 'site/data/status.json',
   template: 'src/report-template.html',
   siteIndex: 'site/index.html',
