@@ -9,11 +9,16 @@ import {
   stableStringify,
   writeJsonFile
 } from './constants.mjs';
+import { buildRecommendations } from './build-recommendations.mjs';
 import { fetchAllLeavingSoon, fetchAllSigls } from './fetch-sigls.mjs';
 import { fetchProducts, productIdsFromSiglsPayload } from './fetch-products.mjs';
 import { normalizeCatalog } from './normalize-catalog.mjs';
 import { readHistorySnapshots, updateHistory } from './update-history.mjs';
-import { validateCatalog, validateDeterministicJson } from './validate-data.mjs';
+import {
+  validateCatalog,
+  validateDeterministicJson,
+  validateRecommendations
+} from './validate-data.mjs';
 import { renderSite } from './render-site.mjs';
 
 function eventCounts(events) {
@@ -137,11 +142,12 @@ async function writeSnapshotIfNeeded(historyResult) {
   await writeJsonFile(`${GENERATED_PATHS.siteDataDir}/${snapshotEntry.path}`, historyResult.snapshot);
 }
 
-async function writeSuccessOutputs({ current, historyResult, status }) {
+async function writeSuccessOutputs({ current, historyResult, recommendations, status }) {
   await mkdir(GENERATED_PATHS.snapshotsDir, { recursive: true });
   await writeSnapshotIfNeeded(historyResult);
   await writeJsonFile(GENERATED_PATHS.current, current);
   await writeJsonFile(GENERATED_PATHS.history, historyResult.history);
+  await writeJsonFile(GENERATED_PATHS.recommendations, recommendations);
   await writeJsonFile(GENERATED_PATHS.status, status);
   await renderSite();
 }
@@ -202,6 +208,11 @@ export async function updateCatalog({ market = DEFAULT_MARKET, language = DEFAUL
   if (validation.errors.length > 0) {
     throw new Error(`Catalog validation failed:\n${validation.errors.join('\n')}`);
   }
+  const recommendations = buildRecommendations({ current });
+  const recommendationErrors = validateRecommendations({ current, recommendations });
+  if (recommendationErrors.length > 0) {
+    throw new Error(`Recommendation validation failed:\n${recommendationErrors.join('\n')}`);
+  }
 
   const status = successStatus({
     generatedAt,
@@ -217,17 +228,18 @@ export async function updateCatalog({ market = DEFAULT_MARKET, language = DEFAUL
     previousCurrent
   });
 
-  await writeSuccessOutputs({ current, historyResult, status });
+  await writeSuccessOutputs({ current, historyResult, recommendations, status });
   const deterministicErrors = await validateDeterministicJson([
     GENERATED_PATHS.current,
     GENERATED_PATHS.history,
+    GENERATED_PATHS.recommendations,
     GENERATED_PATHS.status
   ]);
   if (deterministicErrors.length > 0) {
     throw new Error(`Generated JSON is not deterministic:\n${deterministicErrors.join('\n')}`);
   }
 
-  return { current, history: historyResult.history, status };
+  return { current, history: historyResult.history, recommendations, status };
 }
 
 async function runCli() {

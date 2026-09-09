@@ -698,6 +698,251 @@
       overflow: hidden;
     }
 
+    .recommendations-panel {
+      display: grid;
+      gap: 1rem;
+      border-color: color-mix(in srgb, var(--accent-2) 42%, var(--line));
+      background:
+        linear-gradient(145deg, color-mix(in srgb, var(--accent-2) 9%, var(--panel)), color-mix(in srgb, var(--accent) 5%, var(--panel)));
+    }
+
+    .recommendations-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .recommendations-head h2,
+    .recommendations-head p,
+    .recommendation-rail h3,
+    .recommendation-rail > p {
+      margin: 0;
+    }
+
+    .recommendations-copy {
+      display: grid;
+      gap: 0.35rem;
+      max-width: 72ch;
+    }
+
+    .recommendations-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .recommendations-actions button {
+      width: auto;
+    }
+
+    .taste-controls {
+      display: grid;
+      gap: 1rem;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 0.85rem;
+      background: color-mix(in srgb, var(--panel-2) 86%, transparent);
+    }
+
+    .taste-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.85rem;
+    }
+
+    .taste-fieldset {
+      display: grid;
+      align-content: start;
+      gap: 0.5rem;
+      min-width: 0;
+      margin: 0;
+      padding: 0.75rem;
+      border: 1px solid var(--line);
+      border-radius: 0.75rem;
+    }
+
+    .taste-fieldset legend {
+      padding: 0 0.35rem;
+      color: var(--text);
+      font-size: 0.88rem;
+      font-weight: 750;
+    }
+
+    .taste-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      max-height: 10rem;
+      overflow: auto;
+    }
+
+    .taste-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      width: fit-content;
+      padding: 0.25rem 0.55rem;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--chip);
+      color: var(--text);
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .taste-option:has(input:checked) {
+      border-color: color-mix(in srgb, var(--accent-2) 70%, var(--line));
+      background: color-mix(in srgb, var(--accent-2) 24%, var(--chip));
+    }
+
+    .taste-option input {
+      width: auto;
+      min-height: auto;
+      margin: 0;
+      accent-color: var(--accent-2);
+    }
+
+    .taste-discovery {
+      align-content: start;
+    }
+
+    .taste-transfer {
+      border-top: 1px solid var(--line);
+      padding-top: 0.85rem;
+    }
+
+    .taste-transfer summary {
+      width: fit-content;
+      color: var(--accent-2);
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .taste-transfer-body {
+      display: grid;
+      gap: 0.6rem;
+      margin-top: 0.75rem;
+    }
+
+    .taste-transfer textarea {
+      width: 100%;
+      min-height: 7rem;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 0.65rem;
+      background: #0d1520;
+      color: var(--text);
+      padding: 0.65rem;
+      font: 0.78rem/1.45 "Cascadia Code", "SFMono-Regular", Consolas, ui-monospace, monospace;
+    }
+
+    .taste-notice {
+      min-height: 1.5rem;
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .recommendation-rails {
+      display: grid;
+      gap: 1.25rem;
+    }
+
+    .recommendation-rail {
+      display: grid;
+      gap: 0.65rem;
+    }
+
+    .recommendation-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .recommendation-card {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-width: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 0.85rem;
+      background: color-mix(in srgb, var(--panel-2) 90%, var(--panel));
+    }
+
+    .recommendation-card .card-art {
+      aspect-ratio: 16 / 8.5;
+    }
+
+    .recommendation-card-body {
+      display: grid;
+      align-content: start;
+      gap: 0.55rem;
+      padding: 0.75rem;
+    }
+
+    .recommendation-card h4,
+    .recommendation-card p {
+      margin: 0;
+    }
+
+    .recommendation-card h4 {
+      font-size: 0.98rem;
+    }
+
+    .recommendation-reason {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .recommendation-links,
+    .taste-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .recommendation-links a {
+      font-size: 0.8rem;
+      font-weight: 700;
+    }
+
+    .taste-actions button {
+      width: auto;
+      min-height: 1.95rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 0.74rem;
+    }
+
+    .taste-actions button.taste-action-thumb {
+      min-width: 2.1rem;
+      padding-inline: 0.45rem;
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .taste-actions button[aria-pressed="true"] {
+      color: var(--text);
+      background: color-mix(in srgb, var(--accent-2) 28%, var(--chip));
+      outline-width: 2px;
+    }
+
+    .taste-seed-button {
+      width: fit-content;
+      min-height: 2rem;
+      padding: 0.35rem 0.55rem;
+      color: var(--muted);
+      font-size: 0.76rem;
+    }
+
+    .taste-seed-button[aria-pressed="true"] {
+      color: var(--text);
+    }
+
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -1063,6 +1308,15 @@
         min-width: 0;
       }
 
+      .recommendations-actions,
+      .recommendations-actions button {
+        width: 100%;
+      }
+
+      .recommendation-grid {
+        grid-template-columns: 1fr;
+      }
+
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1105,6 +1359,60 @@
 
   <main>
     <section class="kpis" id="kpis" aria-label="Catalog key performance indicators"></section>
+
+    <section id="recommendationsPanel" class="panel recommendations-panel" aria-labelledby="recommendationsTitle">
+      <div class="recommendations-head">
+        <div class="recommendations-copy">
+          <h2 id="recommendationsTitle">Find your next game</h2>
+          <p class="muted">Explainable recommendations from catalog metadata, your active filters, and optional preferences that stay in this browser.</p>
+        </div>
+        <div class="recommendations-actions">
+          <button id="tasteToggleButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteControls">Shape recommendations</button>
+          <button id="tasteResetButton" class="secondary hidden" type="button">Reset taste</button>
+        </div>
+      </div>
+      <p id="recommendationSummary" class="muted" aria-live="polite" tabindex="-1">Loading recommendations...</p>
+      <div id="tasteControls" class="taste-controls hidden">
+        <div class="taste-grid">
+          <fieldset class="taste-fieldset">
+            <legend>Genres</legend>
+            <div id="tasteGenres" class="taste-options"></div>
+          </fieldset>
+          <fieldset class="taste-fieldset">
+            <legend>Platforms</legend>
+            <div id="tastePlatforms" class="taste-options"></div>
+          </fieldset>
+          <fieldset class="taste-fieldset">
+            <legend>Game Pass tiers</legend>
+            <div id="tasteTiers" class="taste-options"></div>
+          </fieldset>
+          <fieldset class="taste-fieldset">
+            <legend>Player modes</legend>
+            <div id="tasteModes" class="taste-options"></div>
+          </fieldset>
+          <label class="taste-discovery">
+            Discovery style
+            <select id="tasteDiscovery">
+              <option value="familiar">Stay close to my taste</option>
+              <option value="balanced">Balanced</option>
+              <option value="surprising">Surprise me</option>
+            </select>
+          </label>
+        </div>
+        <details class="taste-transfer">
+          <summary>Export or import this local profile</summary>
+          <div class="taste-transfer-body">
+            <textarea id="tasteTransfer" aria-label="Taste profile JSON" placeholder="Exported profile JSON appears here. Paste a profile here to import it."></textarea>
+            <div class="button-row">
+              <button id="tasteExportButton" class="secondary" type="button">Export profile</button>
+              <button id="tasteImportButton" class="secondary" type="button">Import profile</button>
+            </div>
+          </div>
+        </details>
+        <p id="tasteNotice" class="taste-notice" aria-live="polite"></p>
+      </div>
+      <div id="recommendationRails" class="recommendation-rails"></div>
+    </section>
 
     <section id="filterPanel" class="panel" aria-labelledby="filtersTitle">
       <h2 id="filtersTitle">Find games</h2>
@@ -1348,6 +1656,65 @@
   <script>
     const TIERS = ['ultimate', 'premium', 'essential'];
     const PLATFORMS = ['console', 'pc'];
+    const TASTE_STORAGE_KEY = 'catabox.taste.v1';
+    const TASTE_PROFILE_VERSION = 1;
+    const RECOMMENDATION_SCHEMA_VERSION = 1;
+    const RECOMMENDATION_ALGORITHM = 'hybrid-tfidf-mmr-v1';
+    const RECOMMENDATION_LIST_LIMIT = 12;
+    const RECOMMENDATION_LIST_NAMES = ['similar', 'discover', 'sameMode'];
+    const RECOMMENDATION_REASON_CODES = new Set([
+      'sharedGenre',
+      'sameDeveloper',
+      'samePublisher',
+      'sharedPlayerMode',
+      'closeReleaseEra',
+      'sharedKeywords',
+      'sameTier',
+      'samePlatform'
+    ]);
+    const TASTE_ARRAY_FIELDS = [
+      'preferredGenres',
+      'preferredPlatforms',
+      'preferredTiers',
+      'preferredModes',
+      'liked',
+      'disliked',
+      'saved',
+      'played'
+    ];
+    const TASTE_MODE_OPTIONS = [
+      ['single', 'Single player'],
+      ['multiplayer', 'Any multiplayer'],
+      ['localMultiplayer', 'Local multiplayer'],
+      ['onlineMultiplayer', 'Online multiplayer'],
+      ['coop', 'Any co-op'],
+      ['localCoop', 'Local co-op'],
+      ['onlineCoop', 'Online co-op']
+    ];
+    const TASTE_ACTION_COPY = {
+      liked: {
+        visible: '👍',
+        inactiveLabel: 'Recommend more games like this',
+        activeLabel: 'Stop using this game as a recommendation signal',
+        compact: true
+      },
+      disliked: {
+        visible: '👎',
+        inactiveLabel: 'Show fewer games like this',
+        activeLabel: 'Stop using this game as a negative signal',
+        compact: true
+      },
+      saved: {
+        visible: '🔖 Save for later',
+        inactiveLabel: 'Save for later on this device',
+        activeLabel: 'Remove from saved games'
+      },
+      played: {
+        visible: '✓ Played it',
+        inactiveLabel: 'Mark as already played',
+        activeLabel: 'Mark as not played'
+      }
+    };
     const TIER_COMPARISONS = [
       {
         id: 'premiumNotUltimate',
@@ -1422,7 +1789,23 @@
       current: null,
       history: null,
       status: null,
+      recommendations: null,
+      recommendationError: '',
+      recommendationsLoading: true,
       productsById: new Map(),
+      taste: {
+        version: TASTE_PROFILE_VERSION,
+        preferredGenres: [],
+        preferredPlatforms: [],
+        preferredTiers: [],
+        preferredModes: [],
+        liked: [],
+        disliked: [],
+        saved: [],
+        played: [],
+        discovery: 'balanced'
+      },
+      tasteStorageAvailable: true,
       tierComparisonSets: {
         premiumNotUltimate: new Set(),
         premiumNotEssential: new Set(),
@@ -1457,6 +1840,15 @@
     };
 
     const controls = Object.fromEntries(Object.keys(defaults).map((id) => [id, document.getElementById(id)]));
+    const recommendationsPanel = document.getElementById('recommendationsPanel');
+    const recommendationSummary = document.getElementById('recommendationSummary');
+    const recommendationRails = document.getElementById('recommendationRails');
+    const tasteToggleButton = document.getElementById('tasteToggleButton');
+    const tasteResetButton = document.getElementById('tasteResetButton');
+    const tasteControls = document.getElementById('tasteControls');
+    const tasteDiscovery = document.getElementById('tasteDiscovery');
+    const tasteTransfer = document.getElementById('tasteTransfer');
+    const tasteNotice = document.getElementById('tasteNotice');
     const filterPanel = document.getElementById('filterPanel');
     const filterControls = document.getElementById('filterControls');
     const resultsHead = document.getElementById('resultsHead');
@@ -1549,8 +1941,8 @@
       return item && typeof item === 'object' && 'id' in item ? item.id : item;
     }
 
-    async function loadJson(path, required = true) {
-      const response = await fetch(path, { cache: 'no-store' });
+    async function loadJson(path, required = true, signal = undefined) {
+      const response = await fetch(path, { cache: 'no-store', signal });
       if (!response.ok) {
         if (!required) return null;
         throw new Error(`Could not load ${path}: ${response.status}`);
@@ -1558,8 +1950,693 @@
       return response.json();
     }
 
+    async function loadOptionalRecommendations() {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      try {
+        return { data: await loadJson('data/recommendations.json', false, controller.signal), error: '' };
+      } catch (error) {
+        return {
+          data: null,
+          error: error.name === 'AbortError' ? 'the request timed out' : error.message
+        };
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    }
+
     function currentFamilies() {
       return app.current?.families ?? app.current?.games ?? [];
+    }
+
+    function recommendationArtifactIssue(artifact) {
+      if (!artifact || typeof artifact !== 'object' || Array.isArray(artifact)) {
+        return 'the artifact is missing or malformed';
+      }
+      if (artifact.schemaVersion !== RECOMMENDATION_SCHEMA_VERSION) {
+        return `schema version ${artifact.schemaVersion ?? 'missing'} is not supported`;
+      }
+      if (artifact.algorithm !== RECOMMENDATION_ALGORITHM) {
+        return `algorithm ${artifact.algorithm ?? 'missing'} is not supported`;
+      }
+      if (artifact.generatedAt !== app.current.generatedAt
+        || artifact.catalogHash !== app.current.catalogHash
+        || artifact.familyHash !== app.current.familyHash) {
+        return 'the artifact does not match the current catalog';
+      }
+      if (!artifact.items || typeof artifact.items !== 'object' || Array.isArray(artifact.items)) {
+        return 'the artifact item map is malformed';
+      }
+
+      const familyIds = new Set(currentFamilies().map((game) => game.id));
+      const entries = Object.entries(artifact.items);
+      if (entries.length !== familyIds.size) {
+        return 'the artifact does not cover every current game';
+      }
+      for (const [sourceId, lists] of entries) {
+        if (!familyIds.has(sourceId) || !lists || typeof lists !== 'object' || Array.isArray(lists)) {
+          return 'the artifact contains an invalid source game';
+        }
+        const listNames = Object.keys(lists).sort();
+        if (listNames.length !== RECOMMENDATION_LIST_NAMES.length
+          || listNames.some((listName, index) => listName !== [...RECOMMENDATION_LIST_NAMES].sort()[index])) {
+          return 'the artifact contains unexpected candidate lists';
+        }
+        for (const listName of RECOMMENDATION_LIST_NAMES) {
+          const candidates = lists[listName];
+          if (!Array.isArray(candidates) || candidates.length > RECOMMENDATION_LIST_LIMIT) {
+            return `the ${listName} candidate list is malformed`;
+          }
+          const seen = new Set();
+          let previous = null;
+          for (const candidate of candidates) {
+            if (!candidate
+              || typeof candidate !== 'object'
+              || Array.isArray(candidate)
+              || !familyIds.has(candidate.id)
+              || candidate.id === sourceId
+              || !Number.isFinite(candidate.score)
+              || candidate.score < 0
+              || candidate.score > 1
+              || !Array.isArray(candidate.reasons)
+              || candidate.reasons.length === 0
+              || new Set(candidate.reasons).size !== candidate.reasons.length
+              || candidate.reasons.some((reason) => !RECOMMENDATION_REASON_CODES.has(reason))) {
+              return `the ${listName} candidate list contains malformed data`;
+            }
+            if (seen.has(candidate.id)
+              || (previous && (candidate.score > previous.score
+                || (candidate.score === previous.score && candidate.id < previous.id)))) {
+              return `the ${listName} candidate list contains duplicate or unsorted data`;
+            }
+            if (listName === 'sameMode' && !candidate.reasons.includes('sharedPlayerMode')) {
+              return 'the sameMode candidate list contains an incompatible game';
+            }
+            seen.add(candidate.id);
+            previous = candidate;
+          }
+        }
+      }
+      return '';
+    }
+
+    async function hydrateRecommendations() {
+      const recommendationResult = await loadOptionalRecommendations();
+      const artifactIssue = recommendationResult.error
+        ? recommendationResult.error
+        : recommendationArtifactIssue(recommendationResult.data);
+      app.recommendations = artifactIssue ? null : recommendationResult.data;
+      app.recommendationError = artifactIssue;
+      app.recommendationsLoading = false;
+      renderRecommendations();
+    }
+
+    function emptyTasteProfile() {
+      return {
+        version: TASTE_PROFILE_VERSION,
+        preferredGenres: [],
+        preferredPlatforms: [],
+        preferredTiers: [],
+        preferredModes: [],
+        liked: [],
+        disliked: [],
+        saved: [],
+        played: [],
+        discovery: 'balanced'
+      };
+    }
+
+    function uniqueTasteStrings(values) {
+      if (!Array.isArray(values)) return [];
+      return [...new Set(values.filter((value) => typeof value === 'string' && value.trim()).map((value) => value.trim()))];
+    }
+
+    function normalizeTasteProfile(value) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        throw new Error('Taste profile must be a JSON object.');
+      }
+      if (value.version != null && value.version !== TASTE_PROFILE_VERSION) {
+        throw new Error(`Unsupported taste profile version: ${value.version}`);
+      }
+      const profile = emptyTasteProfile();
+      for (const field of TASTE_ARRAY_FIELDS) {
+        profile[field] = uniqueTasteStrings(value[field]);
+      }
+      profile.discovery = ['familiar', 'balanced', 'surprising'].includes(value.discovery)
+        ? value.discovery
+        : 'balanced';
+      const knownGenres = new Set(currentFamilies().flatMap((game) => game.genres ?? []));
+      profile.preferredGenres = profile.preferredGenres.filter((genre) => knownGenres.has(genre));
+      profile.preferredPlatforms = profile.preferredPlatforms.filter((platform) => PLATFORMS.includes(platform));
+      profile.preferredTiers = profile.preferredTiers.filter((tier) => TIERS.includes(tier));
+      const knownModes = new Set(TASTE_MODE_OPTIONS.map(([mode]) => mode));
+      profile.preferredModes = profile.preferredModes.filter((mode) => knownModes.has(mode));
+      return profile;
+    }
+
+    function loadTasteProfile() {
+      const raw = localStorage.getItem(TASTE_STORAGE_KEY);
+      return raw ? normalizeTasteProfile(JSON.parse(raw)) : emptyTasteProfile();
+    }
+
+    function setTasteNotice(message, isError = false) {
+      tasteNotice.textContent = message;
+      tasteNotice.style.color = isError ? 'var(--danger)' : '';
+    }
+
+    function saveTasteProfile(message = 'Preferences saved in this browser.') {
+      try {
+        localStorage.setItem(TASTE_STORAGE_KEY, JSON.stringify(app.taste));
+        app.tasteStorageAvailable = true;
+        setTasteNotice(message);
+      } catch (error) {
+        app.tasteStorageAvailable = false;
+        setTasteNotice(`Preferences are active for this visit but could not be saved: ${error.message}`, true);
+      }
+      updateTasteControls();
+      renderRecommendations();
+    }
+
+    function tasteSignalCount() {
+      return TASTE_ARRAY_FIELDS.reduce((total, field) => total + app.taste[field].length, 0)
+        + Number(app.taste.discovery !== 'balanced');
+    }
+
+    function hasTasteSignals() {
+      return tasteSignalCount() > 0;
+    }
+
+    function renderTasteOptions(containerId, field, values, labeler = (value) => value) {
+      const selected = new Set(app.taste[field]);
+      const container = document.getElementById(containerId);
+      container.replaceChildren(...values.map((value) => {
+        const label = document.createElement('label');
+        label.className = 'taste-option';
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.value = value;
+        checkbox.checked = selected.has(value);
+        checkbox.dataset.tasteField = field;
+        const text = document.createElement('span');
+        text.textContent = labeler(value);
+        label.append(checkbox, text);
+        return label;
+      }));
+    }
+
+    function populateTasteControls() {
+      const games = currentFamilies();
+      renderTasteOptions(
+        'tasteGenres',
+        'preferredGenres',
+        [...new Set(games.flatMap((game) => game.genres ?? []))].sort((left, right) => left.localeCompare(right))
+      );
+      renderTasteOptions('tastePlatforms', 'preferredPlatforms', PLATFORMS, (value) => labelFor('platforms', value));
+      renderTasteOptions('tasteTiers', 'preferredTiers', TIERS, (value) => labelFor('tiers', value));
+      renderTasteOptions('tasteModes', 'preferredModes', TASTE_MODE_OPTIONS.map(([value]) => value), (value) =>
+        TASTE_MODE_OPTIONS.find(([id]) => id === value)?.[1] ?? value
+      );
+      updateTasteControls();
+    }
+
+    function updateTasteControls() {
+      for (const checkbox of tasteControls.querySelectorAll('input[data-taste-field]')) {
+        checkbox.checked = app.taste[checkbox.dataset.tasteField]?.includes(checkbox.value) ?? false;
+      }
+      tasteDiscovery.value = app.taste.discovery;
+      const count = tasteSignalCount();
+      tasteResetButton.classList.toggle('hidden', count === 0);
+      tasteToggleButton.textContent = tasteControls.classList.contains('hidden')
+        ? count > 0 ? `Shape recommendations (${count})` : 'Shape recommendations'
+        : 'Hide taste controls';
+      if (!app.tasteStorageAvailable && !tasteNotice.textContent) {
+        setTasteNotice('Preferences can be used for this visit but browser storage is unavailable.', true);
+      }
+      for (const button of document.querySelectorAll('button[data-taste-action][data-game-id]')) {
+        const active = app.taste[button.dataset.tasteAction]?.includes(button.dataset.gameId) ?? false;
+        button.setAttribute('aria-pressed', String(active));
+        if (button.dataset.activeLabel && button.dataset.inactiveLabel) {
+          button.textContent = active ? button.dataset.activeLabel : button.dataset.inactiveLabel;
+        }
+      }
+    }
+
+    function toggleTasteControls() {
+      const willOpen = tasteControls.classList.contains('hidden');
+      tasteControls.classList.toggle('hidden', !willOpen);
+      tasteToggleButton.setAttribute('aria-expanded', String(willOpen));
+      updateTasteControls();
+      if (willOpen) {
+        tasteControls.querySelector('input, select, textarea, button')?.focus();
+      }
+    }
+
+    function resetTasteProfile() {
+      app.taste = emptyTasteProfile();
+      tasteTransfer.value = '';
+      try {
+        localStorage.removeItem(TASTE_STORAGE_KEY);
+        app.tasteStorageAvailable = true;
+        setTasteNotice('Local taste profile reset.');
+      } catch (error) {
+        app.tasteStorageAvailable = false;
+        setTasteNotice(`Profile reset for this visit, but browser storage could not be cleared: ${error.message}`, true);
+      }
+      updateTasteControls();
+      renderRecommendations();
+    }
+
+    function importTasteProfile() {
+      try {
+        app.taste = normalizeTasteProfile(JSON.parse(tasteTransfer.value));
+      } catch (error) {
+        setTasteNotice(`Could not import profile: ${error.message}`, true);
+        return;
+      }
+      saveTasteProfile('Taste profile imported and saved in this browser.');
+    }
+
+    async function exportTasteProfile() {
+      tasteTransfer.value = JSON.stringify(app.taste, null, 2);
+      tasteTransfer.focus();
+      tasteTransfer.select();
+      if (!navigator.clipboard?.writeText) {
+        setTasteNotice('Profile JSON is selected and ready to copy.');
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(tasteTransfer.value);
+        setTasteNotice('Profile JSON copied to the clipboard.');
+      } catch (error) {
+        setTasteNotice(`Profile JSON is ready to copy, but clipboard access failed: ${error.message}`, true);
+      }
+    }
+
+    function valuesOverlap(left, right) {
+      const rightSet = new Set(right ?? []);
+      return (left ?? []).some((value) => rightSet.has(value));
+    }
+
+    function firstSharedValue(left, right) {
+      const rightSet = new Set(right ?? []);
+      return (left ?? []).find((value) => rightSet.has(value)) ?? null;
+    }
+
+    function gameMatchesTasteMode(game, mode) {
+      if (mode === 'single') return game.supportsSinglePlayer === true;
+      if (mode === 'multiplayer') return game.supportsMultiplayer === true;
+      if (mode === 'localMultiplayer') return game.supportsLocalMultiplayer === true;
+      if (mode === 'onlineMultiplayer') return game.supportsOnlineMultiplayer === true;
+      if (mode === 'coop') return game.supportsCoop === true;
+      if (mode === 'localCoop') return game.supportsLocalCoop === true;
+      if (mode === 'onlineCoop') return game.supportsOnlineCoop === true;
+      return false;
+    }
+
+    function knownTasteGames() {
+      return new Set(['liked', 'disliked', 'saved', 'played'].flatMap((field) => app.taste[field]));
+    }
+
+    function recommendationMatchesFilters(game) {
+      return selectedValues('state').includes('current') && matchesFilters(game);
+    }
+
+    function stableRecommendationUnit(game) {
+      const input = `${app.current?.familyHash ?? ''}:${game.id}`;
+      let hash = 2166136261;
+      for (let index = 0; index < input.length; index += 1) {
+        hash ^= input.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+      }
+      return (hash >>> 0) / 4294967295;
+    }
+
+    function releaseRecencyScore(game) {
+      const year = Number(game.releaseDate?.slice(0, 4));
+      if (!Number.isFinite(year)) return 0;
+      const currentYear = new Date(app.current.generatedAt).getUTCFullYear();
+      return Math.max(0, 1 - Math.abs(currentYear - year) / 20);
+    }
+
+    function artifactCandidates() {
+      if (!app.recommendations) return new Map();
+      const combined = new Map();
+      const sources = [
+        ...app.taste.liked.map((id) => [id, 1]),
+        ...app.taste.saved.map((id) => [id, 0.72])
+      ];
+      const listWeights = app.taste.discovery === 'familiar'
+        ? { similar: 1, discover: 0.35, sameMode: 0.7 }
+        : app.taste.discovery === 'surprising'
+          ? { similar: 0.45, discover: 1, sameMode: 0.65 }
+          : { similar: 0.82, discover: 0.75, sameMode: 0.7 };
+      for (const [sourceId, sourceWeight] of sources) {
+        const sourceLists = app.recommendations.items?.[sourceId];
+        if (!sourceLists) continue;
+        for (const [listName, listWeight] of Object.entries(listWeights)) {
+          for (const candidate of sourceLists[listName] ?? []) {
+            const weightedScore = candidate.score * sourceWeight * listWeight;
+            const current = combined.get(candidate.id);
+            if (!current || weightedScore > current.score) {
+              combined.set(candidate.id, {
+                score: weightedScore,
+                reasons: candidate.reasons ?? [],
+                sourceId
+              });
+            }
+          }
+        }
+      }
+      return combined;
+    }
+
+    function rankedAnchorCandidates(sourceId) {
+      const sourceLists = app.recommendations?.items?.[sourceId];
+      if (!sourceLists) return [];
+      const listWeights = app.taste.discovery === 'familiar'
+        ? { similar: 1, discover: 0.35, sameMode: 0.7 }
+        : app.taste.discovery === 'surprising'
+          ? { similar: 0.45, discover: 1, sameMode: 0.65 }
+          : { similar: 0.82, discover: 0.75, sameMode: 0.7 };
+      const candidates = new Map();
+      for (const [listName, listWeight] of Object.entries(listWeights)) {
+        for (const candidate of sourceLists[listName] ?? []) {
+          const score = candidate.score * listWeight;
+          const previous = candidates.get(candidate.id);
+          if (!previous || score > previous.score) {
+            candidates.set(candidate.id, {
+              score,
+              sourceId,
+              reasons: candidate.reasons ?? []
+            });
+          }
+        }
+      }
+      const known = knownTasteGames();
+      return [...candidates.entries()]
+        .map(([id, artifact]) => ({ game: currentFamilies().find((game) => game.id === id), artifact }))
+        .filter(({ game }) => game && !known.has(game.id) && recommendationMatchesFilters(game))
+        .map(({ game, artifact }) => ({
+          game,
+          artifact,
+          score: recommendationScore(game, artifact),
+          reasons: preferenceReasons(game, artifact)
+        }))
+        .sort((left, right) => right.artifact.score - left.artifact.score || left.game.id.localeCompare(right.game.id));
+    }
+
+    function preferenceReasons(game, artifact = null) {
+      const reasons = [];
+      const genre = firstSharedValue(game.genres, app.taste.preferredGenres);
+      if (genre) reasons.push(`Matches your ${genre} preference`);
+      const mode = app.taste.preferredModes.find((value) => gameMatchesTasteMode(game, value));
+      if (mode) reasons.push(TASTE_MODE_OPTIONS.find(([id]) => id === mode)?.[1] ?? mode);
+      const platform = firstSharedValue(game.platforms, app.taste.preferredPlatforms);
+      if (platform) reasons.push(`Available on ${labelFor('platforms', platform)}`);
+      const tier = firstSharedValue(game.memberships, app.taste.preferredTiers);
+      if (tier) reasons.push(`Included in ${labelFor('tiers', tier)}`);
+      if (artifact) {
+        const source = findGameById(artifact.sourceId);
+        const reason = artifact.reasons.map((code) => artifactReasonText(source, game, code)).find(Boolean);
+        if (source && reason) reasons.push(`${reason}; similar to ${source.title}`);
+      }
+      if (game.leavingSoon) reasons.push(leavingSoonLabel(game));
+      return [...new Set(reasons)].slice(0, 2);
+    }
+
+    function artifactReasonText(source, target, code) {
+      if (!source || !target) return '';
+      if (code === 'sharedGenre') {
+        const genre = firstSharedValue(source.genres, target.genres);
+        return genre ? `Both are ${genre}` : '';
+      }
+      if (code === 'sameDeveloper') return source.developer && source.developer === target.developer
+        ? `Both by ${source.developer}`
+        : '';
+      if (code === 'samePublisher') return source.publisher && source.publisher === target.publisher
+        ? `Both published by ${source.publisher}`
+        : '';
+      if (code === 'sharedPlayerMode') {
+        const mode = firstSharedValue(playerModeLabels(source), playerModeLabels(target));
+        return mode ? `Both support ${mode.toLocaleLowerCase()}` : '';
+      }
+      if (code === 'closeReleaseEra') return 'Released in a similar era';
+      if (code === 'sharedKeywords') return 'Similar themes and description';
+      if (code === 'sameTier') {
+        const tier = firstSharedValue(source.memberships, target.memberships);
+        return tier ? `Both included in ${labelFor('tiers', tier)}` : '';
+      }
+      if (code === 'samePlatform') {
+        const platform = firstSharedValue(source.platforms, target.platforms);
+        return platform ? `Both available on ${labelFor('platforms', platform)}` : '';
+      }
+      return '';
+    }
+
+    function recommendationScore(game, artifact = null) {
+      let score = 0.08 + stableRecommendationUnit(game) * 0.04;
+      if (app.taste.preferredGenres.length > 0) {
+        score += valuesOverlap(game.genres, app.taste.preferredGenres) ? 0.26 : -0.08;
+      }
+      if (app.taste.preferredPlatforms.length > 0) {
+        score += valuesOverlap(game.platforms, app.taste.preferredPlatforms) ? 0.14 : -0.2;
+      }
+      if (app.taste.preferredTiers.length > 0) {
+        score += valuesOverlap(game.memberships, app.taste.preferredTiers) ? 0.14 : -0.2;
+      }
+      if (app.taste.preferredModes.length > 0) {
+        score += app.taste.preferredModes.some((mode) => gameMatchesTasteMode(game, mode)) ? 0.18 : -0.08;
+      }
+      if (artifact) score += artifact.score * 0.5;
+      score += releaseRecencyScore(game) * 0.04;
+      return score;
+    }
+
+    function recommendationPairSimilarity(left, right) {
+      let score = 0;
+      if (valuesOverlap(left.genres, right.genres)) score += 0.42;
+      if (left.publisher && left.publisher === right.publisher) score += 0.2;
+      if (left.developer && left.developer === right.developer) score += 0.2;
+      if (valuesOverlap(playerModeLabels(left), playerModeLabels(right))) score += 0.1;
+      if (valuesOverlap(left.platforms, right.platforms)) score += 0.08;
+      return score;
+    }
+
+    function diversifyRecommendations(ranked, limit, strength) {
+      const pool = [...ranked];
+      const selected = [];
+      while (pool.length > 0 && selected.length < limit) {
+        let bestIndex = 0;
+        let bestScore = -Infinity;
+        for (let index = 0; index < pool.length; index += 1) {
+          const item = pool[index];
+          const redundancy = selected.length === 0
+            ? 0
+            : Math.max(...selected.map((chosen) => recommendationPairSimilarity(item.game, chosen.game)));
+          const score = item.score - strength * redundancy;
+          if (score > bestScore || (score === bestScore && item.game.id.localeCompare(pool[bestIndex].game.id) < 0)) {
+            bestScore = score;
+            bestIndex = index;
+          }
+        }
+        selected.push(pool.splice(bestIndex, 1)[0]);
+      }
+      return selected;
+    }
+
+    function rankedRecommendationCandidates() {
+      const known = knownTasteGames();
+      const artifacts = artifactCandidates();
+      return currentFamilies()
+        .filter((game) => !known.has(game.id) && recommendationMatchesFilters(game))
+        .map((game) => {
+          const artifact = artifacts.get(game.id) ?? null;
+          return {
+            game,
+            artifact,
+            score: recommendationScore(game, artifact),
+            reasons: preferenceReasons(game, artifact)
+          };
+        })
+        .sort((left, right) => right.score - left.score || left.game.id.localeCompare(right.game.id));
+    }
+
+    function latestTasteAnchor() {
+      const supported = (id) => currentFamilies().some((game) => game.id === id)
+        && Boolean(app.recommendations?.items?.[id]);
+      const likedId = app.taste.liked.findLast(supported);
+      if (likedId) return { game: findGameById(likedId), verb: 'liked' };
+      const savedId = app.taste.saved.findLast(supported);
+      return savedId ? { game: findGameById(savedId), verb: 'saved' } : null;
+    }
+
+    function recommendationRailsData() {
+      const ranked = rankedRecommendationCandidates();
+      const used = new Set();
+      const takeUnique = (items, limit) => {
+        const selected = [];
+        for (const item of items) {
+          if (used.has(item.game.id)) continue;
+          used.add(item.game.id);
+          selected.push(item);
+          if (selected.length === limit) break;
+        }
+        return selected;
+      };
+      const rails = [];
+      const anchor = latestTasteAnchor();
+      if (anchor?.game) {
+        const items = takeUnique(rankedAnchorCandidates(anchor.game.id), 6);
+        if (items.length > 0) {
+          rails.push({
+            title: `Because you ${anchor.verb} ${anchor.game.title}`,
+            description: 'Closest catalog matches, re-ranked around your current constraints.',
+            items
+          });
+        }
+      }
+
+      const discoveryStrength = app.taste.discovery === 'familiar' ? 0.1 : app.taste.discovery === 'surprising' ? 0.42 : 0.24;
+      const personal = takeUnique(diversifyRecommendations(ranked.slice(0, 80), 12, discoveryStrength), 6);
+      if (personal.length > 0) {
+        rails.push({
+          title: hasTasteSignals() ? 'Recommended for you' : 'A varied starting point',
+          description: hasTasteSignals()
+            ? 'Your local preferences and feedback shape this list.'
+            : 'A deterministic mix across the current catalog. Add preferences to personalize it.',
+          items: personal
+        });
+      }
+
+      const discoveryPool = [...ranked]
+        .sort((left, right) =>
+          (right.score + stableRecommendationUnit(right.game) * 0.16)
+          - (left.score + stableRecommendationUnit(left.game) * 0.16)
+          || left.game.id.localeCompare(right.game.id)
+        );
+      const different = takeUnique(diversifyRecommendations(discoveryPool.slice(0, 120), 12, 0.48), 6);
+      if (different.length > 0) {
+        rails.push({
+          title: 'Try something different',
+          description: 'A broader mix that deliberately avoids repeating the same publishers and genres.',
+          items: different
+        });
+      }
+
+      const leaving = takeUnique(
+        ranked.filter((item) => item.game.leavingSoon).sort((left, right) => right.score - left.score || left.game.id.localeCompare(right.game.id)),
+        6
+      );
+      if (leaving.length > 0) {
+        rails.push({
+          title: 'Leaving soon and worth a look',
+          description: 'Preference-ranked games from the official leaving-soon collections.',
+          items: leaving
+        });
+      }
+      return rails;
+    }
+
+    function tasteActionButton(game, action) {
+      const copy = TASTE_ACTION_COPY[action];
+      const active = app.taste[action].includes(game.id);
+      const label = active ? copy.activeLabel : copy.inactiveLabel;
+      const className = copy.compact ? ' class="taste-action-thumb"' : '';
+      return `<button${className} type="button" data-taste-action="${escapeHtml(action)}" data-game-id="${escapeHtml(game.id)}" aria-label="${escapeHtml(`${label}: ${game.title}`)}" title="${escapeHtml(label)}" aria-pressed="${active}"><span aria-hidden="true">${escapeHtml(copy.visible)}</span></button>`;
+    }
+
+    function tasteSeedButton(game) {
+      if (game.departed) return '';
+      const active = app.taste.liked.includes(game.id);
+      return `<button class="secondary taste-seed-button" type="button" data-taste-action="liked" data-game-id="${escapeHtml(game.id)}" data-inactive-label="Recommend games like this" data-active-label="Used for recommendations" aria-pressed="${active}">${active ? 'Used for recommendations' : 'Recommend games like this'}</button>`;
+    }
+
+    function catalogSearchUrl(game) {
+      const params = new URLSearchParams({ search: game.title });
+      return `${location.pathname}?${params.toString()}`;
+    }
+
+    function renderRecommendationCard(item) {
+      const game = item.game;
+      const image = cardImage(game);
+      const reason = item.reasons.length > 0
+        ? item.reasons.join(' · ')
+        : `${game.genres?.slice(0, 2).join(' + ') || 'Catalog match'} · ${game.platforms.map((platform) => labelFor('platforms', platform)).join(' + ')}`;
+      return `
+        <article class="recommendation-card" data-preview-game="${escapeHtml(game.id)}">
+          ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
+          <div class="recommendation-card-body">
+            <h4>${escapeHtml(game.title)}</h4>
+            ${cardGenres(game)}
+            <p class="recommendation-reason">${escapeHtml(reason)}</p>
+            <div class="recommendation-links">
+              <a href="${escapeHtml(catalogSearchUrl(game))}">Show in catalog</a>
+              <a href="${escapeHtml(game.url)}">Open on Xbox</a>
+            </div>
+            <div class="taste-actions" aria-label="Taste feedback for ${escapeHtml(game.title)}">
+              ${tasteActionButton(game, 'liked')}
+              ${tasteActionButton(game, 'disliked')}
+              ${tasteActionButton(game, 'saved')}
+              ${tasteActionButton(game, 'played')}
+            </div>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderRecommendations() {
+      if (!app.current) return;
+      const rails = recommendationRailsData();
+      const artifactReady = Boolean(app.recommendations);
+      const signals = tasteSignalCount();
+      if (artifactReady) {
+        recommendationSummary.textContent = `${signals > 0 ? `${signals} local taste signal${signals === 1 ? '' : 's'} active. ` : ''}Recommendations are generated from catalog metadata and remain on this device.`;
+      } else if (app.recommendationsLoading) {
+        recommendationSummary.textContent = 'Local metadata recommendations are ready while precomputed similarity loads.';
+      } else if (app.recommendationError) {
+        recommendationSummary.textContent = `Local recommendations are available, but precomputed similarity could not be loaded: ${app.recommendationError}`;
+      } else {
+        recommendationSummary.textContent = 'Local recommendations are available, but the precomputed similarity artifact is missing or stale.';
+      }
+      recommendationRails.innerHTML = rails.length > 0
+        ? rails.map((rail) => `
+          <section class="recommendation-rail">
+            <h3>${escapeHtml(rail.title)}</h3>
+            <p class="muted">${escapeHtml(rail.description)}</p>
+            <div class="recommendation-grid">${rail.items.map(renderRecommendationCard).join('')}</div>
+          </section>
+        `).join('')
+        : '<p class="empty">No recommendation candidates match the active filters.</p>';
+      updateTasteControls();
+      observeLazyImages([recommendationRails]);
+    }
+
+    function toggleTasteGame(action, gameId) {
+      if (!['liked', 'disliked', 'saved', 'played'].includes(action) || !findGameById(gameId)) return;
+      const values = new Set(app.taste[action]);
+      if (values.has(gameId)) values.delete(gameId);
+      else values.add(gameId);
+      app.taste[action] = [...values];
+      if (action === 'liked' && values.has(gameId)) {
+        app.taste.disliked = app.taste.disliked.filter((id) => id !== gameId);
+      }
+      if (action === 'disliked' && values.has(gameId)) {
+        app.taste.liked = app.taste.liked.filter((id) => id !== gameId);
+        app.taste.saved = app.taste.saved.filter((id) => id !== gameId);
+      }
+      saveTasteProfile('Feedback saved in this browser.');
+    }
+
+    function restoreRecommendationFocus(action, preferredGameIds) {
+      requestAnimationFrame(() => {
+        const buttons = [...recommendationRails.querySelectorAll('button[data-taste-action][data-game-id]')];
+        const target = preferredGameIds
+          .map((gameId) => buttons.find((button) =>
+            button.dataset.tasteAction === action && button.dataset.gameId === gameId
+          ))
+          .find(Boolean);
+        (target ?? recommendationSummary).focus();
+      });
     }
 
     function storeSlug(title) {
@@ -2704,6 +3781,14 @@
       return app.view === 'cards' ? cards : tableBody;
     }
 
+    function imageContainers() {
+      return [recommendationRails, activeImageContainer()];
+    }
+
+    function pendingLazyImages(containers = imageContainers()) {
+      return containers.flatMap((container) => [...container.querySelectorAll('img[data-src]')]);
+    }
+
     function isInViewport(rect) {
       const height = innerHeight || document.documentElement.clientHeight;
       return rect.bottom > 0 && rect.top < height;
@@ -2749,7 +3834,7 @@
     }
 
     function prioritizeViewportImages() {
-      const images = [...activeImageContainer().querySelectorAll('img[data-src]')]
+      const images = pendingLazyImages()
         .map((image) => ({ image, rect: image.getBoundingClientRect() }))
         .filter(({ rect }) => isInViewport(rect))
         .sort((left, right) => distanceToViewport(left.rect) - distanceToViewport(right.rect));
@@ -2764,8 +3849,8 @@
       });
     }
 
-    function observeLazyImages() {
-      const images = [...activeImageContainer().querySelectorAll('img[data-src]')];
+    function observeLazyImages(containers = imageContainers()) {
+      const images = pendingLazyImages(containers);
       if (images.length === 0) return;
       if (!app.imageObserver) {
         images.forEach((image) => loadImage(image));
@@ -2790,6 +3875,7 @@
           ${cardGenres(game)}
           ${leavingSoonBadge(game)}
           ${variantLinksHtml(game)}
+          ${tasteSeedButton(game)}
           <p>${escapeHtml(game.publisher || 'Unknown publisher')}</p>
           ${chipList(game.memberships, (tier) => labelFor('tiers', tier))}
           ${chipList(game.platforms, (platform) => labelFor('platforms', platform))}
@@ -2812,6 +3898,7 @@
             <span class="game-title-text">
               <span>${titleHtml(game)}</span>
               ${variantLinksHtml(game)}
+              ${tasteSeedButton(game)}
             </span>
           </div>
         </td>
@@ -2858,6 +3945,7 @@
         cards.innerHTML = '<p class="empty">No games match these filters.</p>';
       }
       syncUrl();
+      renderRecommendations();
       app.imageObserver?.disconnect();
       observeLazyImages();
     }
@@ -3088,7 +4176,46 @@
       toolbarFiltersButton.addEventListener('click', showFilters);
       toolbarClearButton.addEventListener('click', resetFilters);
       toolbarTopButton.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
+      tasteToggleButton.addEventListener('click', toggleTasteControls);
+      tasteResetButton.addEventListener('click', resetTasteProfile);
+      tasteControls.addEventListener('change', (event) => {
+        if (event.target === tasteDiscovery) {
+          app.taste.discovery = tasteDiscovery.value;
+          saveTasteProfile('Discovery style saved in this browser.');
+          return;
+        }
+        if (!(event.target instanceof HTMLInputElement) || !event.target.dataset.tasteField) return;
+        const field = event.target.dataset.tasteField;
+        if (!TASTE_ARRAY_FIELDS.includes(field)) return;
+        const values = new Set(app.taste[field]);
+        if (event.target.checked) values.add(event.target.value);
+        else values.delete(event.target.value);
+        app.taste[field] = [...values];
+        saveTasteProfile('Preferences saved in this browser.');
+      });
+      document.getElementById('tasteExportButton').addEventListener('click', exportTasteProfile);
+      document.getElementById('tasteImportButton').addEventListener('click', importTasteProfile);
+      recommendationRails.addEventListener('click', (event) => {
+        const button = closestFromEvent(event, 'button[data-taste-action][data-game-id]');
+        if (!button) return;
+        const actionButtons = [...recommendationRails.querySelectorAll(`button[data-taste-action="${button.dataset.tasteAction}"]`)];
+        const index = actionButtons.indexOf(button);
+        const focusCandidates = [
+          button.dataset.gameId,
+          actionButtons[index + 1]?.dataset.gameId,
+          actionButtons[index - 1]?.dataset.gameId
+        ].filter(Boolean);
+        toggleTasteGame(button.dataset.tasteAction, button.dataset.gameId);
+        restoreRecommendationFocus(button.dataset.tasteAction, focusCandidates);
+      });
       for (const container of [cards, tableBody]) {
+        container.addEventListener('click', (event) => {
+          const button = closestFromEvent(event, 'button[data-taste-action][data-game-id]');
+          if (!button) return;
+          toggleTasteGame(button.dataset.tasteAction, button.dataset.gameId);
+        });
+      }
+      for (const container of [recommendationRails, cards, tableBody]) {
         container.addEventListener('mouseover', (event) => {
           const target = closestFromEvent(event, '[data-preview-game]');
           if (!target || (event.relatedTarget instanceof Node && target.contains(event.relatedTarget))) return;
@@ -3198,16 +4325,25 @@
         app.history = historyData;
         app.status = statusData;
         app.productsById = new Map(current.games.map((game) => [game.id, game]));
+        try {
+          app.taste = loadTasteProfile();
+        } catch (error) {
+          app.taste = emptyTasteProfile();
+          app.tasteStorageAvailable = false;
+          setTasteNotice(`The saved taste profile could not be loaded and was ignored: ${error.message}`, true);
+        }
         setupImageObserver();
         populateTierComparisonSets();
         populateFilters();
         restoreFiltersFromUrl();
         renderMultiSelectControls();
+        populateTasteControls();
         bindEvents();
         renderStatus();
         renderKpis();
         renderResults();
         renderHistoryDashboard();
+        void hydrateRecommendations();
       } catch (error) {
         document.querySelector('main').innerHTML = `<section class="panel status failed"><h2>Could not load catalog data</h2><p>${escapeHtml(error.message)}</p></section>`;
       }

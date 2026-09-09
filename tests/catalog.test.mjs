@@ -440,6 +440,44 @@ test('card genres render as accented chips above the publisher line', () => {
   assert.match(reportTemplate, /<td class="genre-col">\$\{genreChipList\(game\.genres \?\? \[\]\)\}<\/td>/);
 });
 
+test('recommendation UI keeps taste state local and explainable', () => {
+  assert.match(reportTemplate, /id="recommendationsPanel"/);
+  assert.match(reportTemplate, /id="tasteControls"/);
+  assert.match(reportTemplate, /catabox\.taste\.v1/);
+  assert.match(reportTemplate, /localStorage\.setItem\(TASTE_STORAGE_KEY/);
+  assert.match(reportTemplate, /loadJson\('data\/recommendations\.json', false, controller\.signal\)/);
+  assert.match(reportTemplate, /async function loadOptionalRecommendations\(\)/);
+  assert.match(reportTemplate, /function recommendationArtifactIssue\(artifact\)/);
+  assert.match(reportTemplate, /artifact\.schemaVersion !== RECOMMENDATION_SCHEMA_VERSION/);
+  assert.match(reportTemplate, /artifact\.algorithm !== RECOMMENDATION_ALGORITHM/);
+  assert.match(reportTemplate, /artifact\.generatedAt !== app\.current\.generatedAt/);
+  assert.match(reportTemplate, /artifact\.catalogHash !== app\.current\.catalogHash/);
+  assert.match(reportTemplate, /artifact\.familyHash !== app\.current\.familyHash/);
+  assert.match(reportTemplate, /candidate\.score < 0/);
+  assert.match(reportTemplate, /candidate\.score > 1/);
+  assert.match(reportTemplate, /candidate\.reasons\.length === 0/);
+  assert.match(reportTemplate, /seen\.has\(candidate\.id\)/);
+  assert.match(reportTemplate, /const \[current, historyData, statusData\] = await Promise\.all/);
+  assert.match(reportTemplate, /void hydrateRecommendations\(\)/);
+  assert.match(reportTemplate, /function renderRecommendations\(\)/);
+  assert.match(reportTemplate, /observeLazyImages\(\[recommendationRails\]\)/);
+  assert.match(reportTemplate, /class="recommendation-card" data-preview-game="\$\{escapeHtml\(game\.id\)\}"/);
+  assert.match(reportTemplate, /<h4>\$\{escapeHtml\(game\.title\)\}<\/h4>\s+\$\{cardGenres\(game\)\}/);
+  assert.match(reportTemplate, /for \(const container of \[recommendationRails, cards, tableBody\]\)/);
+  assert.match(reportTemplate, /return selectedValues\('state'\)\.includes\('current'\) && matchesFilters\(game\)/);
+  assert.match(reportTemplate, /function rankedAnchorCandidates\(sourceId\)/);
+  assert.match(reportTemplate, /if \(game\.departed\) return ''/);
+  assert.match(reportTemplate, /function restoreRecommendationFocus\(action, preferredGameIds\)/);
+  assert.match(reportTemplate, /data-taste-action=/);
+  assert.match(reportTemplate, /visible: '👍'/);
+  assert.match(reportTemplate, /visible: '👎'/);
+  assert.match(reportTemplate, /visible: '🔖 Save for later'/);
+  assert.match(reportTemplate, /visible: '✓ Played it'/);
+  assert.match(reportTemplate, /aria-label="\$\{escapeHtml\(`\$\{label\}: \$\{game\.title\}`\)\}"/);
+  assert.match(reportTemplate, /Similar themes and description/);
+  assert.match(reportTemplate, /No recommendation candidates match the active filters/);
+});
+
 test('screenshot metadata does not affect the membership catalog hash', () => {
   const lists = [
     list('ultimate', 'console', ['9PNJXVCVWD4K']),
