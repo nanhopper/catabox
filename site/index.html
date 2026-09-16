@@ -846,6 +846,85 @@
       font-size: 0.85rem;
     }
 
+    .taste-quick-entry {
+      display: grid;
+      gap: 0.6rem;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 0.85rem;
+      background: color-mix(in srgb, var(--panel-2) 86%, transparent);
+    }
+
+    .taste-quick-entry > p {
+      margin: 0;
+      font-size: 0.85rem;
+    }
+
+    .quick-entry-field {
+      display: grid;
+      gap: 0.3rem;
+      max-width: 34rem;
+      font-size: 0.85rem;
+    }
+
+    .quick-entry-results {
+      display: grid;
+      gap: 0.35rem;
+      max-height: 22rem;
+      overflow-y: auto;
+    }
+
+    .quick-entry-results > p {
+      margin: 0;
+      font-size: 0.85rem;
+    }
+
+    .quick-entry-result {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      padding: 0.45rem 0.6rem;
+      border: 1px solid var(--line);
+      border-radius: 0.6rem;
+      background: var(--panel);
+    }
+
+    .quick-entry-result-copy {
+      display: grid;
+      gap: 0.1rem;
+      min-width: 12rem;
+    }
+
+    .quick-entry-result-copy span {
+      font-size: 0.78rem;
+    }
+
+    .quick-entry-count {
+      min-height: 1.5rem;
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .quick-entry-recent {
+      display: grid;
+      gap: 0.35rem;
+    }
+
+    .quick-entry-recent p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .quick-entry-undo {
+      width: auto;
+      cursor: pointer;
+      font-size: 0.76rem;
+    }
+
     .recommendation-rails {
       display: grid;
       gap: 1.25rem;
@@ -931,16 +1010,13 @@
       outline-width: 2px;
     }
 
-    .taste-seed-button {
-      width: fit-content;
-      min-height: 2rem;
-      padding: 0.35rem 0.55rem;
-      color: var(--muted);
-      font-size: 0.76rem;
+    .card-body .taste-actions,
+    .game-title-text .taste-actions {
+      margin-block: 0.15rem;
     }
 
-    .taste-seed-button[aria-pressed="true"] {
-      color: var(--text);
+    .game-title-text .taste-actions button {
+      min-height: 1.8rem;
     }
 
     .cards {
@@ -1007,6 +1083,26 @@
       margin: 0;
       color: var(--muted);
       font-size: 0.92rem;
+    }
+
+    .game-preview-tags {
+      margin-bottom: 0.45rem;
+    }
+
+    .game-preview-tags .chip {
+      font-size: 0.72rem;
+      padding: 0.15rem 0.45rem;
+    }
+
+    .chip-mode {
+      color: #e6f2ff;
+      font-weight: 700;
+      background: color-mix(in srgb, var(--accent-2) 30%, var(--chip));
+      border-color: color-mix(in srgb, var(--accent-2) 65%, var(--line));
+    }
+
+    .chip.is-empty {
+      color: var(--muted);
     }
 
     [data-preview-game] {
@@ -1368,6 +1464,7 @@
         </div>
         <div class="recommendations-actions">
           <button id="tasteToggleButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteControls">Shape recommendations</button>
+          <button id="tasteQuickEntryButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteQuickEntry">Log games you played</button>
           <button id="tasteResetButton" class="secondary hidden" type="button">Reset taste</button>
         </div>
       </div>
@@ -1410,6 +1507,16 @@
           </div>
         </details>
         <p id="tasteNotice" class="taste-notice" aria-live="polite"></p>
+      </div>
+      <div id="tasteQuickEntry" class="taste-quick-entry hidden">
+        <p class="muted">Search the whole catalog, including games hidden by the active filters and games that already left Game Pass. Marking a game played removes it from your recommendations.</p>
+        <label class="quick-entry-field">Find a game to mark
+          <input id="tasteQuickEntrySearch" type="search" autocomplete="off" placeholder="Start typing a game title" aria-describedby="tasteQuickEntryHint">
+        </label>
+        <p id="tasteQuickEntryHint" class="muted">Press Enter to mark the first result as played and clear the box.</p>
+        <div id="tasteQuickEntryResults" class="quick-entry-results" role="group" aria-label="Quick entry search results"></div>
+        <p id="tasteQuickEntryCount" class="quick-entry-count" aria-live="polite"></p>
+        <div id="tasteQuickEntryRecent" class="quick-entry-recent"></div>
       </div>
       <div id="recommendationRails" class="recommendation-rails"></div>
     </section>
@@ -1706,15 +1813,22 @@
       },
       saved: {
         visible: '🔖 Save for later',
+        icon: '🔖',
         inactiveLabel: 'Save for later on this device',
         activeLabel: 'Remove from saved games'
       },
       played: {
         visible: '✓ Played it',
+        icon: '✓',
         inactiveLabel: 'Mark as already played',
         activeLabel: 'Mark as not played'
       }
     };
+    const TASTE_GAME_ACTIONS = ['liked', 'disliked', 'saved', 'played'];
+    const TASTE_DEPARTED_ACTIONS = ['saved', 'played'];
+    const QUICK_ENTRY_MIN_QUERY = 2;
+    const QUICK_ENTRY_RESULT_LIMIT = 10;
+    const QUICK_ENTRY_RECENT_LIMIT = 8;
     const TIER_COMPARISONS = [
       {
         id: 'premiumNotUltimate',
@@ -1806,6 +1920,8 @@
         discovery: 'balanced'
       },
       tasteStorageAvailable: true,
+      quickEntryIndex: null,
+      quickEntryMatches: [],
       tierComparisonSets: {
         premiumNotUltimate: new Set(),
         premiumNotEssential: new Set(),
@@ -1845,6 +1961,12 @@
     const recommendationRails = document.getElementById('recommendationRails');
     const tasteToggleButton = document.getElementById('tasteToggleButton');
     const tasteResetButton = document.getElementById('tasteResetButton');
+    const tasteQuickEntryButton = document.getElementById('tasteQuickEntryButton');
+    const tasteQuickEntry = document.getElementById('tasteQuickEntry');
+    const tasteQuickEntrySearch = document.getElementById('tasteQuickEntrySearch');
+    const tasteQuickEntryResults = document.getElementById('tasteQuickEntryResults');
+    const tasteQuickEntryCount = document.getElementById('tasteQuickEntryCount');
+    const tasteQuickEntryRecent = document.getElementById('tasteQuickEntryRecent');
     const tasteControls = document.getElementById('tasteControls');
     const tasteDiscovery = document.getElementById('tasteDiscovery');
     const tasteTransfer = document.getElementById('tasteTransfer');
@@ -2115,6 +2237,8 @@
       }
       updateTasteControls();
       renderRecommendations();
+      renderQuickEntryRecent();
+      updateQuickEntryCount();
     }
 
     function tasteSignalCount() {
@@ -2157,6 +2281,7 @@
         TASTE_MODE_OPTIONS.find(([id]) => id === value)?.[1] ?? value
       );
       updateTasteControls();
+      renderQuickEntry();
     }
 
     function updateTasteControls() {
@@ -2175,9 +2300,11 @@
       for (const button of document.querySelectorAll('button[data-taste-action][data-game-id]')) {
         const active = app.taste[button.dataset.tasteAction]?.includes(button.dataset.gameId) ?? false;
         button.setAttribute('aria-pressed', String(active));
-        if (button.dataset.activeLabel && button.dataset.inactiveLabel) {
-          button.textContent = active ? button.dataset.activeLabel : button.dataset.inactiveLabel;
-        }
+        const copy = TASTE_ACTION_COPY[button.dataset.tasteAction];
+        if (!copy || !button.dataset.gameTitle) continue;
+        const label = active ? copy.activeLabel : copy.inactiveLabel;
+        button.setAttribute('aria-label', `${label}: ${button.dataset.gameTitle}`);
+        button.title = label;
       }
     }
 
@@ -2204,6 +2331,7 @@
       }
       updateTasteControls();
       renderRecommendations();
+      renderQuickEntry();
     }
 
     function importTasteProfile() {
@@ -2254,7 +2382,7 @@
     }
 
     function knownTasteGames() {
-      return new Set(['liked', 'disliked', 'saved', 'played'].flatMap((field) => app.taste[field]));
+      return new Set(TASTE_GAME_ACTIONS.flatMap((field) => app.taste[field]));
     }
 
     function recommendationMatchesFilters(game) {
@@ -2537,18 +2665,133 @@
       return rails;
     }
 
-    function tasteActionButton(game, action) {
+    function tasteActionButton(game, action, { forceCompact = false } = {}) {
       const copy = TASTE_ACTION_COPY[action];
       const active = app.taste[action].includes(game.id);
       const label = active ? copy.activeLabel : copy.inactiveLabel;
-      const className = copy.compact ? ' class="taste-action-thumb"' : '';
-      return `<button${className} type="button" data-taste-action="${escapeHtml(action)}" data-game-id="${escapeHtml(game.id)}" aria-label="${escapeHtml(`${label}: ${game.title}`)}" title="${escapeHtml(label)}" aria-pressed="${active}"><span aria-hidden="true">${escapeHtml(copy.visible)}</span></button>`;
+      const compact = forceCompact || copy.compact === true;
+      const glyph = compact ? copy.icon ?? copy.visible : copy.visible;
+      const className = compact ? ' class="taste-action-thumb"' : '';
+      return `<button${className} type="button" data-taste-action="${escapeHtml(action)}" data-game-id="${escapeHtml(game.id)}" data-game-title="${escapeHtml(game.title)}" aria-label="${escapeHtml(`${label}: ${game.title}`)}" title="${escapeHtml(label)}" aria-pressed="${active}"><span aria-hidden="true">${escapeHtml(glyph)}</span></button>`;
     }
 
-    function tasteSeedButton(game) {
-      if (game.departed) return '';
-      const active = app.taste.liked.includes(game.id);
-      return `<button class="secondary taste-seed-button" type="button" data-taste-action="liked" data-game-id="${escapeHtml(game.id)}" data-inactive-label="Recommend games like this" data-active-label="Used for recommendations" aria-pressed="${active}">${active ? 'Used for recommendations' : 'Recommend games like this'}</button>`;
+    function tasteActionsFor(game) {
+      return game.departed ? TASTE_DEPARTED_ACTIONS : TASTE_GAME_ACTIONS;
+    }
+
+    function tasteActionRow(game, { compact = false } = {}) {
+      const buttons = tasteActionsFor(game)
+        .map((action) => tasteActionButton(game, action, { forceCompact: compact }))
+        .join('');
+      return `<div class="taste-actions" aria-label="${escapeHtml(`Taste feedback for ${game.title}`)}">${buttons}</div>`;
+    }
+
+    function quickEntryIndex() {
+      if (!app.current) return [];
+      if (!app.quickEntryIndex) {
+        app.quickEntryIndex = [...currentFamilies(), ...departedRows()].map((game) => ({
+          game,
+          title: String(game.title ?? '').toLocaleLowerCase(),
+          haystack: [game.title, game.publisher, game.developer, ...variantsFor(game).map((variant) => variant.title)]
+            .filter(Boolean)
+            .join(' ')
+            .toLocaleLowerCase()
+        }));
+      }
+      return app.quickEntryIndex;
+    }
+
+    function quickEntryMatches(query) {
+      const needle = query.trim().toLocaleLowerCase();
+      if (needle.length < QUICK_ENTRY_MIN_QUERY) return [];
+      return quickEntryIndex()
+        .filter((entry) => entry.haystack.includes(needle))
+        .map((entry) => ({
+          entry,
+          rank: entry.title.startsWith(needle) ? 0 : entry.title.includes(needle) ? 1 : 2
+        }))
+        .sort((left, right) =>
+          left.rank - right.rank
+          || left.entry.title.localeCompare(right.entry.title)
+          || String(left.entry.game.id).localeCompare(String(right.entry.game.id))
+        )
+        .slice(0, QUICK_ENTRY_RESULT_LIMIT)
+        .map(({ entry }) => entry.game);
+    }
+
+    function quickEntryResultHtml(game) {
+      const meta = [
+        game.departed ? 'Left the catalog' : game.memberships.map((tier) => labelFor('tiers', tier)).join(' + '),
+        ...(game.genres ?? []).slice(0, 2),
+        ...playerModeLabels(game).slice(0, 2)
+      ].filter(Boolean);
+      return `
+        <div class="quick-entry-result">
+          <span class="quick-entry-result-copy">
+            <strong>${escapeHtml(game.title)}</strong>
+            <span class="muted">${escapeHtml(meta.join(' · ') || 'No catalog metadata')}</span>
+          </span>
+          ${tasteActionRow(game, { compact: true })}
+        </div>
+      `;
+    }
+
+    function updateQuickEntryCount(message = '') {
+      const played = app.taste.played.length;
+      const saved = app.taste.saved.length;
+      const totals = `${played} marked played, ${saved} saved on this device.`;
+      tasteQuickEntryCount.textContent = message ? `${message} ${totals}` : totals;
+    }
+
+    function renderQuickEntryRecent() {
+      const recent = app.taste.played
+        .slice(-QUICK_ENTRY_RECENT_LIMIT)
+        .reverse()
+        .map((gameId) => findGameById(gameId))
+        .filter(Boolean);
+      if (recent.length === 0) {
+        tasteQuickEntryRecent.innerHTML = '';
+        return;
+      }
+      const label = (game) => `Mark as not played: ${game.title}`;
+      tasteQuickEntryRecent.innerHTML = `
+        <p>Recently marked played. Select one to undo.</p>
+        <span class="chips">${recent.map((game) => `<button class="chip quick-entry-undo" type="button" data-quick-entry-undo="true" data-taste-action="played" data-game-id="${escapeHtml(game.id)}" data-game-title="${escapeHtml(game.title)}" aria-label="${escapeHtml(label(game))}" title="${escapeHtml(label(game))}" aria-pressed="true">${escapeHtml(game.title)} ✕</button>`).join('')}</span>
+      `;
+    }
+
+    function renderQuickEntry(message = '') {
+      const query = tasteQuickEntrySearch.value;
+      const matches = quickEntryMatches(query);
+      app.quickEntryMatches = matches;
+      if (query.trim().length < QUICK_ENTRY_MIN_QUERY) {
+        tasteQuickEntryResults.innerHTML = `<p class="muted">Type at least ${QUICK_ENTRY_MIN_QUERY} characters to search every tracked game.</p>`;
+      } else if (matches.length === 0) {
+        tasteQuickEntryResults.innerHTML = '<p class="empty">No tracked game matches that search.</p>';
+      } else {
+        tasteQuickEntryResults.innerHTML = matches.map(quickEntryResultHtml).join('');
+      }
+      renderQuickEntryRecent();
+      updateQuickEntryCount(message);
+    }
+
+    function quickEntryMarkPlayed(game) {
+      if (app.taste.played.includes(game.id)) {
+        renderQuickEntry(`${game.title} was already marked played.`);
+        return;
+      }
+      toggleTasteGame('played', game.id);
+      renderQuickEntry(`Marked ${game.title} as played.`);
+    }
+
+    function toggleQuickEntry() {
+      const willOpen = tasteQuickEntry.classList.contains('hidden');
+      tasteQuickEntry.classList.toggle('hidden', !willOpen);
+      tasteQuickEntryButton.setAttribute('aria-expanded', String(willOpen));
+      tasteQuickEntryButton.textContent = willOpen ? 'Hide quick entry' : 'Log games you played';
+      if (!willOpen) return;
+      renderQuickEntry();
+      tasteQuickEntrySearch.focus();
     }
 
     function catalogSearchUrl(game) {
@@ -2573,15 +2816,23 @@
               <a href="${escapeHtml(catalogSearchUrl(game))}">Show in catalog</a>
               <a href="${escapeHtml(game.url)}">Open on Xbox</a>
             </div>
-            <div class="taste-actions" aria-label="Taste feedback for ${escapeHtml(game.title)}">
-              ${tasteActionButton(game, 'liked')}
-              ${tasteActionButton(game, 'disliked')}
-              ${tasteActionButton(game, 'saved')}
-              ${tasteActionButton(game, 'played')}
-            </div>
+            ${tasteActionRow(game)}
           </div>
         </article>
       `;
+    }
+
+    function recommendationEmptyMessage() {
+      const known = knownTasteGames();
+      if (known.size === 0) return 'No recommendation candidates match the active filters.';
+      const unmarked = currentFamilies().filter((game) => !known.has(game.id));
+      if (unmarked.length === 0) {
+        return 'Every tracked game is already liked, disliked, saved, or marked played. Unmark a few in quick entry to get recommendations again.';
+      }
+      if (!unmarked.some(recommendationMatchesFilters)) {
+        return `No unmarked game matches the active filters. ${known.size} game${known.size === 1 ? ' is' : 's are'} excluded because you already rated or played them.`;
+      }
+      return 'No recommendation candidates match the active filters.';
     }
 
     function renderRecommendations() {
@@ -2606,13 +2857,13 @@
             <div class="recommendation-grid">${rail.items.map(renderRecommendationCard).join('')}</div>
           </section>
         `).join('')
-        : '<p class="empty">No recommendation candidates match the active filters.</p>';
+        : `<p class="empty">${escapeHtml(recommendationEmptyMessage())}</p>`;
       updateTasteControls();
       observeLazyImages([recommendationRails]);
     }
 
     function toggleTasteGame(action, gameId) {
-      if (!['liked', 'disliked', 'saved', 'played'].includes(action) || !findGameById(gameId)) return;
+      if (!TASTE_GAME_ACTIONS.includes(action) || !findGameById(gameId)) return;
       const values = new Set(app.taste[action]);
       if (values.has(gameId)) values.delete(gameId);
       else values.add(gameId);
@@ -3344,6 +3595,19 @@
       return game.shortDescription || game.description || 'No short description metadata.';
     }
 
+    function previewTagsHtml(game) {
+      const modes = playerModeLabels(game);
+      const chips = [
+        ...modes.map((mode) => `<span class="chip chip-mode">${escapeHtml(mode)}</span>`),
+        ...(game.platforms ?? []).map((platform) => `<span class="chip">${escapeHtml(labelFor('platforms', platform))}</span>`),
+        ...(game.memberships ?? []).map((tier) => `<span class="chip">${escapeHtml(labelFor('tiers', tier))}</span>`)
+      ];
+      if (modes.length === 0) {
+        chips.unshift('<span class="chip is-empty">No player mode metadata</span>');
+      }
+      return chips.length === 0 ? '' : `<span class="chips game-preview-tags">${chips.join('')}</span>`;
+    }
+
     function previewHtml(game) {
       const hasScreenshots = Array.isArray(game.screenshots) && game.screenshots.length > 0;
       return `
@@ -3352,6 +3616,7 @@
           <img class="game-preview-frame" data-preview-frame="1" alt="" crossorigin="anonymous" decoding="async">
         </div>
         <strong>${escapeHtml(game.title)}</strong>
+        ${previewTagsHtml(game)}
         <p id="gamePreviewDescription">${escapeHtml(descriptionForGame(game))}</p>
       `;
     }
@@ -3875,7 +4140,7 @@
           ${cardGenres(game)}
           ${leavingSoonBadge(game)}
           ${variantLinksHtml(game)}
-          ${tasteSeedButton(game)}
+          ${tasteActionRow(game)}
           <p>${escapeHtml(game.publisher || 'Unknown publisher')}</p>
           ${chipList(game.memberships, (tier) => labelFor('tiers', tier))}
           ${chipList(game.platforms, (platform) => labelFor('platforms', platform))}
@@ -3898,7 +4163,7 @@
             <span class="game-title-text">
               <span>${titleHtml(game)}</span>
               ${variantLinksHtml(game)}
-              ${tasteSeedButton(game)}
+              ${tasteActionRow(game, { compact: true })}
             </span>
           </div>
         </td>
@@ -4178,6 +4443,23 @@
       toolbarTopButton.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
       tasteToggleButton.addEventListener('click', toggleTasteControls);
       tasteResetButton.addEventListener('click', resetTasteProfile);
+      tasteQuickEntryButton.addEventListener('click', toggleQuickEntry);
+      tasteQuickEntrySearch.addEventListener('input', () => renderQuickEntry());
+      tasteQuickEntrySearch.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        event.preventDefault();
+        const target = app.quickEntryMatches[0];
+        if (!target) return;
+        tasteQuickEntrySearch.value = '';
+        quickEntryMarkPlayed(target);
+      });
+      tasteQuickEntry.addEventListener('click', (event) => {
+        const button = closestFromEvent(event, 'button[data-taste-action][data-game-id]');
+        if (!button) return;
+        const isUndo = button.dataset.quickEntryUndo === 'true';
+        toggleTasteGame(button.dataset.tasteAction, button.dataset.gameId);
+        if (isUndo) tasteQuickEntrySearch.focus();
+      });
       tasteControls.addEventListener('change', (event) => {
         if (event.target === tasteDiscovery) {
           app.taste.discovery = tasteDiscovery.value;
