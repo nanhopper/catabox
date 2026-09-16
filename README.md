@@ -18,11 +18,15 @@ The tracker does not use personal gamertags, linked libraries, installed-game da
 
 The generated `site/data/current.json` retains one source record per Xbox product ID and adds a display layer of semantic game families. Families are grouped only when titles match after conservative, versioned normalization of punctuation, presentation marks, Roman numerals, and explicit terminal platform qualifiers. Editions, remasters, remakes, bundles, subtitles, and bare `Console` titles remain distinct. The current product and family models each include counts, diffs, tier-combination segments, and deterministic membership hashes.
 
-The site renders and counts game families first. A family with several PC, console, or generation-specific products exposes every Xbox product page in an accessible platform-aware disclosure; raw product IDs and metadata remain available for auditing. Visual metadata includes up to eight deduplicated DisplayCatalog screenshot thumbnails per family, loaded only while its preview popup is open.
+The site renders and counts game families first. A family with several PC, console, or generation-specific products exposes every Xbox product page in an accessible platform-aware disclosure; raw product IDs and metadata remain available for auditing. Visual metadata includes up to eight deduplicated DisplayCatalog screenshot thumbnails per family, loaded only while its preview popup is open. The hover and focus preview also lists player modes, platforms, and tiers, so single-player, co-op, and multiplayer context is available from any card, table row, or recommendation without opening the game.
 
 ## Recommendations
 
 The weekly catalog build generates deterministic, explainable recommendation candidates from title and description similarity, genres, publishers and developers, player modes, release era, tiers, and platforms. The public site combines those candidates with active filters and optional browser-local taste preferences.
+
+Every game card, table row, and recommendation card carries the same four markers: like, dislike, save for later, and already played. Games that have left the catalog accept saved and played markers only, since like and dislike feed catalog similarity lookups.
+
+Because a recommendation rail never repeats a game you already marked, marking played only from the rails would leave the rest of the catalog unreachable. **Log games you played** opens a quick-entry panel that searches every tracked game — including games hidden by the active filters and games that already left Game Pass — and marks each result without touching the catalog view. Typing a title and pressing Enter marks the first result as played and clears the box, so a back catalogue can be entered in one pass. A recent strip undoes the last markers.
 
 Catabox does not upload recommendation interactions. Likes, saves, played markers, dismissals, preferred genres, platforms, tiers, player modes, and discovery style remain in `localStorage` on the current browser. The recommendation controls can reset the profile or export/import it as JSON.
 
@@ -150,4 +154,4 @@ The update workflow commits only generated `site/` changes when those files chan
 - Conservative exact family matching intentionally leaves spelling and word-boundary aliases unmerged rather than risk false positives.
 - Family IDs are title-derived, so a substantive upstream rename can produce family churn; product-level history remains authoritative.
 - Market availability defaults to France (`FR`) and product metadata language defaults to `en-us`.
-- The site has no user accounts, cross-device sync, linked Xbox library, or knowledge of installed games. Played and saved markers are optional browser-local notes supplied by the visitor.
+- The site has no user accounts, cross-device sync, linked Xbox library, or knowledge of installed games. Played and saved markers are optional browser-local notes supplied by the visitor, entered per game from the catalog or the quick-entry panel.

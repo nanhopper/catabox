@@ -466,7 +466,6 @@ test('recommendation UI keeps taste state local and explainable', () => {
   assert.match(reportTemplate, /for \(const container of \[recommendationRails, cards, tableBody\]\)/);
   assert.match(reportTemplate, /return selectedValues\('state'\)\.includes\('current'\) && matchesFilters\(game\)/);
   assert.match(reportTemplate, /function rankedAnchorCandidates\(sourceId\)/);
-  assert.match(reportTemplate, /if \(game\.departed\) return ''/);
   assert.match(reportTemplate, /function restoreRecommendationFocus\(action, preferredGameIds\)/);
   assert.match(reportTemplate, /data-taste-action=/);
   assert.match(reportTemplate, /visible: '👍'/);
@@ -476,6 +475,83 @@ test('recommendation UI keeps taste state local and explainable', () => {
   assert.match(reportTemplate, /aria-label="\$\{escapeHtml\(`\$\{label\}: \$\{game\.title\}`\)\}"/);
   assert.match(reportTemplate, /Similar themes and description/);
   assert.match(reportTemplate, /No recommendation candidates match the active filters/);
+  assert.match(reportTemplate, /function recommendationEmptyMessage\(\)/);
+  assert.match(reportTemplate, /Every tracked game is already liked, disliked, saved, or marked played/);
+});
+
+test('every catalog card and table row exposes the full taste action row', () => {
+  assert.match(reportTemplate, /function tasteActionRow\(game, \{ compact = false \} = \{\}\)/);
+  assert.doesNotMatch(reportTemplate, /tasteSeedButton/);
+  assert.doesNotMatch(reportTemplate, /taste-seed-button/);
+
+  const cardStart = reportTemplate.indexOf('function renderCard(game)');
+  const cardEnd = reportTemplate.indexOf('function renderTableRow(game)', cardStart);
+  const rowEnd = reportTemplate.indexOf('function findGameById(familyId)', cardEnd);
+  assert(cardStart >= 0 && cardEnd > cardStart && rowEnd > cardEnd, 'card and row renderers should exist in order');
+
+  assert.match(reportTemplate.slice(cardStart, cardEnd), /\$\{tasteActionRow\(game\)\}/);
+  assert.match(reportTemplate.slice(cardEnd, rowEnd), /\$\{tasteActionRow\(game, \{ compact: true \}\)\}/);
+
+  assert.match(reportTemplate, /const TASTE_GAME_ACTIONS = \['liked', 'disliked', 'saved', 'played'\]/);
+  assert.match(reportTemplate, /const TASTE_DEPARTED_ACTIONS = \['saved', 'played'\]/);
+  assert.match(reportTemplate, /return game\.departed \? TASTE_DEPARTED_ACTIONS : TASTE_GAME_ACTIONS/);
+  assert.match(reportTemplate, /icon: '🔖'/);
+  assert.match(reportTemplate, /icon: '✓'/);
+  assert.match(reportTemplate, /const glyph = compact \? copy\.icon \?\? copy\.visible : copy\.visible/);
+  assert.match(reportTemplate, /button\.setAttribute\('aria-label', `\$\{label\}: \$\{button\.dataset\.gameTitle\}`\)/);
+});
+
+test('quick entry marks played games outside the active filters', () => {
+  assert.match(reportTemplate, /id="tasteQuickEntryButton"/);
+  assert.match(reportTemplate, /id="tasteQuickEntry"/);
+  assert.match(reportTemplate, /id="tasteQuickEntrySearch"/);
+  assert.match(reportTemplate, /id="tasteQuickEntryResults"/);
+  assert.match(reportTemplate, /id="tasteQuickEntryCount" class="quick-entry-count" aria-live="polite"/);
+  assert.match(reportTemplate, /id="tasteQuickEntryRecent"/);
+  assert.match(reportTemplate, /aria-expanded="false" aria-controls="tasteQuickEntry"/);
+
+  assert.match(reportTemplate, /app\.quickEntryIndex = \[\.\.\.currentFamilies\(\), \.\.\.departedRows\(\)\]/);
+  assert.match(reportTemplate, /if \(needle\.length < QUICK_ENTRY_MIN_QUERY\) return \[\]/);
+  assert.match(reportTemplate, /\.slice\(0, QUICK_ENTRY_RESULT_LIMIT\)/);
+  assert.match(reportTemplate, /function quickEntryMarkPlayed\(game\)/);
+  assert.match(reportTemplate, /if \(app\.taste\.played\.includes\(game\.id\)\)/);
+  assert.match(reportTemplate, /if \(event\.key !== 'Enter'\) return;/);
+  assert.match(reportTemplate, /quickEntryMarkPlayed\(target\)/);
+  assert.match(reportTemplate, /data-quick-entry-undo="true"/);
+  assert.match(reportTemplate, /tasteQuickEntry\.addEventListener\('click'/);
+
+  const matchStart = reportTemplate.indexOf('function quickEntryMatches(query)');
+  const matchEnd = reportTemplate.indexOf('function quickEntryResultHtml(game)', matchStart);
+  assert(matchStart >= 0 && matchEnd > matchStart, 'quick entry search should exist');
+  const matchSource = reportTemplate.slice(matchStart, matchEnd);
+  assert.doesNotMatch(matchSource, /matchesFilters/, 'quick entry search must ignore the active catalog filters');
+  assert.doesNotMatch(matchSource, /allRowsForState/, 'quick entry search must ignore the catalog state filter');
+});
+
+test('hover preview exposes player mode, platform, and tier tags', () => {
+  assert.match(reportTemplate, /function previewTagsHtml\(game\)/);
+
+  const tagStart = reportTemplate.indexOf('function previewTagsHtml(game)');
+  const tagEnd = reportTemplate.indexOf('function previewScreenshots', tagStart);
+  assert(tagStart >= 0 && tagEnd > tagStart, 'preview tag helper should exist before previewScreenshots');
+  const tagSource = reportTemplate.slice(tagStart, tagEnd);
+
+  assert.match(tagSource, /playerModeLabels\(game\)/);
+  assert.match(tagSource, /labelFor\('platforms', platform\)/);
+  assert.match(tagSource, /labelFor\('tiers', tier\)/);
+  assert.match(tagSource, /class="chip chip-mode"/);
+  assert.match(tagSource, /No player mode metadata/);
+
+  const previewStart = tagSource.indexOf('function previewHtml(game)');
+  assert(previewStart >= 0, 'previewHtml should follow previewTagsHtml');
+  const previewSource = tagSource.slice(previewStart);
+  const tagPosition = previewSource.indexOf('${previewTagsHtml(game)}');
+  const descriptionPosition = previewSource.indexOf('id="gamePreviewDescription"');
+  assert(tagPosition >= 0, 'preview should render the tag chips');
+  assert(tagPosition < descriptionPosition, 'tags should sit between the title and the description');
+
+  assert.match(reportTemplate, /\.chip-mode \{/);
+  assert.match(reportTemplate, /\.game-preview-tags \{/);
 });
 
 test('screenshot metadata does not affect the membership catalog hash', () => {
