@@ -14,6 +14,7 @@
     "migrate:families": "node src/migrate-families.mjs",
     "summary:catalog": "node src/catalog-summary.mjs",
     "build": "node src/render-site.mjs",
+    "serve": "node src/serve-site.mjs",
     "update": "node src/update.mjs",
     "test": "node --test"
   },
