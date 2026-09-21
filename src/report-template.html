@@ -704,6 +704,49 @@
       border-color: color-mix(in srgb, var(--accent-2) 42%, var(--line));
       background:
         linear-gradient(145deg, color-mix(in srgb, var(--accent-2) 9%, var(--panel)), color-mix(in srgb, var(--accent) 5%, var(--panel)));
+      transition:
+        border-color 320ms ease,
+        box-shadow 320ms ease,
+        gap 360ms cubic-bezier(0.42, 0, 0.58, 1),
+        padding 360ms cubic-bezier(0.42, 0, 0.58, 1),
+        transform 180ms ease;
+    }
+
+    .recommendations-panel.is-collapsed {
+      gap: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .recommendations-panel.is-collapsed .recommendations-head,
+    .recommendations-panel.is-collapsed .recommendations-copy {
+      width: 100%;
+      max-width: none;
+    }
+
+    .recommendations-panel.is-collapsed:has(.recommendations-toggle:hover) {
+      border-color: color-mix(in srgb, var(--accent) 58%, var(--accent-2));
+      box-shadow:
+        0 16px 38px color-mix(in srgb, var(--accent-2) 18%, transparent),
+        inset 0 1px 0 rgb(255 255 255 / 12%);
+      transform: translateY(-1px);
+    }
+
+    .recommendations-panel.is-collapsed .recommendations-toggle {
+      border: 0;
+      border-radius: calc(1rem - 1px);
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .recommendations-panel.is-collapsed .recommendations-toggle:hover {
+      border-color: transparent;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .recommendations-panel.is-collapsed .recommendations-toggle:focus-visible {
+      outline-offset: -4px;
     }
 
     .recommendations-head {
@@ -723,18 +766,149 @@
 
     .recommendations-copy {
       display: grid;
+      flex: 1 1 32rem;
       gap: 0.35rem;
-      max-width: 72ch;
+      min-width: 0;
     }
 
     .recommendations-actions {
       display: flex;
+      justify-content: flex-end;
       gap: 0.5rem;
       flex-wrap: wrap;
     }
 
     .recommendations-actions button {
       width: auto;
+    }
+
+    .recommendations-toggle {
+      --arrow-rotation: 0deg;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      width: 100%;
+      min-height: 4.8rem;
+      overflow: hidden;
+      padding: 0.6rem 0.65rem 0.75rem 0.15rem;
+      border: 0;
+      border-radius: 0.65rem;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent-2) 7%, transparent), transparent 88%);
+      box-shadow: none;
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      letter-spacing: inherit;
+      text-align: left;
+      transition:
+        background-color 180ms ease,
+        filter 180ms ease;
+    }
+
+    .recommendations-toggle:hover {
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--accent-2) 11%, transparent), transparent 92%);
+    }
+
+    .recommendations-toggle:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent-2) 70%, transparent);
+      outline-offset: 3px;
+    }
+
+    .recommendations-toggle-label {
+      color: transparent;
+      background: linear-gradient(118deg, var(--text), var(--accent-2) 52%, var(--accent));
+      background-clip: text;
+      -webkit-background-clip: text;
+    }
+
+    .recommendations-toggle-icon {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+      width: 2.3rem;
+      height: 2.3rem;
+      padding-inline: 0.48rem 0.6rem;
+      border: 1px solid color-mix(in srgb, var(--accent) 48%, var(--line));
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 9%, var(--panel));
+      color: var(--accent);
+      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 28%, transparent));
+      transform: rotate(var(--arrow-rotation)) translateX(0);
+      transform-origin: center;
+      transition: background-color 180ms ease, border-color 180ms ease, filter 180ms ease, transform 220ms ease;
+    }
+
+    .recommendations-toggle-chevron {
+      width: 0.52rem;
+      height: 0.52rem;
+      margin-left: -0.16rem;
+      border-top: 2px solid currentColor;
+      border-right: 2px solid currentColor;
+      transform: rotate(45deg);
+      transition: transform 180ms ease;
+    }
+
+    .recommendations-toggle[aria-expanded="true"] .recommendations-toggle-icon {
+      --arrow-rotation: 90deg;
+    }
+
+    .recommendations-panel.is-collapsed .recommendations-toggle-icon {
+      animation: recommendations-arrow-invite 3s ease-in-out infinite;
+    }
+
+    .recommendations-toggle:hover .recommendations-toggle-icon,
+    .recommendations-toggle:focus-visible .recommendations-toggle-icon {
+      animation: none;
+      border-color: color-mix(in srgb, var(--accent) 76%, var(--text));
+      background: color-mix(in srgb, var(--accent) 16%, var(--panel));
+      filter: drop-shadow(0 0 12px color-mix(in srgb, var(--accent) 46%, transparent));
+      transform: rotate(var(--arrow-rotation)) translateX(0.22rem);
+    }
+
+    .recommendations-toggle:hover .recommendations-toggle-chevron:first-child,
+    .recommendations-toggle:focus-visible .recommendations-toggle-chevron:first-child {
+      transform: translateX(0.06rem) rotate(45deg);
+    }
+
+    .recommendations-toggle:hover .recommendations-toggle-chevron:last-child,
+    .recommendations-toggle:focus-visible .recommendations-toggle-chevron:last-child {
+      transform: translateX(0.15rem) rotate(45deg);
+    }
+
+    .recommendations-content {
+      display: grid;
+      gap: 1rem;
+      overflow: hidden;
+      transform-origin: top;
+    }
+
+    @keyframes recommendations-arrow-invite {
+      0%,
+      68%,
+      100% {
+        transform: rotate(var(--arrow-rotation)) translateX(0);
+      }
+
+      78% {
+        transform: rotate(var(--arrow-rotation)) translateX(0.22rem);
+      }
+
+      88% {
+        transform: rotate(var(--arrow-rotation)) translateX(0.06rem);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .recommendations-toggle,
+      .recommendations-toggle-icon,
+      .recommendations-toggle-chevron {
+        animation: none;
+        transition: none;
+      }
     }
 
     .taste-controls {
@@ -1456,69 +1630,78 @@
   <main>
     <section class="kpis" id="kpis" aria-label="Catalog key performance indicators"></section>
 
-    <section id="recommendationsPanel" class="panel recommendations-panel" aria-labelledby="recommendationsTitle">
+    <section id="recommendationsPanel" class="panel recommendations-panel is-collapsed" aria-labelledby="recommendationsTitle">
       <div class="recommendations-head">
         <div class="recommendations-copy">
-          <h2 id="recommendationsTitle">Find your next game</h2>
-          <p class="muted">Explainable recommendations from catalog metadata, your active filters, and optional preferences that stay in this browser.</p>
+          <h2 id="recommendationsTitle">
+            <button id="recommendationsToggleButton" class="recommendations-toggle" type="button" aria-expanded="false" aria-controls="recommendationsContent">
+              <span class="recommendations-toggle-label">Find your next game</span>
+              <span class="recommendations-toggle-icon" aria-hidden="true">
+                <span class="recommendations-toggle-chevron"></span>
+                <span class="recommendations-toggle-chevron"></span>
+              </span>
+            </button>
+          </h2>
         </div>
+      </div>
+      <div id="recommendationsContent" class="recommendations-content hidden" aria-hidden="true" inert>
         <div class="recommendations-actions">
           <button id="tasteToggleButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteControls">Shape recommendations</button>
           <button id="tasteQuickEntryButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteQuickEntry">Log games you played</button>
           <button id="tasteResetButton" class="secondary hidden" type="button">Reset taste</button>
         </div>
-      </div>
-      <p id="recommendationSummary" class="muted" aria-live="polite" tabindex="-1">Loading recommendations...</p>
-      <div id="tasteControls" class="taste-controls hidden">
-        <div class="taste-grid">
-          <fieldset class="taste-fieldset">
-            <legend>Genres</legend>
-            <div id="tasteGenres" class="taste-options"></div>
-          </fieldset>
-          <fieldset class="taste-fieldset">
-            <legend>Platforms</legend>
-            <div id="tastePlatforms" class="taste-options"></div>
-          </fieldset>
-          <fieldset class="taste-fieldset">
-            <legend>Game Pass tiers</legend>
-            <div id="tasteTiers" class="taste-options"></div>
-          </fieldset>
-          <fieldset class="taste-fieldset">
-            <legend>Player modes</legend>
-            <div id="tasteModes" class="taste-options"></div>
-          </fieldset>
-          <label class="taste-discovery">
-            Discovery style
-            <select id="tasteDiscovery">
-              <option value="familiar">Stay close to my taste</option>
-              <option value="balanced">Balanced</option>
-              <option value="surprising">Surprise me</option>
-            </select>
-          </label>
-        </div>
-        <details class="taste-transfer">
-          <summary>Export or import this local profile</summary>
-          <div class="taste-transfer-body">
-            <textarea id="tasteTransfer" aria-label="Taste profile JSON" placeholder="Exported profile JSON appears here. Paste a profile here to import it."></textarea>
-            <div class="button-row">
-              <button id="tasteExportButton" class="secondary" type="button">Export profile</button>
-              <button id="tasteImportButton" class="secondary" type="button">Import profile</button>
-            </div>
+        <p id="recommendationSummary" class="muted" aria-live="polite" tabindex="-1">Loading recommendations...</p>
+        <div id="tasteControls" class="taste-controls hidden">
+          <div class="taste-grid">
+            <fieldset class="taste-fieldset">
+              <legend>Genres</legend>
+              <div id="tasteGenres" class="taste-options"></div>
+            </fieldset>
+            <fieldset class="taste-fieldset">
+              <legend>Platforms</legend>
+              <div id="tastePlatforms" class="taste-options"></div>
+            </fieldset>
+            <fieldset class="taste-fieldset">
+              <legend>Game Pass tiers</legend>
+              <div id="tasteTiers" class="taste-options"></div>
+            </fieldset>
+            <fieldset class="taste-fieldset">
+              <legend>Player modes</legend>
+              <div id="tasteModes" class="taste-options"></div>
+            </fieldset>
+            <label class="taste-discovery">
+              Discovery style
+              <select id="tasteDiscovery">
+                <option value="familiar">Stay close to my taste</option>
+                <option value="balanced">Balanced</option>
+                <option value="surprising">Surprise me</option>
+              </select>
+            </label>
           </div>
-        </details>
-        <p id="tasteNotice" class="taste-notice" aria-live="polite"></p>
+          <details class="taste-transfer">
+            <summary>Export or import this local profile</summary>
+            <div class="taste-transfer-body">
+              <textarea id="tasteTransfer" aria-label="Taste profile JSON" placeholder="Exported profile JSON appears here. Paste a profile here to import it."></textarea>
+              <div class="button-row">
+                <button id="tasteExportButton" class="secondary" type="button">Export profile</button>
+                <button id="tasteImportButton" class="secondary" type="button">Import profile</button>
+              </div>
+            </div>
+          </details>
+          <p id="tasteNotice" class="taste-notice" aria-live="polite"></p>
+        </div>
+        <div id="tasteQuickEntry" class="taste-quick-entry hidden">
+          <p class="muted">Search the whole catalog, including games hidden by the active filters and games that already left Game Pass. Marking a game played removes it from your recommendations.</p>
+          <label class="quick-entry-field">Find a game to mark
+            <input id="tasteQuickEntrySearch" type="search" autocomplete="off" placeholder="Start typing a game title" aria-describedby="tasteQuickEntryHint">
+          </label>
+          <p id="tasteQuickEntryHint" class="muted">Press Enter to mark the first result as played and clear the box.</p>
+          <div id="tasteQuickEntryResults" class="quick-entry-results" role="group" aria-label="Quick entry search results"></div>
+          <p id="tasteQuickEntryCount" class="quick-entry-count" aria-live="polite"></p>
+          <div id="tasteQuickEntryRecent" class="quick-entry-recent"></div>
+        </div>
+        <div id="recommendationRails" class="recommendation-rails"></div>
       </div>
-      <div id="tasteQuickEntry" class="taste-quick-entry hidden">
-        <p class="muted">Search the whole catalog, including games hidden by the active filters and games that already left Game Pass. Marking a game played removes it from your recommendations.</p>
-        <label class="quick-entry-field">Find a game to mark
-          <input id="tasteQuickEntrySearch" type="search" autocomplete="off" placeholder="Start typing a game title" aria-describedby="tasteQuickEntryHint">
-        </label>
-        <p id="tasteQuickEntryHint" class="muted">Press Enter to mark the first result as played and clear the box.</p>
-        <div id="tasteQuickEntryResults" class="quick-entry-results" role="group" aria-label="Quick entry search results"></div>
-        <p id="tasteQuickEntryCount" class="quick-entry-count" aria-live="polite"></p>
-        <div id="tasteQuickEntryRecent" class="quick-entry-recent"></div>
-      </div>
-      <div id="recommendationRails" class="recommendation-rails"></div>
     </section>
 
     <section id="filterPanel" class="panel" aria-labelledby="filtersTitle">
@@ -1957,6 +2140,9 @@
 
     const controls = Object.fromEntries(Object.keys(defaults).map((id) => [id, document.getElementById(id)]));
     const recommendationsPanel = document.getElementById('recommendationsPanel');
+    const recommendationsToggleButton = document.getElementById('recommendationsToggleButton');
+    const recommendationsContent = document.getElementById('recommendationsContent');
+    let recommendationsPanelAnimation = null;
     const recommendationSummary = document.getElementById('recommendationSummary');
     const recommendationRails = document.getElementById('recommendationRails');
     const tasteToggleButton = document.getElementById('tasteToggleButton');
@@ -2316,6 +2502,48 @@
       if (willOpen) {
         tasteControls.querySelector('input, select, textarea, button')?.focus();
       }
+    }
+
+    function toggleRecommendationsPanel() {
+      const willOpen = recommendationsToggleButton.getAttribute('aria-expanded') !== 'true';
+      const currentHeight = recommendationsContent.classList.contains('hidden')
+        ? 0
+        : recommendationsContent.getBoundingClientRect().height;
+      recommendationsPanelAnimation?.cancel();
+      recommendationsContent.classList.remove('hidden');
+      recommendationsContent.inert = !willOpen;
+      recommendationsContent.setAttribute('aria-hidden', String(!willOpen));
+      recommendationsPanel.classList.toggle('is-collapsed', !willOpen);
+      recommendationsToggleButton.setAttribute('aria-expanded', String(willOpen));
+
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        recommendationsContent.classList.toggle('hidden', !willOpen);
+        return;
+      }
+
+      const targetHeight = willOpen ? recommendationsContent.scrollHeight : 0;
+      const duration = Math.min(600, 320 + Math.abs(targetHeight - currentHeight) * 0.09);
+      recommendationsPanelAnimation = recommendationsContent.animate([
+        {
+          height: `${currentHeight}px`,
+          opacity: willOpen ? 0 : 1,
+          transform: willOpen ? 'translateY(-0.5rem)' : 'translateY(0)'
+        },
+        {
+          height: `${targetHeight}px`,
+          opacity: willOpen ? 1 : 0,
+          transform: willOpen ? 'translateY(0)' : 'translateY(-0.5rem)'
+        }
+      ], {
+        duration,
+        easing: 'cubic-bezier(0.42, 0, 0.58, 1)',
+        fill: 'both'
+      });
+      recommendationsPanelAnimation.onfinish = () => {
+        recommendationsContent.classList.toggle('hidden', !willOpen);
+        recommendationsPanelAnimation?.cancel();
+        recommendationsPanelAnimation = null;
+      };
     }
 
     function resetTasteProfile() {
@@ -4441,6 +4669,7 @@
       toolbarFiltersButton.addEventListener('click', showFilters);
       toolbarClearButton.addEventListener('click', resetFilters);
       toolbarTopButton.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
+      recommendationsToggleButton.addEventListener('click', toggleRecommendationsPanel);
       tasteToggleButton.addEventListener('click', toggleTasteControls);
       tasteResetButton.addEventListener('click', resetTasteProfile);
       tasteQuickEntryButton.addEventListener('click', toggleQuickEntry);
