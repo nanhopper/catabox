@@ -440,6 +440,24 @@ test('card genres render as accented chips above the publisher line', () => {
   assert.match(reportTemplate, /<td class="genre-col">\$\{genreChipList\(game\.genres \?\? \[\]\)\}<\/td>/);
 });
 
+test('game card renders leaving soon overlay on the card media instead of in card body', () => {
+  const cardStart = reportTemplate.indexOf('function renderCard(game)');
+  const cardEnd = reportTemplate.indexOf('function renderTableRow(game)', cardStart);
+  assert(cardStart >= 0 && cardEnd > cardStart, 'renderCard should exist before renderTableRow');
+  const cardSource = reportTemplate.slice(cardStart, cardEnd);
+
+  assert.match(cardSource, /class="card-media"/);
+  assert.match(cardSource, /\$\{leavingSoonCardOverlay\(game\)\}/);
+  assert.doesNotMatch(cardSource, /<div class="card-body">[\s\S]*\$\{leavingSoonBadge\(game\)\}/);
+
+  assert.match(reportTemplate, /function leavingSoonCardOverlay\(game\)/);
+  assert.match(reportTemplate, /class="card-leaving-ribbon"/);
+  assert.doesNotMatch(reportTemplate, /class="card-leaving-macaron"/);
+  assert.doesNotMatch(reportTemplate, /class="card-leaving-flag"/);
+  assert.doesNotMatch(reportTemplate, /id="leavingStyleButton"/);
+  assert.doesNotMatch(reportTemplate, /id="toolbarLeavingStyle"/);
+});
+
 test('recommendation UI keeps taste state local and independent of catalog filters', () => {
   assert.match(reportTemplate, /id="recommendationsPanel"/);
   assert.match(reportTemplate, /id="tasteControls"/);
@@ -462,7 +480,9 @@ test('recommendation UI keeps taste state local and independent of catalog filte
   assert.match(reportTemplate, /function renderRecommendations\(\)/);
   assert.match(reportTemplate, /observeLazyImages\(\[recommendationRails\]\)/);
   assert.match(reportTemplate, /class="recommendation-card" data-preview-game="\$\{escapeHtml\(game\.id\)\}"/);
-  assert.match(reportTemplate, /<h4>\$\{escapeHtml\(game\.title\)\}<\/h4>\s+\$\{cardGenres\(game\)\}\s+\$\{leavingSoonBadge\(game\)\}/);
+  assert.match(reportTemplate, /class="recommendation-card"[\s\S]*class="card-media"[\s\S]*\$\{leavingSoonCardOverlay\(game\)\}/);
+  assert.match(reportTemplate, /<h4>\$\{escapeHtml\(game\.title\)\}<\/h4>\s+\$\{cardGenres\(game\)\}\s+<p class="recommendation-reason">/);
+  assert.doesNotMatch(reportTemplate, /class="recommendation-card-body"[\s\S]*\$\{leavingSoonBadge\(game\)\}/);
   assert.match(reportTemplate, /for \(const container of \[recommendationRails, cards, tableBody\]\)/);
   assert.doesNotMatch(reportTemplate, /function recommendationMatchesFilters/);
   const rankedStart = reportTemplate.indexOf('function rankedRecommendationCandidates()');
