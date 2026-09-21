@@ -458,7 +458,7 @@ test('game card renders leaving soon overlay on the card media instead of in car
   assert.doesNotMatch(reportTemplate, /id="toolbarLeavingStyle"/);
 });
 
-test('recommendation UI keeps taste state local and explainable', () => {
+test('recommendation UI keeps taste state local and independent of catalog filters', () => {
   assert.match(reportTemplate, /id="recommendationsPanel"/);
   assert.match(reportTemplate, /id="tasteControls"/);
   assert.match(reportTemplate, /catabox\.taste\.v1/);
@@ -484,7 +484,17 @@ test('recommendation UI keeps taste state local and explainable', () => {
   assert.match(reportTemplate, /<h4>\$\{escapeHtml\(game\.title\)\}<\/h4>\s+\$\{cardGenres\(game\)\}\s+<p class="recommendation-reason">/);
   assert.doesNotMatch(reportTemplate, /class="recommendation-card-body"[\s\S]*\$\{leavingSoonBadge\(game\)\}/);
   assert.match(reportTemplate, /for \(const container of \[recommendationRails, cards, tableBody\]\)/);
-  assert.match(reportTemplate, /return selectedValues\('state'\)\.includes\('current'\) && matchesFilters\(game\)/);
+  assert.doesNotMatch(reportTemplate, /function recommendationMatchesFilters/);
+  const rankedStart = reportTemplate.indexOf('function rankedRecommendationCandidates()');
+  const rankedEnd = reportTemplate.indexOf('function latestTasteAnchor()', rankedStart);
+  assert(rankedStart >= 0 && rankedEnd > rankedStart, 'ranked recommendation candidates should exist');
+  const rankedSource = reportTemplate.slice(rankedStart, rankedEnd);
+  assert.doesNotMatch(rankedSource, /matchesFilters|selectedValues|allRowsForState/);
+  const anchorStart = reportTemplate.indexOf('function rankedAnchorCandidates(sourceId)');
+  const anchorEnd = reportTemplate.indexOf('function preferenceReasons(game, artifact = null)', anchorStart);
+  assert(anchorStart >= 0 && anchorEnd > anchorStart, 'anchor recommendation candidates should exist');
+  const anchorSource = reportTemplate.slice(anchorStart, anchorEnd);
+  assert.doesNotMatch(anchorSource, /matchesFilters|selectedValues|allRowsForState/);
   assert.match(reportTemplate, /function rankedAnchorCandidates\(sourceId\)/);
   assert.match(reportTemplate, /function restoreRecommendationFocus\(action, preferredGameIds\)/);
   assert.match(reportTemplate, /data-taste-action=/);
@@ -494,8 +504,8 @@ test('recommendation UI keeps taste state local and explainable', () => {
   assert.match(reportTemplate, /visible: '✓ Played it'/);
   assert.match(reportTemplate, /aria-label="\$\{escapeHtml\(`\$\{label\}: \$\{game\.title\}`\)\}"/);
   assert.match(reportTemplate, /Similar themes and description/);
-  assert.match(reportTemplate, /No recommendation candidates match the active filters/);
   assert.match(reportTemplate, /function recommendationEmptyMessage\(\)/);
+  assert.match(reportTemplate, /No current games are available to recommend/);
   assert.match(reportTemplate, /Every tracked game is already liked, disliked, saved, or marked played/);
 });
 
