@@ -479,7 +479,11 @@ test('recommendation UI keeps taste state local and explainable', () => {
   assert.match(reportTemplate, /setTimeout\(\(\) => recommendationsDrawer\.focus\(\{ preventScroll: true \}\), delay\)/);
   assert.match(reportTemplate, /history\.pushState\(\{ \.\.\.history\.state, cataboxRecommendations: true \}, ''\)/);
   assert.match(reportTemplate, /mobileQuery\.addEventListener\('change'/);
-  assert.match(reportTemplate, /width: clamp\(680px, 72vw, 960px\)/);
+  assert.match(reportTemplate, /width: min\(75vw, 1440px\)/);
+  assert.match(reportTemplate, /id="recommendationsDrawerResizer"/);
+  assert.match(reportTemplate, /function setRecommendationDrawerWidth\(width, \{ persist = false \} = \{\}\)/);
+  assert.match(reportTemplate, /recommendationsDrawerResizer\.addEventListener\('pointerdown'/);
+  assert.match(reportTemplate, /recommendationsDrawerResizer\.addEventListener\('keydown'/);
   assert.match(reportTemplate, /grid-template-columns: repeat\(auto-fit, minmax\(240px, 1fr\)\)/);
   assert.match(reportTemplate, /recommendationRailHtml\(rail, rail\.items, \{ dense: !mobileQuery\.matches \}\)/);
   assert.match(reportTemplate, /aria-label="Close recommendations"/);

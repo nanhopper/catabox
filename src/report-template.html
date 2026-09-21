@@ -870,7 +870,8 @@
       position: relative;
       display: grid;
       grid-template-rows: auto 1fr;
-      width: clamp(680px, 72vw, 960px);
+      width: min(75vw, 1440px);
+      min-width: min(640px, calc(100vw - 3rem));
       max-width: calc(100vw - 3rem);
       height: 100dvh;
       overflow: hidden;
@@ -880,6 +881,51 @@
       box-shadow: -24px 0 60px rgb(0 0 0 / 42%);
       transform: translateX(100%);
       transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .recommendations-drawer-resizer {
+      position: absolute;
+      z-index: 3;
+      inset: 0 auto 0 0;
+      width: 0.7rem;
+      border: 0;
+      background: transparent;
+      cursor: ew-resize;
+      touch-action: none;
+    }
+
+    .recommendations-drawer-resizer::after {
+      position: absolute;
+      top: 50%;
+      left: 0.16rem;
+      width: 0.2rem;
+      height: 3.5rem;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--accent-2) 54%, var(--line));
+      content: "";
+      opacity: 0.42;
+      transform: translateY(-50%);
+      transition:
+        height 160ms ease,
+        opacity 160ms ease,
+        background-color 160ms ease;
+    }
+
+    .recommendations-drawer-resizer:hover::after,
+    .recommendations-drawer-resizer:focus-visible::after,
+    .recommendations-drawer-resizer.is-resizing::after {
+      height: 5rem;
+      background: var(--accent-2);
+      opacity: 1;
+    }
+
+    .recommendations-drawer-resizer:focus-visible {
+      outline: none;
+    }
+
+    body.drawer-resizing {
+      cursor: ew-resize;
+      user-select: none;
     }
 
     .recommendations-drawer.is-open .recommendations-drawer-backdrop {
@@ -1704,8 +1750,9 @@
       }
 
       .recommendations-drawer-panel {
-        width: 100%;
+        width: 100% !important;
         max-width: none;
+        min-width: 0;
         height: 100dvh;
         border-left: 0;
         box-shadow: none;
@@ -1715,6 +1762,10 @@
 
       .recommendations-drawer.is-open .recommendations-drawer-panel {
         transform: translateY(0);
+      }
+
+      .recommendations-drawer-resizer {
+        display: none;
       }
 
       .recommendations-drawer-head {
@@ -2026,6 +2077,7 @@
             <span class="recommendations-close-label">Close</span>
           </button>
         </header>
+        <div id="recommendationsDrawerResizer" class="recommendations-drawer-resizer" role="separator" aria-label="Resize recommendations panel" aria-orientation="vertical" aria-valuemin="640" aria-valuemax="1440" aria-valuenow="960" tabindex="0" title="Drag to resize. Use arrow keys for precise resizing; double-click to reset."></div>
         <div id="recommendationsDrawerBody" class="recommendations-drawer-body">
           <div class="recommendations-actions">
             <button id="tasteToggleButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteControls">Shape recommendations</button>
@@ -2290,7 +2342,8 @@
       recommendationsHistoryEntry: false,
       recommendationDrawerState: {
         open: false,
-        scrollTop: 0
+        scrollTop: 0,
+        width: null
       },
       productsById: new Map(),
       taste: {
@@ -2346,8 +2399,10 @@
     const recommendationsSeeAllButton = document.getElementById('recommendationsSeeAllButton');
     const recommendationsDrawer = document.getElementById('recommendationsDrawer');
     const recommendationsDrawerPanel = recommendationsDrawer.querySelector('.recommendations-drawer-panel');
+    const recommendationsDrawerResizer = document.getElementById('recommendationsDrawerResizer');
     const recommendationsDrawerBody = document.getElementById('recommendationsDrawerBody');
     let recommendationsDrawerCloseTimer = 0;
+    let recommendationDrawerResize = null;
     const recommendationSummary = document.getElementById('recommendationSummary');
     const recommendationRails = document.getElementById('recommendationRails');
     const tasteToggleButton = document.getElementById('tasteToggleButton');
@@ -2722,11 +2777,12 @@
         const parsed = JSON.parse(sessionStorage.getItem(RECOMMENDATION_DRAWER_STORAGE_KEY) ?? '{}');
         return {
           open: parsed.open === true,
-          scrollTop: Number.isFinite(parsed.scrollTop) ? Math.max(0, parsed.scrollTop) : 0
+          scrollTop: Number.isFinite(parsed.scrollTop) ? Math.max(0, parsed.scrollTop) : 0,
+          width: Number.isFinite(parsed.width) ? Math.max(0, parsed.width) : null
         };
       } catch (error) {
         console.warn('Could not restore recommendation drawer state.', error);
-        return { open: false, scrollTop: 0 };
+        return { open: false, scrollTop: 0, width: null };
       }
     }
 
@@ -2764,6 +2820,44 @@
       document.body.classList.toggle('drawer-open', filterOpen || recommendationsOpen);
     }
 
+    function recommendationDrawerWidthBounds() {
+      const max = Math.max(0, innerWidth - 48);
+      return {
+        min: Math.min(640, max),
+        max
+      };
+    }
+
+    function updateRecommendationDrawerResizeValue(width) {
+      const bounds = recommendationDrawerWidthBounds();
+      recommendationsDrawerResizer.setAttribute('aria-valuemin', String(Math.round(bounds.min)));
+      recommendationsDrawerResizer.setAttribute('aria-valuemax', String(Math.round(bounds.max)));
+      recommendationsDrawerResizer.setAttribute('aria-valuenow', String(Math.round(width)));
+    }
+
+    function setRecommendationDrawerWidth(width, { persist = false } = {}) {
+      if (mobileQuery.matches) return;
+      const bounds = recommendationDrawerWidthBounds();
+      const next = Math.min(bounds.max, Math.max(bounds.min, width));
+      recommendationsDrawerPanel.style.width = `${next}px`;
+      app.recommendationDrawerState.width = next;
+      updateRecommendationDrawerResizeValue(next);
+      if (persist) saveRecommendationDrawerState();
+    }
+
+    function syncRecommendationDrawerWidth() {
+      if (mobileQuery.matches) {
+        recommendationsDrawerPanel.style.removeProperty('width');
+        return;
+      }
+      if (Number.isFinite(app.recommendationDrawerState.width)) {
+        setRecommendationDrawerWidth(app.recommendationDrawerState.width);
+        return;
+      }
+      recommendationsDrawerPanel.style.removeProperty('width');
+      updateRecommendationDrawerResizeValue(recommendationsDrawerPanel.getBoundingClientRect().width);
+    }
+
     function openRecommendationsDrawer(opener = document.activeElement, { pushHistory = true } = {}) {
       if (recommendationsDrawer.getAttribute('aria-hidden') === 'false') return;
       if (!filterDrawer.classList.contains('hidden')) {
@@ -2776,6 +2870,7 @@
       recommendationsDrawer.classList.remove('hidden');
       recommendationsDrawer.inert = false;
       recommendationsDrawer.setAttribute('aria-hidden', 'false');
+      syncRecommendationDrawerWidth();
       syncDrawerOpenState();
       if (mobileQuery.matches && pushHistory && !app.recommendationsHistoryEntry) {
         history.pushState({ ...history.state, cataboxRecommendations: true }, '');
@@ -2794,7 +2889,8 @@
       if (recommendationsDrawer.getAttribute('aria-hidden') !== 'false') return;
       app.recommendationDrawerState = {
         open: false,
-        scrollTop: recommendationsDrawerBody.scrollTop
+        scrollTop: recommendationsDrawerBody.scrollTop,
+        width: app.recommendationDrawerState.width
       };
       saveRecommendationDrawerState();
       recommendationsDrawer.setAttribute('aria-hidden', 'true');
@@ -5132,12 +5228,61 @@
         }
         trapDialogFocus(event, recommendationsDrawer, recommendationsDrawerPanel);
       });
+      recommendationsDrawerResizer.addEventListener('pointerdown', (event) => {
+        if (mobileQuery.matches) return;
+        event.preventDefault();
+        recommendationDrawerResize = {
+          pointerId: event.pointerId,
+          startX: event.clientX,
+          startWidth: recommendationsDrawerPanel.getBoundingClientRect().width
+        };
+        recommendationsDrawerResizer.setPointerCapture(event.pointerId);
+        recommendationsDrawerResizer.classList.add('is-resizing');
+        document.body.classList.add('drawer-resizing');
+      });
+      recommendationsDrawerResizer.addEventListener('pointermove', (event) => {
+        if (!recommendationDrawerResize || event.pointerId !== recommendationDrawerResize.pointerId) return;
+        setRecommendationDrawerWidth(
+          recommendationDrawerResize.startWidth + recommendationDrawerResize.startX - event.clientX
+        );
+      });
+      const finishRecommendationDrawerResize = (event) => {
+        if (!recommendationDrawerResize || event.pointerId !== recommendationDrawerResize.pointerId) return;
+        if (recommendationsDrawerResizer.hasPointerCapture(event.pointerId)) {
+          recommendationsDrawerResizer.releasePointerCapture(event.pointerId);
+        }
+        recommendationDrawerResize = null;
+        recommendationsDrawerResizer.classList.remove('is-resizing');
+        document.body.classList.remove('drawer-resizing');
+        saveRecommendationDrawerState();
+      };
+      recommendationsDrawerResizer.addEventListener('pointerup', finishRecommendationDrawerResize);
+      recommendationsDrawerResizer.addEventListener('pointercancel', finishRecommendationDrawerResize);
+      recommendationsDrawerResizer.addEventListener('dblclick', () => {
+        app.recommendationDrawerState.width = null;
+        syncRecommendationDrawerWidth();
+        saveRecommendationDrawerState();
+      });
+      recommendationsDrawerResizer.addEventListener('keydown', (event) => {
+        const bounds = recommendationDrawerWidthBounds();
+        const current = recommendationsDrawerPanel.getBoundingClientRect().width;
+        const step = event.shiftKey ? 64 : 24;
+        let next = null;
+        if (event.key === 'ArrowLeft') next = current + step;
+        else if (event.key === 'ArrowRight') next = current - step;
+        else if (event.key === 'Home') next = bounds.min;
+        else if (event.key === 'End') next = bounds.max;
+        if (next === null) return;
+        event.preventDefault();
+        setRecommendationDrawerWidth(next, { persist: true });
+      });
       addEventListener('popstate', () => {
         if (recommendationsDrawer.getAttribute('aria-hidden') !== 'false') return;
         app.recommendationsHistoryEntry = false;
         closeRecommendationsDrawer({ fromHistory: true });
       });
       mobileQuery.addEventListener('change', (event) => {
+        syncRecommendationDrawerWidth();
         renderRecommendations();
         if (
           !event.matches
@@ -5160,6 +5305,7 @@
         hideGamePreview();
         updateToolbarVisibility();
         scheduleViewportImageLoad();
+        syncRecommendationDrawerWidth();
         if (!mobileQuery.matches && !filterDrawer.classList.contains('hidden')) {
           closeFilterDrawer({ restoreFocus: false });
         }
