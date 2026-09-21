@@ -121,7 +121,7 @@ npm test
 npm run check
 ```
 
-Open `site/index.html` directly or serve `site/` with any static file server. The site uses relative `data/current.json`, `data/history.json`, and `data/status.json` paths.
+Open `site/index.html` directly, or run `npm run serve` to serve `site/` at `http://localhost:4173/` with the repo's zero-dependency static file server. The site uses relative `data/current.json`, `data/history.json`, and `data/status.json` paths.
 
 Useful scripts:
 
@@ -134,6 +134,7 @@ Useful scripts:
 | `npm run migrate:families` | Rebuild family data and backfill family history from checked-in snapshots |
 | `npm run summary:catalog` | Render the latest catalog update job summary |
 | `npm run build` | Render the static site shell into `site/` |
+| `npm run serve` | Serve `site/` locally at `http://localhost:4173/` for previewing |
 | `npm run update` | Full fetch, normalize, validate, history, and build pipeline |
 | `npm test` | Run Node built-in tests |
 | `npm run check` | Validate generated JSON |
