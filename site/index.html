@@ -700,18 +700,51 @@
 
     .recommendations-panel {
       display: grid;
-      gap: 0.9rem;
+      gap: 0;
+      padding: 0;
+      overflow: hidden;
       border-color: color-mix(in srgb, var(--accent-2) 42%, var(--line));
       background:
         linear-gradient(145deg, color-mix(in srgb, var(--accent-2) 9%, var(--panel)), color-mix(in srgb, var(--accent) 5%, var(--panel)));
     }
 
     .recommendations-head {
-      display: flex;
+      position: relative;
+      isolation: isolate;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      flex-wrap: wrap;
+      padding: 0.95rem 1rem;
+      overflow: hidden;
+      border-bottom: 1px solid color-mix(in srgb, var(--accent-2) 24%, var(--line));
+      background:
+        linear-gradient(105deg, color-mix(in srgb, var(--accent-2) 11%, var(--panel)) 0%, color-mix(in srgb, var(--panel) 94%, transparent) 56%, color-mix(in srgb, var(--accent) 6%, var(--panel)) 100%);
+    }
+
+    .recommendations-head::before {
+      position: absolute;
+      z-index: -1;
+      inset: -120% 58% -160% -8%;
+      border-radius: 50%;
+      background: radial-gradient(circle, color-mix(in srgb, var(--accent-2) 20%, transparent), transparent 66%);
+      content: "";
+      pointer-events: none;
+    }
+
+    .recommendations-head::after {
+      position: absolute;
+      z-index: -1;
+      top: -6rem;
+      right: 5rem;
+      width: 12rem;
+      height: 12rem;
+      border: 1px solid color-mix(in srgb, var(--accent) 12%, transparent);
+      border-radius: 50%;
+      box-shadow: 0 0 0 2.6rem color-mix(in srgb, var(--accent-2) 3%, transparent);
+      content: "";
+      pointer-events: none;
     }
 
     .recommendations-head h2,
@@ -722,7 +755,27 @@
 
     .recommendations-heading {
       display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      gap: 0.75rem;
+      min-width: 0;
+    }
+
+    .recommendations-heading-copy {
+      display: grid;
       gap: 0.15rem;
+      min-width: 0;
+    }
+
+    .recommendations-drawer-mark.recommendations-inline-mark {
+      grid-area: auto;
+    }
+
+    .recommendations-heading h2 {
+      overflow: hidden;
+      letter-spacing: -0.025em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     .recommendations-eyebrow {
@@ -750,6 +803,9 @@
       align-items: center;
       gap: 0.5rem;
       width: auto;
+      border-color: color-mix(in srgb, var(--accent-2) 42%, var(--line));
+      background: color-mix(in srgb, var(--accent-2) 10%, var(--panel-2));
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 6%);
     }
 
     .recommendations-see-all::after {
@@ -767,6 +823,7 @@
     .recommendation-teaser {
       position: relative;
       max-height: 340px;
+      padding: 0.9rem;
       overflow: hidden;
     }
 
@@ -875,10 +932,12 @@
       max-width: calc(100vw - 3rem);
       height: 100dvh;
       overflow: hidden;
-      border-left: 1px solid color-mix(in srgb, var(--accent-2) 34%, var(--line));
+      border-left: 1px solid color-mix(in srgb, var(--accent-2) 66%, var(--line));
       background:
         linear-gradient(160deg, color-mix(in srgb, var(--accent-2) 8%, var(--panel)), var(--panel) 30%);
-      box-shadow: -24px 0 60px rgb(0 0 0 / 42%);
+      box-shadow:
+        -1px 0 0 color-mix(in srgb, var(--accent-2) 24%, transparent),
+        -30px 0 72px rgb(0 0 0 / 52%);
       transform: translateX(100%);
       transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
     }
@@ -887,9 +946,9 @@
       position: absolute;
       z-index: 3;
       inset: 0 auto 0 0;
-      width: 0.7rem;
+      width: 0.85rem;
       border: 0;
-      background: transparent;
+      background: linear-gradient(90deg, color-mix(in srgb, var(--accent-2) 18%, transparent), transparent 72%);
       cursor: ew-resize;
       touch-action: none;
     }
@@ -897,13 +956,16 @@
     .recommendations-drawer-resizer::after {
       position: absolute;
       top: 50%;
-      left: 0.16rem;
-      width: 0.2rem;
-      height: 3.5rem;
+      left: 0.2rem;
+      width: 0.24rem;
+      height: 4.5rem;
       border-radius: 999px;
-      background: color-mix(in srgb, var(--accent-2) 54%, var(--line));
+      background: color-mix(in srgb, var(--accent-2) 76%, white);
       content: "";
-      opacity: 0.42;
+      box-shadow:
+        0 0 0.8rem color-mix(in srgb, var(--accent-2) 42%, transparent),
+        0 0 0 1px rgb(255 255 255 / 8%);
+      opacity: 0.72;
       transform: translateY(-50%);
       transition:
         height 160ms ease,
@@ -914,7 +976,7 @@
     .recommendations-drawer-resizer:hover::after,
     .recommendations-drawer-resizer:focus-visible::after,
     .recommendations-drawer-resizer.is-resizing::after {
-      height: 5rem;
+      height: 6rem;
       background: var(--accent-2);
       opacity: 1;
     }
@@ -942,15 +1004,23 @@
       isolation: isolate;
       display: grid;
       grid-template-columns: auto minmax(0, 1fr) auto;
+      grid-template-areas:
+        "mark title close"
+        ". actions actions";
       align-items: center;
-      gap: 0.9rem;
-      min-height: 6.5rem;
-      padding: 1rem 1rem 1rem 1.2rem;
+      gap: 0.75rem 0.9rem;
+      width: 100%;
+      min-height: 7.7rem;
+      margin: 0;
+      padding: 0.9rem 1rem 0.85rem 1.2rem;
       overflow: hidden;
       border-bottom: 1px solid color-mix(in srgb, var(--accent-2) 28%, var(--line));
       background:
         linear-gradient(105deg, color-mix(in srgb, var(--accent-2) 10%, var(--panel)) 0%, color-mix(in srgb, var(--panel) 96%, transparent) 44%, color-mix(in srgb, var(--accent) 5%, var(--panel)) 100%);
       backdrop-filter: blur(22px);
+      box-shadow:
+        inset 1px 0 0 color-mix(in srgb, var(--accent-2) 22%, transparent),
+        inset -1px 0 0 color-mix(in srgb, var(--accent) 12%, transparent);
     }
 
     .recommendations-drawer-head::before {
@@ -986,6 +1056,7 @@
     }
 
     .recommendations-drawer-mark {
+      grid-area: mark;
       display: grid;
       width: 3.25rem;
       height: 3.25rem;
@@ -1017,41 +1088,26 @@
     }
 
     .recommendations-drawer-title {
+      grid-area: title;
       display: grid;
       min-width: 0;
-      gap: 0.2rem;
+      gap: 0.28rem;
     }
 
-    .recommendations-drawer-kicker {
-      display: flex;
-      align-items: center;
-      gap: 0.55rem;
-      min-width: 0;
-    }
-
-    .recommendations-drawer-kicker .recommendations-eyebrow {
-      white-space: nowrap;
-    }
-
-    .recommendations-drawer-count {
+    .recommendations-drawer-meta {
       display: inline-flex;
       align-items: center;
-      gap: 0.35rem;
+      gap: 0.45rem;
       min-width: 0;
-      padding: 0.16rem 0.48rem;
-      border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--line));
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--accent) 8%, transparent);
-      color: color-mix(in srgb, var(--accent) 76%, var(--text));
-      font-size: 0.62rem;
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      line-height: 1.2;
-      text-transform: uppercase;
+      overflow: hidden;
+      color: color-mix(in srgb, var(--muted) 88%, var(--text));
+      font-size: 0.74rem;
+      line-height: 1.25;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .recommendations-drawer-count::before {
+    .recommendations-drawer-meta::before {
       width: 0.34rem;
       height: 0.34rem;
       flex: 0 0 auto;
@@ -1059,6 +1115,15 @@
       background: var(--accent);
       box-shadow: 0 0 0.7rem color-mix(in srgb, var(--accent) 60%, transparent);
       content: "";
+    }
+
+    .recommendations-drawer-count {
+      color: color-mix(in srgb, var(--accent) 76%, var(--text));
+      font-weight: 800;
+    }
+
+    .recommendations-drawer-meta-separator {
+      color: color-mix(in srgb, var(--muted) 48%, transparent);
     }
 
     .recommendations-drawer-title h2 {
@@ -1070,16 +1135,8 @@
       white-space: nowrap;
     }
 
-    .recommendations-drawer-subtitle {
-      overflow: hidden;
-      color: color-mix(in srgb, var(--muted) 88%, var(--text));
-      font-size: 0.78rem;
-      line-height: 1.3;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
     .recommendations-drawer-close {
+      grid-area: close;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -1111,6 +1168,40 @@
 
     .recommendations-close-label {
       display: none;
+    }
+
+    .recommendations-drawer-actions {
+      grid-area: actions;
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+      min-width: 0;
+    }
+
+    .recommendations-drawer-actions button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.42rem;
+      min-height: 2.15rem;
+      padding: 0.38rem 0.68rem;
+      border-color: color-mix(in srgb, var(--accent-2) 30%, var(--line));
+      background: color-mix(in srgb, var(--panel-2) 72%, transparent);
+      color: color-mix(in srgb, var(--muted) 80%, var(--text));
+      font-size: 0.76rem;
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
+    }
+
+    .recommendations-drawer-actions button:hover,
+    .recommendations-drawer-actions button[aria-expanded="true"] {
+      border-color: color-mix(in srgb, var(--accent-2) 56%, var(--line));
+      background: color-mix(in srgb, var(--accent-2) 13%, var(--panel-2));
+      color: var(--text);
+    }
+
+    .recommendations-drawer-actions .ui-icon {
+      width: 0.95rem;
+      height: 0.95rem;
+      flex: 0 0 auto;
     }
 
     .recommendations-drawer-body {
@@ -1829,6 +1920,19 @@
         width: 100%;
       }
 
+      .recommendations-head {
+        grid-template-columns: 1fr;
+      }
+
+      .recommendations-inline-mark {
+        display: none;
+      }
+
+      .recommendations-see-all {
+        justify-content: center;
+        width: 100%;
+      }
+
       .recommendation-teaser {
         max-height: 300px;
       }
@@ -1895,6 +1999,9 @@
 
       .recommendations-drawer-head {
         grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+          "title close"
+          "actions actions";
         min-height: 0;
         gap: 0.75rem;
         padding-top: max(1rem, env(safe-area-inset-top));
@@ -1908,11 +2015,7 @@
         font-size: 1.35rem;
       }
 
-      .recommendations-drawer-count {
-        display: none;
-      }
-
-      .recommendations-drawer-subtitle {
+      .recommendations-drawer-meta {
         font-size: 0.72rem;
       }
 
@@ -1927,6 +2030,20 @@
 
       .recommendations-close-label {
         display: inline;
+      }
+
+      .recommendations-drawer-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+      }
+
+      .recommendations-drawer-actions button {
+        width: 100%;
+      }
+
+      .recommendations-drawer-actions #tasteResetButton {
+        grid-column: 1 / -1;
       }
 
       .recommendation-grid {
@@ -2002,8 +2119,19 @@
     <section id="recommendationsPanel" class="panel recommendations-panel" aria-labelledby="recommendationsTitle">
       <div class="recommendations-head">
         <div class="recommendations-heading">
-          <p class="recommendations-eyebrow">Personalized picks</p>
-          <h2 id="recommendationsTitle">Find your next game</h2>
+          <div class="recommendations-drawer-mark recommendations-inline-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32">
+              <path class="recommendation-star-fill" d="M16 4.5l2.4 7.1 7.1 2.4-7.1 2.4-2.4 7.1-2.4-7.1L6.5 14l7.1-2.4z"></path>
+              <path d="M24.5 4.5v5"></path>
+              <path d="M22 7h5"></path>
+              <path d="M7.5 21.5v4"></path>
+              <path d="M5.5 23.5h4"></path>
+            </svg>
+          </div>
+          <div class="recommendations-heading-copy">
+            <p class="recommendations-eyebrow">Personalized picks</p>
+            <h2 id="recommendationsTitle">Find your next game</h2>
+          </div>
         </div>
         <button id="recommendationsSeeAllButton" class="secondary recommendations-see-all" type="button" aria-haspopup="dialog" aria-controls="recommendationsDrawer">See all recommendations</button>
       </div>
@@ -2219,12 +2347,34 @@
             </svg>
           </div>
           <div class="recommendations-drawer-title">
-            <div class="recommendations-drawer-kicker">
-              <p class="recommendations-eyebrow">Personalized discovery</p>
-              <span id="recommendationsDrawerCount" class="recommendations-drawer-count">Curated picks</span>
-            </div>
             <h2 id="recommendationsDrawerTitle">Your recommendations</h2>
-            <p id="recommendationsDrawerSubtitle" class="recommendations-drawer-subtitle">Ranked locally from the current catalog</p>
+            <p class="recommendations-drawer-meta">
+              <span id="recommendationsDrawerCount" class="recommendations-drawer-count">Curated picks</span>
+              <span class="recommendations-drawer-meta-separator" aria-hidden="true">&middot;</span>
+              <span id="recommendationsDrawerContext">Ranked locally</span>
+            </p>
+          </div>
+          <div class="recommendations-actions recommendations-drawer-actions">
+            <button id="tasteToggleButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteControls">
+              <svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M4 5h12"></path>
+                <path d="M4 10h12"></path>
+                <path d="M4 15h12"></path>
+                <circle cx="8" cy="5" r="1.6"></circle>
+                <circle cx="13" cy="10" r="1.6"></circle>
+                <circle cx="7" cy="15" r="1.6"></circle>
+              </svg>
+              <span id="tasteToggleLabel">Shape recommendations</span>
+            </button>
+            <button id="tasteQuickEntryButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteQuickEntry">
+              <svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx="10" cy="10" r="6.5"></circle>
+                <path d="M10 6.5v4l2.8 1.8"></path>
+                <path d="M15 4.7l1.8-1.8"></path>
+              </svg>
+              <span id="tasteQuickEntryLabel">Log games you played</span>
+            </button>
+            <button id="tasteResetButton" class="secondary hidden" type="button">Reset taste</button>
           </div>
           <button id="recommendationsDrawerClose" class="secondary recommendations-drawer-close" type="button" aria-label="Close recommendations">
             <svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true">
@@ -2236,11 +2386,6 @@
         </header>
         <div id="recommendationsDrawerResizer" class="recommendations-drawer-resizer" role="separator" aria-label="Resize recommendations panel" aria-orientation="vertical" aria-valuemin="640" aria-valuemax="1440" aria-valuenow="960" tabindex="0" title="Drag to resize. Use arrow keys for precise resizing; double-click to reset."></div>
         <div id="recommendationsDrawerBody" class="recommendations-drawer-body">
-          <div class="recommendations-actions">
-            <button id="tasteToggleButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteControls">Shape recommendations</button>
-            <button id="tasteQuickEntryButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteQuickEntry">Log games you played</button>
-            <button id="tasteResetButton" class="secondary hidden" type="button">Reset taste</button>
-          </div>
           <p id="recommendationSummary" class="muted" aria-live="polite">Loading recommendations...</p>
           <div id="tasteControls" class="taste-controls hidden">
             <div class="taste-grid">
@@ -2558,15 +2703,17 @@
     const recommendationsDrawerPanel = recommendationsDrawer.querySelector('.recommendations-drawer-panel');
     const recommendationsDrawerResizer = document.getElementById('recommendationsDrawerResizer');
     const recommendationsDrawerCount = document.getElementById('recommendationsDrawerCount');
-    const recommendationsDrawerSubtitle = document.getElementById('recommendationsDrawerSubtitle');
+    const recommendationsDrawerContext = document.getElementById('recommendationsDrawerContext');
     const recommendationsDrawerBody = document.getElementById('recommendationsDrawerBody');
     let recommendationsDrawerCloseTimer = 0;
     let recommendationDrawerResize = null;
     const recommendationSummary = document.getElementById('recommendationSummary');
     const recommendationRails = document.getElementById('recommendationRails');
     const tasteToggleButton = document.getElementById('tasteToggleButton');
+    const tasteToggleLabel = document.getElementById('tasteToggleLabel');
     const tasteResetButton = document.getElementById('tasteResetButton');
     const tasteQuickEntryButton = document.getElementById('tasteQuickEntryButton');
+    const tasteQuickEntryLabel = document.getElementById('tasteQuickEntryLabel');
     const tasteQuickEntry = document.getElementById('tasteQuickEntry');
     const tasteQuickEntrySearch = document.getElementById('tasteQuickEntrySearch');
     const tasteQuickEntryResults = document.getElementById('tasteQuickEntryResults');
@@ -2900,7 +3047,7 @@
       tasteDiscovery.value = app.taste.discovery;
       const count = tasteSignalCount();
       tasteResetButton.classList.toggle('hidden', count === 0);
-      tasteToggleButton.textContent = tasteControls.classList.contains('hidden')
+      tasteToggleLabel.textContent = tasteControls.classList.contains('hidden')
         ? count > 0 ? `Shape recommendations (${count})` : 'Shape recommendations'
         : 'Hide taste controls';
       if (!app.tasteStorageAvailable && !tasteNotice.textContent) {
@@ -3540,7 +3687,7 @@
       const willOpen = tasteQuickEntry.classList.contains('hidden');
       tasteQuickEntry.classList.toggle('hidden', !willOpen);
       tasteQuickEntryButton.setAttribute('aria-expanded', String(willOpen));
-      tasteQuickEntryButton.textContent = willOpen ? 'Hide quick entry' : 'Log games you played';
+      tasteQuickEntryLabel.textContent = willOpen ? 'Hide quick entry' : 'Log games you played';
       if (!willOpen) return;
       renderQuickEntry();
       tasteQuickEntrySearch.focus();
@@ -3600,17 +3747,16 @@
     function updateRecommendationEntryPoints(rails) {
       const count = new Set(rails.flatMap((rail) => rail.items.map((item) => item.game.id))).size;
       const disabled = count === 0;
-      const catalogCount = currentFamilies().length;
       const tasteSignals = tasteSignalCount();
       recommendationsSeeAllButton.disabled = disabled;
       toolbarRecommendationsButton.disabled = disabled;
       toolbarRecommendationsButton.title = disabled ? 'No recommendations available' : 'Recommendations';
-      recommendationsDrawerCount.textContent = disabled ? 'No matches' : `${count} curated pick${count === 1 ? '' : 's'}`;
-      recommendationsDrawerSubtitle.textContent = disabled
-        ? 'Adjust the active filters to surface new matches'
+      recommendationsDrawerCount.textContent = disabled ? 'No matches' : `${count} pick${count === 1 ? '' : 's'}`;
+      recommendationsDrawerContext.textContent = disabled
+        ? 'Adjust filters'
         : tasteSignals > 0
-          ? `Tuned with ${tasteSignals} local taste signal${tasteSignals === 1 ? '' : 's'} across ${catalogCount.toLocaleString()} current games`
-          : `Curated locally from ${catalogCount.toLocaleString()} current games`;
+          ? `${tasteSignals} taste signal${tasteSignals === 1 ? '' : 's'}`
+          : 'Ranked locally';
       if (disabled || app.recommendationsSeen) {
         toolbarRecommendationsBadge.classList.add('hidden');
         toolbarRecommendationsButton.setAttribute('aria-label', disabled ? 'No recommendations available' : 'Recommendations');

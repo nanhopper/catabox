@@ -482,8 +482,13 @@ test('recommendation UI keeps taste state local and explainable', () => {
   assert.match(reportTemplate, /width: min\(75vw, 1440px\)/);
   assert.match(reportTemplate, /id="recommendationsDrawerResizer"/);
   assert.match(reportTemplate, /id="recommendationsDrawerCount"/);
-  assert.match(reportTemplate, /id="recommendationsDrawerSubtitle"/);
+  assert.match(reportTemplate, /id="recommendationsDrawerContext"/);
   assert.match(reportTemplate, /class="recommendations-drawer-mark"/);
+  assert.match(reportTemplate, /class="recommendations-drawer-mark recommendations-inline-mark"/);
+  assert.match(reportTemplate, /\.recommendations-drawer-mark\.recommendations-inline-mark\s*\{\s*grid-area: auto;/);
+  assert.match(reportTemplate, /class="recommendations-actions recommendations-drawer-actions"/);
+  assert.match(reportTemplate, /id="tasteToggleLabel"/);
+  assert.match(reportTemplate, /id="tasteQuickEntryLabel"/);
   assert.match(reportTemplate, /recommendationsDrawerCount\.textContent = disabled \? 'No matches'/);
   assert.match(reportTemplate, /function setRecommendationDrawerWidth\(width, \{ persist = false \} = \{\}\)/);
   assert.match(reportTemplate, /recommendationsDrawerResizer\.addEventListener\('pointerdown'/);
