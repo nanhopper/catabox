@@ -2811,6 +2811,7 @@
           <div class="recommendation-card-body">
             <h4>${escapeHtml(game.title)}</h4>
             ${cardGenres(game)}
+            ${leavingSoonBadge(game)}
             <p class="recommendation-reason">${escapeHtml(reason)}</p>
             <div class="recommendation-links">
               <a href="${escapeHtml(catalogSearchUrl(game))}">Show in catalog</a>

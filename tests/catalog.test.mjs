@@ -462,7 +462,7 @@ test('recommendation UI keeps taste state local and explainable', () => {
   assert.match(reportTemplate, /function renderRecommendations\(\)/);
   assert.match(reportTemplate, /observeLazyImages\(\[recommendationRails\]\)/);
   assert.match(reportTemplate, /class="recommendation-card" data-preview-game="\$\{escapeHtml\(game\.id\)\}"/);
-  assert.match(reportTemplate, /<h4>\$\{escapeHtml\(game\.title\)\}<\/h4>\s+\$\{cardGenres\(game\)\}/);
+  assert.match(reportTemplate, /<h4>\$\{escapeHtml\(game\.title\)\}<\/h4>\s+\$\{cardGenres\(game\)\}\s+\$\{leavingSoonBadge\(game\)\}/);
   assert.match(reportTemplate, /for \(const container of \[recommendationRails, cards, tableBody\]\)/);
   assert.match(reportTemplate, /return selectedValues\('state'\)\.includes\('current'\) && matchesFilters\(game\)/);
   assert.match(reportTemplate, /function rankedAnchorCandidates\(sourceId\)/);
