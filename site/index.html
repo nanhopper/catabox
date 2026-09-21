@@ -951,6 +951,7 @@
       background: color-mix(in srgb, var(--panel-2) 90%, var(--panel));
     }
 
+    .recommendation-card .card-media,
     .recommendation-card .card-art {
       aspect-ratio: 16 / 8.5;
     }
@@ -1125,9 +1126,76 @@
       opacity: 0.35;
     }
 
+    .card-media {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: #0d1520;
+    }
+
+    .card-media .card-art {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .card-media .empty {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
     .card-art {
       width: 100%;
       aspect-ratio: 16 / 9;
+    }
+
+    .card-leaving-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .card-leaving-ribbon {
+      position: absolute;
+      top: 32px;
+      right: -46px;
+      width: 180px;
+      transform: rotate(45deg);
+      background: linear-gradient(135deg, #ffd056 0%, #ff8f00 100%);
+      color: #0d1520;
+      text-align: center;
+      padding: 0.26rem 0;
+      font-size: 0.62rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      line-height: 1.25;
+      border-top: 1px solid rgb(255 255 255 / 45%);
+      border-bottom: 1px solid rgb(0 0 0 / 25%);
+      box-shadow: 0 4px 14px rgb(0 0 0 / 60%);
+      text-shadow: 0 1px 0 rgb(255 255 255 / 30%);
+      transition: filter 140ms ease;
+    }
+
+    .card:hover .card-leaving-ribbon,
+    .recommendation-card:hover .card-leaving-ribbon {
+      filter: brightness(1.08);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .card-leaving-ribbon {
+        transition: none !important;
+        transform: none !important;
+      }
     }
 
     .card-body {
@@ -2807,11 +2875,13 @@
         : `${game.genres?.slice(0, 2).join(' + ') || 'Catalog match'} · ${game.platforms.map((platform) => labelFor('platforms', platform)).join(' + ')}`;
       return `
         <article class="recommendation-card" data-preview-game="${escapeHtml(game.id)}">
-          ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
+          <div class="card-media">
+            ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
+            ${leavingSoonCardOverlay(game)}
+          </div>
           <div class="recommendation-card-body">
             <h4>${escapeHtml(game.title)}</h4>
             ${cardGenres(game)}
-            ${leavingSoonBadge(game)}
             <p class="recommendation-reason">${escapeHtml(reason)}</p>
             <div class="recommendation-links">
               <a href="${escapeHtml(catalogSearchUrl(game))}">Show in catalog</a>
@@ -3556,6 +3626,18 @@
         : emptyText;
     }
 
+    function leavingSoonCardOverlay(game) {
+      const platforms = PLATFORMS.filter((platformId) => game.leavingSoonPlatforms?.includes(platformId));
+      if (platforms.length === 0) return '';
+      const platformLabel = platforms.map((platformId) => labelFor('platforms', platformId)).join(' + ');
+      const fullLabel = `Leaving soon · ${platformLabel}`;
+      return `
+        <div class="card-leaving-overlay" role="status" aria-label="${escapeHtml(fullLabel)}" title="${escapeHtml(fullLabel)}">
+          <div class="card-leaving-ribbon" aria-hidden="true">Leaving soon</div>
+        </div>
+      `;
+    }
+
     function cardImage(game) {
       return game.heroArt || game.poster || game.boxArt;
     }
@@ -4135,11 +4217,13 @@
       const image = cardImage(game);
       const modes = playerModeLabels(game);
       article.innerHTML = `
-        ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
+        <div class="card-media">
+          ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
+          ${leavingSoonCardOverlay(game)}
+        </div>
         <div class="card-body">
           <h3>${titleHtml(game)}</h3>
           ${cardGenres(game)}
-          ${leavingSoonBadge(game)}
           ${variantLinksHtml(game)}
           ${tasteActionRow(game)}
           <p>${escapeHtml(game.publisher || 'Unknown publisher')}</p>
