@@ -442,6 +442,10 @@ test('card genres render as accented chips above the publisher line', () => {
 
 test('recommendation UI keeps taste state local and explainable', () => {
   assert.match(reportTemplate, /id="recommendationsPanel"/);
+  assert.match(reportTemplate, /id="recommendationTeaser"/);
+  assert.match(reportTemplate, /id="recommendationsDrawer" class="recommendations-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="recommendationsDrawerTitle" aria-describedby="recommendationSummary" aria-hidden="true" tabindex="-1" inert/);
+  assert.match(reportTemplate, /id="toolbarRecommendationsButton"/);
+  assert.match(reportTemplate, /id="recommendationsSeeAllButton"/);
   assert.match(reportTemplate, /id="tasteControls"/);
   assert.match(reportTemplate, /catabox\.taste\.v1/);
   assert.match(reportTemplate, /localStorage\.setItem\(TASTE_STORAGE_KEY/);
@@ -460,13 +464,25 @@ test('recommendation UI keeps taste state local and explainable', () => {
   assert.match(reportTemplate, /const \[current, historyData, statusData\] = await Promise\.all/);
   assert.match(reportTemplate, /void hydrateRecommendations\(\)/);
   assert.match(reportTemplate, /function renderRecommendations\(\)/);
-  assert.match(reportTemplate, /observeLazyImages\(\[recommendationRails\]\)/);
-  assert.match(reportTemplate, /class="recommendation-card" data-preview-game="\$\{escapeHtml\(game\.id\)\}"/);
+  assert.match(reportTemplate, /recommendationRailHtml\(rails\[0\], rails\[0\]\.items\.slice\(0, 4\), \{ compact: true \}\)/);
+  assert.match(reportTemplate, /observeLazyImages\(\[recommendationTeaser, recommendationRails\]\)/);
+  assert.match(reportTemplate, /class="recommendation-card\$\{compact \? ' recommendation-card-teaser' : ''\}" data-preview-game="\$\{escapeHtml\(game\.id\)\}"/);
   assert.match(reportTemplate, /<h4>\$\{escapeHtml\(game\.title\)\}<\/h4>\s+\$\{cardGenres\(game\)\}/);
-  assert.match(reportTemplate, /for \(const container of \[recommendationRails, cards, tableBody\]\)/);
+  assert.match(reportTemplate, /for \(const container of \[recommendationTeaser, recommendationRails, cards, tableBody\]\)/);
   assert.match(reportTemplate, /return selectedValues\('state'\)\.includes\('current'\) && matchesFilters\(game\)/);
   assert.match(reportTemplate, /function rankedAnchorCandidates\(sourceId\)/);
-  assert.match(reportTemplate, /function restoreRecommendationFocus\(action, preferredGameIds\)/);
+  assert.match(reportTemplate, /function restoreRecommendationFocus\(action, preferredGameIds, container = recommendationRails\)/);
+  assert.match(reportTemplate, /function openRecommendationsDrawer\(/);
+  assert.match(reportTemplate, /function closeRecommendationsDrawer\(/);
+  assert.match(reportTemplate, /function trapDialogFocus\(event, dialog, fallback\)/);
+  assert.match(reportTemplate, /if \(!focusable\.includes\(document\.activeElement\)\)/);
+  assert.match(reportTemplate, /setTimeout\(\(\) => recommendationsDrawer\.focus\(\{ preventScroll: true \}\), delay\)/);
+  assert.match(reportTemplate, /history\.pushState\(\{ \.\.\.history\.state, cataboxRecommendations: true \}, ''\)/);
+  assert.match(reportTemplate, /mobileQuery\.addEventListener\('change'/);
+  assert.match(reportTemplate, /width: clamp\(360px, 34vw, 460px\)/);
+  assert.match(reportTemplate, /transform: translateY\(100%\)/);
+  assert.match(reportTemplate, /\.recommendation-teaser \{\s+max-height: 300px/);
+  assert.match(reportTemplate, /\.recommendation-card-teaser \.card-art,\s+\.recommendation-card-teaser > \.empty \{\s+height: 92px/);
   assert.match(reportTemplate, /data-taste-action=/);
   assert.match(reportTemplate, /visible: '👍'/);
   assert.match(reportTemplate, /visible: '👎'/);

@@ -700,75 +700,38 @@
 
     .recommendations-panel {
       display: grid;
-      gap: 1rem;
+      gap: 0.9rem;
       border-color: color-mix(in srgb, var(--accent-2) 42%, var(--line));
       background:
         linear-gradient(145deg, color-mix(in srgb, var(--accent-2) 9%, var(--panel)), color-mix(in srgb, var(--accent) 5%, var(--panel)));
-      transition:
-        border-color 320ms ease,
-        box-shadow 320ms ease,
-        gap 360ms cubic-bezier(0.42, 0, 0.58, 1),
-        padding 360ms cubic-bezier(0.42, 0, 0.58, 1),
-        transform 180ms ease;
-    }
-
-    .recommendations-panel.is-collapsed {
-      gap: 0;
-      padding: 0;
-      overflow: hidden;
-    }
-
-    .recommendations-panel.is-collapsed .recommendations-head,
-    .recommendations-panel.is-collapsed .recommendations-copy {
-      width: 100%;
-      max-width: none;
-    }
-
-    .recommendations-panel.is-collapsed:has(.recommendations-toggle:hover) {
-      border-color: color-mix(in srgb, var(--accent) 58%, var(--accent-2));
-      box-shadow:
-        0 16px 38px color-mix(in srgb, var(--accent-2) 18%, transparent),
-        inset 0 1px 0 rgb(255 255 255 / 12%);
-      transform: translateY(-1px);
-    }
-
-    .recommendations-panel.is-collapsed .recommendations-toggle {
-      border: 0;
-      border-radius: calc(1rem - 1px);
-      background: transparent;
-      box-shadow: none;
-    }
-
-    .recommendations-panel.is-collapsed .recommendations-toggle:hover {
-      border-color: transparent;
-      box-shadow: none;
-      transform: none;
-    }
-
-    .recommendations-panel.is-collapsed .recommendations-toggle:focus-visible {
-      outline-offset: -4px;
     }
 
     .recommendations-head {
       display: flex;
-      align-items: start;
+      align-items: center;
       justify-content: space-between;
       gap: 1rem;
       flex-wrap: wrap;
     }
 
     .recommendations-head h2,
-    .recommendations-head p,
     .recommendation-rail h3,
     .recommendation-rail > p {
       margin: 0;
     }
 
-    .recommendations-copy {
+    .recommendations-heading {
       display: grid;
-      flex: 1 1 32rem;
-      gap: 0.35rem;
-      min-width: 0;
+      gap: 0.15rem;
+    }
+
+    .recommendations-eyebrow {
+      margin: 0;
+      color: color-mix(in srgb, var(--accent) 82%, var(--text));
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
     }
 
     .recommendations-actions {
@@ -782,133 +745,188 @@
       width: auto;
     }
 
-    .recommendations-toggle {
-      --arrow-rotation: 0deg;
+    .recommendations-see-all {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      width: auto;
+    }
+
+    .recommendations-see-all::after {
+      content: "\2192";
+      color: var(--accent);
+      font-size: 1.1rem;
+      transition: transform 180ms ease;
+    }
+
+    .recommendations-see-all:hover::after,
+    .recommendations-see-all:focus-visible::after {
+      transform: translateX(0.2rem);
+    }
+
+    .recommendation-teaser {
       position: relative;
+      max-height: 340px;
+      overflow: hidden;
+    }
+
+    .recommendation-teaser::after {
+      position: absolute;
+      inset: 0 0 0 auto;
+      width: 3.5rem;
+      background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--panel) 92%, transparent));
+      content: "";
+      pointer-events: none;
+    }
+
+    .recommendation-teaser .recommendation-rail {
+      min-width: 0;
+    }
+
+    .recommendation-teaser .recommendation-grid {
+      grid-auto-columns: minmax(220px, calc((100% - 2.25rem) / 4));
+      grid-auto-flow: column;
+      grid-template-columns: none;
+      padding: 0.1rem 0 0.45rem;
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x proximity;
+      scrollbar-width: thin;
+    }
+
+    .recommendation-teaser .recommendation-card {
+      scroll-snap-align: start;
+    }
+
+    .recommendation-card-teaser .card-art {
+      aspect-ratio: 16 / 7;
+    }
+
+    .recommendation-card-teaser .recommendation-card-body {
+      gap: 0.4rem;
+      padding: 0.5rem 0.65rem;
+    }
+
+    .recommendation-card-teaser h4,
+    .recommendation-card-teaser .recommendation-reason {
+      display: -webkit-box;
+      overflow: hidden;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .recommendation-card-teaser .chips {
+      max-height: 1.65rem;
+      overflow: hidden;
+    }
+
+    .recommendation-card-teaser .recommendation-links {
+      font-size: 0.76rem;
+    }
+
+    .toolbar-recommendations-button {
+      position: relative;
+    }
+
+    .toolbar-recommendations-badge {
+      position: absolute;
+      top: -0.35rem;
+      right: -0.35rem;
+      display: grid;
+      min-width: 1.15rem;
+      height: 1.15rem;
+      padding: 0 0.25rem;
+      place-items: center;
+      border: 2px solid var(--panel);
+      border-radius: 999px;
+      background: var(--accent);
+      color: #07120a;
+      font-size: 0.62rem;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .recommendations-drawer {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      display: grid;
+      justify-items: end;
+    }
+
+    .recommendations-drawer:focus {
+      outline: none;
+    }
+
+    .recommendations-drawer-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgb(0 0 0 / 62%);
+      opacity: 0;
+      transition: opacity 160ms linear;
+    }
+
+    .recommendations-drawer-panel {
+      position: relative;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      width: clamp(360px, 34vw, 460px);
+      height: 100dvh;
+      overflow: hidden;
+      border-left: 1px solid color-mix(in srgb, var(--accent-2) 34%, var(--line));
+      background:
+        linear-gradient(160deg, color-mix(in srgb, var(--accent-2) 8%, var(--panel)), var(--panel) 30%);
+      box-shadow: -24px 0 60px rgb(0 0 0 / 42%);
+      transform: translateX(100%);
+      transition: transform 240ms cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .recommendations-drawer.is-open .recommendations-drawer-backdrop {
+      opacity: 1;
+    }
+
+    .recommendations-drawer.is-open .recommendations-drawer-panel {
+      transform: translateX(0);
+    }
+
+    .recommendations-drawer-head {
+      position: relative;
+      z-index: 1;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
-      width: 100%;
-      min-height: 4.8rem;
-      overflow: hidden;
-      padding: 0.6rem 0.65rem 0.75rem 0.15rem;
-      border: 0;
-      border-radius: 0.65rem;
-      background:
-        linear-gradient(180deg, color-mix(in srgb, var(--accent-2) 7%, transparent), transparent 88%);
-      box-shadow: none;
-      color: var(--text);
-      cursor: pointer;
-      font: inherit;
-      letter-spacing: inherit;
-      text-align: left;
-      transition:
-        background-color 180ms ease,
-        filter 180ms ease;
+      padding: 1rem;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--panel) 94%, transparent);
+      backdrop-filter: blur(18px);
     }
 
-    .recommendations-toggle:hover {
-      background:
-        linear-gradient(180deg, color-mix(in srgb, var(--accent-2) 11%, transparent), transparent 92%);
+    .recommendations-drawer-head h2,
+    .recommendations-drawer-head p {
+      margin: 0;
     }
 
-    .recommendations-toggle:focus-visible {
-      outline: 3px solid color-mix(in srgb, var(--accent-2) 70%, transparent);
-      outline-offset: 3px;
-    }
-
-    .recommendations-toggle-label {
-      color: transparent;
-      background: linear-gradient(118deg, var(--text), var(--accent-2) 52%, var(--accent));
-      background-clip: text;
-      -webkit-background-clip: text;
-    }
-
-    .recommendations-toggle-icon {
+    .recommendations-drawer-close {
       display: inline-flex;
       align-items: center;
-      flex: 0 0 auto;
-      width: 2.3rem;
-      height: 2.3rem;
-      padding-inline: 0.48rem 0.6rem;
-      border: 1px solid color-mix(in srgb, var(--accent) 48%, var(--line));
-      border-radius: 999px;
-      background: color-mix(in srgb, var(--accent) 9%, var(--panel));
-      color: var(--accent);
-      filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 28%, transparent));
-      transform: rotate(var(--arrow-rotation)) translateX(0);
-      transform-origin: center;
-      transition: background-color 180ms ease, border-color 180ms ease, filter 180ms ease, transform 220ms ease;
+      gap: 0.4rem;
+      width: auto;
     }
 
-    .recommendations-toggle-chevron {
-      width: 0.52rem;
-      height: 0.52rem;
-      margin-left: -0.16rem;
-      border-top: 2px solid currentColor;
-      border-right: 2px solid currentColor;
-      transform: rotate(45deg);
-      transition: transform 180ms ease;
+    .recommendations-drawer-close span[aria-hidden="true"] {
+      font-size: 1.15rem;
+      line-height: 1;
     }
 
-    .recommendations-toggle[aria-expanded="true"] .recommendations-toggle-icon {
-      --arrow-rotation: 90deg;
-    }
-
-    .recommendations-panel.is-collapsed .recommendations-toggle-icon {
-      animation: recommendations-arrow-invite 3s ease-in-out infinite;
-    }
-
-    .recommendations-toggle:hover .recommendations-toggle-icon,
-    .recommendations-toggle:focus-visible .recommendations-toggle-icon {
-      animation: none;
-      border-color: color-mix(in srgb, var(--accent) 76%, var(--text));
-      background: color-mix(in srgb, var(--accent) 16%, var(--panel));
-      filter: drop-shadow(0 0 12px color-mix(in srgb, var(--accent) 46%, transparent));
-      transform: rotate(var(--arrow-rotation)) translateX(0.22rem);
-    }
-
-    .recommendations-toggle:hover .recommendations-toggle-chevron:first-child,
-    .recommendations-toggle:focus-visible .recommendations-toggle-chevron:first-child {
-      transform: translateX(0.06rem) rotate(45deg);
-    }
-
-    .recommendations-toggle:hover .recommendations-toggle-chevron:last-child,
-    .recommendations-toggle:focus-visible .recommendations-toggle-chevron:last-child {
-      transform: translateX(0.15rem) rotate(45deg);
-    }
-
-    .recommendations-content {
+    .recommendations-drawer-body {
       display: grid;
+      align-content: start;
       gap: 1rem;
-      overflow: hidden;
-      transform-origin: top;
-    }
-
-    @keyframes recommendations-arrow-invite {
-      0%,
-      68%,
-      100% {
-        transform: rotate(var(--arrow-rotation)) translateX(0);
-      }
-
-      78% {
-        transform: rotate(var(--arrow-rotation)) translateX(0.22rem);
-      }
-
-      88% {
-        transform: rotate(var(--arrow-rotation)) translateX(0.06rem);
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .recommendations-toggle,
-      .recommendations-toggle-icon,
-      .recommendations-toggle-chevron {
-        animation: none;
-        transition: none;
-      }
+      min-height: 0;
+      padding: 1rem 1rem max(1rem, env(safe-area-inset-bottom));
+      overflow-y: auto;
+      overscroll-behavior: contain;
     }
 
     .taste-controls {
@@ -1583,6 +1601,68 @@
         width: 100%;
       }
 
+      .recommendation-teaser {
+        max-height: 300px;
+      }
+
+      .recommendation-teaser .recommendation-grid {
+        grid-auto-columns: minmax(250px, 82vw);
+      }
+
+      .recommendation-teaser .recommendation-rail {
+        gap: 0.4rem;
+      }
+
+      .recommendation-teaser .recommendation-rail > .muted {
+        overflow: hidden;
+        font-size: 0.78rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .recommendation-card-teaser .card-art,
+      .recommendation-card-teaser > .empty {
+        height: 92px;
+        aspect-ratio: auto;
+      }
+
+      .recommendation-card-teaser .recommendation-card-body {
+        gap: 0.3rem;
+      }
+
+      .recommendation-card-teaser .chips {
+        display: none;
+      }
+
+      .recommendation-card-teaser .recommendation-reason {
+        -webkit-line-clamp: 1;
+      }
+
+      .recommendations-drawer {
+        justify-items: stretch;
+      }
+
+      .recommendations-drawer-backdrop {
+        display: none;
+      }
+
+      .recommendations-drawer-panel {
+        width: 100%;
+        height: 100dvh;
+        border-left: 0;
+        box-shadow: none;
+        transform: translateY(100%);
+        transition-duration: 220ms;
+      }
+
+      .recommendations-drawer.is-open .recommendations-drawer-panel {
+        transform: translateY(0);
+      }
+
+      .recommendations-drawer-head {
+        padding-top: max(1rem, env(safe-area-inset-top));
+      }
+
       .recommendation-grid {
         grid-template-columns: 1fr;
       }
@@ -1590,7 +1670,10 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .game-preview-frame {
+      .game-preview-frame,
+      .recommendations-drawer-backdrop,
+      .recommendations-drawer-panel,
+      .recommendations-see-all::after {
         transition: none;
       }
     }
@@ -1630,77 +1713,16 @@
   <main>
     <section class="kpis" id="kpis" aria-label="Catalog key performance indicators"></section>
 
-    <section id="recommendationsPanel" class="panel recommendations-panel is-collapsed" aria-labelledby="recommendationsTitle">
+    <section id="recommendationsPanel" class="panel recommendations-panel" aria-labelledby="recommendationsTitle">
       <div class="recommendations-head">
-        <div class="recommendations-copy">
-          <h2 id="recommendationsTitle">
-            <button id="recommendationsToggleButton" class="recommendations-toggle" type="button" aria-expanded="false" aria-controls="recommendationsContent">
-              <span class="recommendations-toggle-label">Find your next game</span>
-              <span class="recommendations-toggle-icon" aria-hidden="true">
-                <span class="recommendations-toggle-chevron"></span>
-                <span class="recommendations-toggle-chevron"></span>
-              </span>
-            </button>
-          </h2>
+        <div class="recommendations-heading">
+          <p class="recommendations-eyebrow">Personalized picks</p>
+          <h2 id="recommendationsTitle">Find your next game</h2>
         </div>
+        <button id="recommendationsSeeAllButton" class="secondary recommendations-see-all" type="button" aria-haspopup="dialog" aria-controls="recommendationsDrawer">See all recommendations</button>
       </div>
-      <div id="recommendationsContent" class="recommendations-content hidden" aria-hidden="true" inert>
-        <div class="recommendations-actions">
-          <button id="tasteToggleButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteControls">Shape recommendations</button>
-          <button id="tasteQuickEntryButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteQuickEntry">Log games you played</button>
-          <button id="tasteResetButton" class="secondary hidden" type="button">Reset taste</button>
-        </div>
-        <p id="recommendationSummary" class="muted" aria-live="polite" tabindex="-1">Loading recommendations...</p>
-        <div id="tasteControls" class="taste-controls hidden">
-          <div class="taste-grid">
-            <fieldset class="taste-fieldset">
-              <legend>Genres</legend>
-              <div id="tasteGenres" class="taste-options"></div>
-            </fieldset>
-            <fieldset class="taste-fieldset">
-              <legend>Platforms</legend>
-              <div id="tastePlatforms" class="taste-options"></div>
-            </fieldset>
-            <fieldset class="taste-fieldset">
-              <legend>Game Pass tiers</legend>
-              <div id="tasteTiers" class="taste-options"></div>
-            </fieldset>
-            <fieldset class="taste-fieldset">
-              <legend>Player modes</legend>
-              <div id="tasteModes" class="taste-options"></div>
-            </fieldset>
-            <label class="taste-discovery">
-              Discovery style
-              <select id="tasteDiscovery">
-                <option value="familiar">Stay close to my taste</option>
-                <option value="balanced">Balanced</option>
-                <option value="surprising">Surprise me</option>
-              </select>
-            </label>
-          </div>
-          <details class="taste-transfer">
-            <summary>Export or import this local profile</summary>
-            <div class="taste-transfer-body">
-              <textarea id="tasteTransfer" aria-label="Taste profile JSON" placeholder="Exported profile JSON appears here. Paste a profile here to import it."></textarea>
-              <div class="button-row">
-                <button id="tasteExportButton" class="secondary" type="button">Export profile</button>
-                <button id="tasteImportButton" class="secondary" type="button">Import profile</button>
-              </div>
-            </div>
-          </details>
-          <p id="tasteNotice" class="taste-notice" aria-live="polite"></p>
-        </div>
-        <div id="tasteQuickEntry" class="taste-quick-entry hidden">
-          <p class="muted">Search the whole catalog, including games hidden by the active filters and games that already left Game Pass. Marking a game played removes it from your recommendations.</p>
-          <label class="quick-entry-field">Find a game to mark
-            <input id="tasteQuickEntrySearch" type="search" autocomplete="off" placeholder="Start typing a game title" aria-describedby="tasteQuickEntryHint">
-          </label>
-          <p id="tasteQuickEntryHint" class="muted">Press Enter to mark the first result as played and clear the box.</p>
-          <div id="tasteQuickEntryResults" class="quick-entry-results" role="group" aria-label="Quick entry search results"></div>
-          <p id="tasteQuickEntryCount" class="quick-entry-count" aria-live="polite"></p>
-          <div id="tasteQuickEntryRecent" class="quick-entry-recent"></div>
-        </div>
-        <div id="recommendationRails" class="recommendation-rails"></div>
+      <div id="recommendationTeaser" class="recommendation-teaser">
+        <p class="muted">Loading recommendations...</p>
       </div>
     </section>
 
@@ -1871,6 +1893,10 @@
         <button id="toolbarView" class="badge toolbar-badge-button toolbar-icon-button toolbar-view-button" type="button" aria-label="Switch view"></button>
       </div>
       <div class="toolbar-actions" role="group" aria-label="Quick result actions">
+        <button id="toolbarRecommendationsButton" class="secondary toolbar-icon-button toolbar-recommendations-button" type="button" aria-label="Recommendations" aria-haspopup="dialog" aria-controls="recommendationsDrawer">
+          <span id="toolbarRecommendationsIcon" aria-hidden="true"></span>
+          <span id="toolbarRecommendationsBadge" class="toolbar-recommendations-badge hidden" aria-hidden="true"></span>
+        </button>
         <button id="toolbarFiltersButton" class="secondary toolbar-icon-button" type="button" aria-label="Show filters"></button>
         <button id="toolbarClearButton" class="secondary toolbar-icon-button hidden" type="button" aria-label="Clear filters"></button>
         <button id="toolbarTopButton" class="secondary toolbar-icon-button hidden" type="button" aria-label="Back to top"></button>
@@ -1891,6 +1917,80 @@
         </div>
       </div>
 
+    </div>
+
+    <div id="recommendationsDrawer" class="recommendations-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="recommendationsDrawerTitle" aria-describedby="recommendationSummary" aria-hidden="true" tabindex="-1" inert>
+      <div class="recommendations-drawer-backdrop" data-close-recommendations></div>
+      <section class="recommendations-drawer-panel" tabindex="-1">
+        <header class="recommendations-drawer-head">
+          <div>
+            <p class="recommendations-eyebrow">Personalized picks</p>
+            <h2 id="recommendationsDrawerTitle">Your recommendations</h2>
+          </div>
+          <button id="recommendationsDrawerClose" class="secondary recommendations-drawer-close" type="button">
+            <span aria-hidden="true">&times;</span>
+            <span>Close</span>
+          </button>
+        </header>
+        <div id="recommendationsDrawerBody" class="recommendations-drawer-body">
+          <div class="recommendations-actions">
+            <button id="tasteToggleButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteControls">Shape recommendations</button>
+            <button id="tasteQuickEntryButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteQuickEntry">Log games you played</button>
+            <button id="tasteResetButton" class="secondary hidden" type="button">Reset taste</button>
+          </div>
+          <p id="recommendationSummary" class="muted" aria-live="polite">Loading recommendations...</p>
+          <div id="tasteControls" class="taste-controls hidden">
+            <div class="taste-grid">
+              <fieldset class="taste-fieldset">
+                <legend>Genres</legend>
+                <div id="tasteGenres" class="taste-options"></div>
+              </fieldset>
+              <fieldset class="taste-fieldset">
+                <legend>Platforms</legend>
+                <div id="tastePlatforms" class="taste-options"></div>
+              </fieldset>
+              <fieldset class="taste-fieldset">
+                <legend>Game Pass tiers</legend>
+                <div id="tasteTiers" class="taste-options"></div>
+              </fieldset>
+              <fieldset class="taste-fieldset">
+                <legend>Player modes</legend>
+                <div id="tasteModes" class="taste-options"></div>
+              </fieldset>
+              <label class="taste-discovery">
+                Discovery style
+                <select id="tasteDiscovery">
+                  <option value="familiar">Stay close to my taste</option>
+                  <option value="balanced">Balanced</option>
+                  <option value="surprising">Surprise me</option>
+                </select>
+              </label>
+            </div>
+            <details class="taste-transfer">
+              <summary>Export or import this local profile</summary>
+              <div class="taste-transfer-body">
+                <textarea id="tasteTransfer" aria-label="Taste profile JSON" placeholder="Exported profile JSON appears here. Paste a profile here to import it."></textarea>
+                <div class="button-row">
+                  <button id="tasteExportButton" class="secondary" type="button">Export profile</button>
+                  <button id="tasteImportButton" class="secondary" type="button">Import profile</button>
+                </div>
+              </div>
+            </details>
+            <p id="tasteNotice" class="taste-notice" aria-live="polite"></p>
+          </div>
+          <div id="tasteQuickEntry" class="taste-quick-entry hidden">
+            <p class="muted">Search the whole catalog, including games hidden by the active filters and games that already left Game Pass. Marking a game played removes it from your recommendations.</p>
+            <label class="quick-entry-field">Find a game to mark
+              <input id="tasteQuickEntrySearch" type="search" autocomplete="off" placeholder="Start typing a game title" aria-describedby="tasteQuickEntryHint">
+            </label>
+            <p id="tasteQuickEntryHint" class="muted">Press Enter to mark the first result as played and clear the box.</p>
+            <div id="tasteQuickEntryResults" class="quick-entry-results" role="group" aria-label="Quick entry search results"></div>
+            <p id="tasteQuickEntryCount" class="quick-entry-count" aria-live="polite"></p>
+            <div id="tasteQuickEntryRecent" class="quick-entry-recent"></div>
+          </div>
+          <div id="recommendationRails" class="recommendation-rails"></div>
+        </div>
+      </section>
     </div>
 
     <div id="gamePreviewTooltip" class="game-preview-tooltip hidden" role="tooltip" aria-hidden="true"></div>
@@ -1947,6 +2047,8 @@
     const TIERS = ['ultimate', 'premium', 'essential'];
     const PLATFORMS = ['console', 'pc'];
     const TASTE_STORAGE_KEY = 'catabox.taste.v1';
+    const RECOMMENDATION_DRAWER_STORAGE_KEY = 'catabox.recommendations.drawer.v1';
+    const RECOMMENDATION_SEEN_STORAGE_PREFIX = 'catabox.recommendations.seen.v1';
     const TASTE_PROFILE_VERSION = 1;
     const RECOMMENDATION_SCHEMA_VERSION = 1;
     const RECOMMENDATION_ALGORITHM = 'hybrid-tfidf-mmr-v1';
@@ -2089,6 +2191,13 @@
       recommendations: null,
       recommendationError: '',
       recommendationsLoading: true,
+      recommendationsSeen: false,
+      recommendationsLastFocused: null,
+      recommendationsHistoryEntry: false,
+      recommendationDrawerState: {
+        open: false,
+        scrollTop: 0
+      },
       productsById: new Map(),
       taste: {
         version: TASTE_PROFILE_VERSION,
@@ -2139,10 +2248,12 @@
     };
 
     const controls = Object.fromEntries(Object.keys(defaults).map((id) => [id, document.getElementById(id)]));
-    const recommendationsPanel = document.getElementById('recommendationsPanel');
-    const recommendationsToggleButton = document.getElementById('recommendationsToggleButton');
-    const recommendationsContent = document.getElementById('recommendationsContent');
-    let recommendationsPanelAnimation = null;
+    const recommendationTeaser = document.getElementById('recommendationTeaser');
+    const recommendationsSeeAllButton = document.getElementById('recommendationsSeeAllButton');
+    const recommendationsDrawer = document.getElementById('recommendationsDrawer');
+    const recommendationsDrawerPanel = recommendationsDrawer.querySelector('.recommendations-drawer-panel');
+    const recommendationsDrawerBody = document.getElementById('recommendationsDrawerBody');
+    let recommendationsDrawerCloseTimer = 0;
     const recommendationSummary = document.getElementById('recommendationSummary');
     const recommendationRails = document.getElementById('recommendationRails');
     const tasteToggleButton = document.getElementById('tasteToggleButton');
@@ -2171,6 +2282,9 @@
     const toolbarSearch = document.getElementById('toolbarSearch');
     const toolbarFilters = document.getElementById('toolbarFilters');
     const toolbarView = document.getElementById('toolbarView');
+    const toolbarRecommendationsButton = document.getElementById('toolbarRecommendationsButton');
+    const toolbarRecommendationsIcon = document.getElementById('toolbarRecommendationsIcon');
+    const toolbarRecommendationsBadge = document.getElementById('toolbarRecommendationsBadge');
     const toolbarFiltersButton = document.getElementById('toolbarFiltersButton');
     const toolbarClearButton = document.getElementById('toolbarClearButton');
     const toolbarTopButton = document.getElementById('toolbarTopButton');
@@ -2200,6 +2314,7 @@
       const icons = {
         full: '<svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><rect x="3" y="3" width="5" height="5" rx="1.4"></rect><rect x="12" y="3" width="5" height="5" rx="1.4"></rect><rect x="3" y="12" width="5" height="5" rx="1.4"></rect><rect x="12" y="12" width="5" height="5" rx="1.4"></rect></svg>',
         table: '<svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 5.5h2.2"></path><path d="M9 5.5h7"></path><path d="M4 10h2.2"></path><path d="M9 10h7"></path><path d="M4 14.5h2.2"></path><path d="M9 14.5h7"></path></svg>',
+        recommendations: '<svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="2.5"></circle><path d="M10 2.5v3"></path><path d="M10 14.5v3"></path><path d="M2.5 10h3"></path><path d="M14.5 10h3"></path><path d="M4.8 4.8l2.1 2.1"></path><path d="M13.1 13.1l2.1 2.1"></path><path d="M15.2 4.8l-2.1 2.1"></path><path d="M6.9 13.1l-2.1 2.1"></path></svg>',
         filter: '<svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 4.5h13l-5.2 6v3.8l-2.6 1.3v-5.1z"></path></svg>',
         clear: '<svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M3.5 4.5h13l-5.2 6v3.8l-2.6 1.3v-5.1z"></path><path d="M4.5 15.5l11-11"></path></svg>',
         top: '<svg class="ui-icon" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 15.5v-11"></path><path d="M5.5 9L10 4.5 14.5 9"></path></svg>'
@@ -2504,46 +2619,106 @@
       }
     }
 
-    function toggleRecommendationsPanel() {
-      const willOpen = recommendationsToggleButton.getAttribute('aria-expanded') !== 'true';
-      const currentHeight = recommendationsContent.classList.contains('hidden')
-        ? 0
-        : recommendationsContent.getBoundingClientRect().height;
-      recommendationsPanelAnimation?.cancel();
-      recommendationsContent.classList.remove('hidden');
-      recommendationsContent.inert = !willOpen;
-      recommendationsContent.setAttribute('aria-hidden', String(!willOpen));
-      recommendationsPanel.classList.toggle('is-collapsed', !willOpen);
-      recommendationsToggleButton.setAttribute('aria-expanded', String(willOpen));
+    function recommendationSeenStorageKey() {
+      return `${RECOMMENDATION_SEEN_STORAGE_PREFIX}.${app.current?.catalogHash ?? 'current'}`;
+    }
 
-      if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        recommendationsContent.classList.toggle('hidden', !willOpen);
-        return;
+    function loadRecommendationDrawerState() {
+      try {
+        const parsed = JSON.parse(sessionStorage.getItem(RECOMMENDATION_DRAWER_STORAGE_KEY) ?? '{}');
+        return {
+          open: parsed.open === true,
+          scrollTop: Number.isFinite(parsed.scrollTop) ? Math.max(0, parsed.scrollTop) : 0
+        };
+      } catch (error) {
+        console.warn('Could not restore recommendation drawer state.', error);
+        return { open: false, scrollTop: 0 };
       }
+    }
 
-      const targetHeight = willOpen ? recommendationsContent.scrollHeight : 0;
-      const duration = Math.min(600, 320 + Math.abs(targetHeight - currentHeight) * 0.09);
-      recommendationsPanelAnimation = recommendationsContent.animate([
-        {
-          height: `${currentHeight}px`,
-          opacity: willOpen ? 0 : 1,
-          transform: willOpen ? 'translateY(-0.5rem)' : 'translateY(0)'
-        },
-        {
-          height: `${targetHeight}px`,
-          opacity: willOpen ? 1 : 0,
-          transform: willOpen ? 'translateY(0)' : 'translateY(-0.5rem)'
-        }
-      ], {
-        duration,
-        easing: 'cubic-bezier(0.42, 0, 0.58, 1)',
-        fill: 'both'
+    function saveRecommendationDrawerState() {
+      try {
+        sessionStorage.setItem(RECOMMENDATION_DRAWER_STORAGE_KEY, JSON.stringify(app.recommendationDrawerState));
+      } catch (error) {
+        console.warn('Could not save recommendation drawer state.', error);
+      }
+    }
+
+    function recommendationsWereSeen() {
+      try {
+        return sessionStorage.getItem(recommendationSeenStorageKey()) === '1';
+      } catch (error) {
+        console.warn('Could not read recommendation seen state.', error);
+        return false;
+      }
+    }
+
+    function markRecommendationsSeen() {
+      app.recommendationsSeen = true;
+      toolbarRecommendationsBadge.classList.add('hidden');
+      toolbarRecommendationsButton.setAttribute('aria-label', 'Recommendations');
+      try {
+        sessionStorage.setItem(recommendationSeenStorageKey(), '1');
+      } catch (error) {
+        console.warn('Could not save recommendation seen state.', error);
+      }
+    }
+
+    function syncDrawerOpenState() {
+      const filterOpen = !filterDrawer.classList.contains('hidden');
+      const recommendationsOpen = recommendationsDrawer.getAttribute('aria-hidden') === 'false';
+      document.body.classList.toggle('drawer-open', filterOpen || recommendationsOpen);
+    }
+
+    function openRecommendationsDrawer(opener = document.activeElement, { pushHistory = true } = {}) {
+      if (recommendationsDrawer.getAttribute('aria-hidden') === 'false') return;
+      if (!filterDrawer.classList.contains('hidden')) {
+        closeFilterDrawer({ restoreFocus: false });
+      }
+      clearTimeout(recommendationsDrawerCloseTimer);
+      app.recommendationsLastFocused = opener;
+      app.recommendationDrawerState.open = true;
+      saveRecommendationDrawerState();
+      recommendationsDrawer.classList.remove('hidden');
+      recommendationsDrawer.inert = false;
+      recommendationsDrawer.setAttribute('aria-hidden', 'false');
+      syncDrawerOpenState();
+      if (mobileQuery.matches && pushHistory && !app.recommendationsHistoryEntry) {
+        history.pushState({ ...history.state, cataboxRecommendations: true }, '');
+        app.recommendationsHistoryEntry = true;
+      }
+      markRecommendationsSeen();
+      requestAnimationFrame(() => {
+        recommendationsDrawer.classList.add('is-open');
+        recommendationsDrawerBody.scrollTop = app.recommendationDrawerState.scrollTop;
+        const delay = reducedMotionQuery.matches ? 0 : mobileQuery.matches ? 220 : 240;
+        setTimeout(() => recommendationsDrawer.focus({ preventScroll: true }), delay);
       });
-      recommendationsPanelAnimation.onfinish = () => {
-        recommendationsContent.classList.toggle('hidden', !willOpen);
-        recommendationsPanelAnimation?.cancel();
-        recommendationsPanelAnimation = null;
+    }
+
+    function closeRecommendationsDrawer({ restoreFocus = true, fromHistory = false } = {}) {
+      if (recommendationsDrawer.getAttribute('aria-hidden') !== 'false') return;
+      app.recommendationDrawerState = {
+        open: false,
+        scrollTop: recommendationsDrawerBody.scrollTop
       };
+      saveRecommendationDrawerState();
+      recommendationsDrawer.setAttribute('aria-hidden', 'true');
+      recommendationsDrawer.inert = true;
+      recommendationsDrawer.classList.remove('is-open');
+      if (app.recommendationsHistoryEntry && !fromHistory) {
+        app.recommendationsHistoryEntry = false;
+        history.back();
+      }
+      const delay = reducedMotionQuery.matches ? 0 : mobileQuery.matches ? 220 : 240;
+      clearTimeout(recommendationsDrawerCloseTimer);
+      recommendationsDrawerCloseTimer = setTimeout(() => {
+        recommendationsDrawer.classList.add('hidden');
+        syncDrawerOpenState();
+        if (restoreFocus && app.recommendationsLastFocused instanceof HTMLElement) {
+          app.recommendationsLastFocused.focus();
+        }
+      }, delay);
     }
 
     function resetTasteProfile() {
@@ -3027,14 +3202,14 @@
       return `${location.pathname}?${params.toString()}`;
     }
 
-    function renderRecommendationCard(item) {
+    function renderRecommendationCard(item, { compact = false } = {}) {
       const game = item.game;
       const image = cardImage(game);
       const reason = item.reasons.length > 0
         ? item.reasons.join(' · ')
         : `${game.genres?.slice(0, 2).join(' + ') || 'Catalog match'} · ${game.platforms.map((platform) => labelFor('platforms', platform)).join(' + ')}`;
       return `
-        <article class="recommendation-card" data-preview-game="${escapeHtml(game.id)}">
+        <article class="recommendation-card${compact ? ' recommendation-card-teaser' : ''}" data-preview-game="${escapeHtml(game.id)}">
           ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
           <div class="recommendation-card-body">
             <h4>${escapeHtml(game.title)}</h4>
@@ -3044,7 +3219,7 @@
               <a href="${escapeHtml(catalogSearchUrl(game))}">Show in catalog</a>
               <a href="${escapeHtml(game.url)}">Open on Xbox</a>
             </div>
-            ${tasteActionRow(game)}
+            ${compact ? '' : tasteActionRow(game)}
           </div>
         </article>
       `;
@@ -3063,6 +3238,32 @@
       return 'No recommendation candidates match the active filters.';
     }
 
+    function recommendationRailHtml(rail, items = rail.items, { compact = false } = {}) {
+      return `
+        <section class="recommendation-rail">
+          <h3>${escapeHtml(rail.title)}</h3>
+          <p class="muted">${escapeHtml(rail.description)}</p>
+          <div class="recommendation-grid">${items.map((item) => renderRecommendationCard(item, { compact })).join('')}</div>
+        </section>
+      `;
+    }
+
+    function updateRecommendationEntryPoints(rails) {
+      const count = new Set(rails.flatMap((rail) => rail.items.map((item) => item.game.id))).size;
+      const disabled = count === 0;
+      recommendationsSeeAllButton.disabled = disabled;
+      toolbarRecommendationsButton.disabled = disabled;
+      toolbarRecommendationsButton.title = disabled ? 'No recommendations available' : 'Recommendations';
+      if (disabled || app.recommendationsSeen) {
+        toolbarRecommendationsBadge.classList.add('hidden');
+        toolbarRecommendationsButton.setAttribute('aria-label', disabled ? 'No recommendations available' : 'Recommendations');
+        return;
+      }
+      toolbarRecommendationsBadge.textContent = count > 99 ? '99+' : String(count);
+      toolbarRecommendationsBadge.classList.remove('hidden');
+      toolbarRecommendationsButton.setAttribute('aria-label', `Recommendations, ${count} unseen`);
+    }
+
     function renderRecommendations() {
       if (!app.current) return;
       const rails = recommendationRailsData();
@@ -3078,16 +3279,14 @@
         recommendationSummary.textContent = 'Local recommendations are available, but the precomputed similarity artifact is missing or stale.';
       }
       recommendationRails.innerHTML = rails.length > 0
-        ? rails.map((rail) => `
-          <section class="recommendation-rail">
-            <h3>${escapeHtml(rail.title)}</h3>
-            <p class="muted">${escapeHtml(rail.description)}</p>
-            <div class="recommendation-grid">${rail.items.map(renderRecommendationCard).join('')}</div>
-          </section>
-        `).join('')
+        ? rails.map((rail) => recommendationRailHtml(rail)).join('')
         : `<p class="empty">${escapeHtml(recommendationEmptyMessage())}</p>`;
+      recommendationTeaser.innerHTML = rails.length > 0
+        ? recommendationRailHtml(rails[0], rails[0].items.slice(0, 4), { compact: true })
+        : `<p class="empty">${escapeHtml(recommendationEmptyMessage())}</p>`;
+      updateRecommendationEntryPoints(rails);
       updateTasteControls();
-      observeLazyImages([recommendationRails]);
+      observeLazyImages([recommendationTeaser, recommendationRails]);
     }
 
     function toggleTasteGame(action, gameId) {
@@ -3106,16 +3305,33 @@
       saveTasteProfile('Feedback saved in this browser.');
     }
 
-    function restoreRecommendationFocus(action, preferredGameIds) {
+    function restoreRecommendationFocus(action, preferredGameIds, container = recommendationRails) {
       requestAnimationFrame(() => {
-        const buttons = [...recommendationRails.querySelectorAll('button[data-taste-action][data-game-id]')];
+        const buttons = [...container.querySelectorAll('button[data-taste-action][data-game-id]')];
         const target = preferredGameIds
           .map((gameId) => buttons.find((button) =>
             button.dataset.tasteAction === action && button.dataset.gameId === gameId
           ))
           .find(Boolean);
-        (target ?? recommendationSummary).focus();
+        const fallback = recommendationsDrawer.getAttribute('aria-hidden') === 'false'
+          ? recommendationsDrawer
+          : recommendationsSeeAllButton;
+        (target ?? fallback).focus();
       });
+    }
+
+    function handleRecommendationAction(container, event) {
+      const button = closestFromEvent(event, 'button[data-taste-action][data-game-id]');
+      if (!button) return;
+      const actionButtons = [...container.querySelectorAll(`button[data-taste-action="${button.dataset.tasteAction}"]`)];
+      const index = actionButtons.indexOf(button);
+      const focusCandidates = [
+        button.dataset.gameId,
+        actionButtons[index + 1]?.dataset.gameId,
+        actionButtons[index - 1]?.dataset.gameId
+      ].filter(Boolean);
+      toggleTasteGame(button.dataset.tasteAction, button.dataset.gameId);
+      restoreRecommendationFocus(button.dataset.tasteAction, focusCandidates, container);
     }
 
     function storeSlug(title) {
@@ -3485,6 +3701,7 @@
       viewToggleButton.innerHTML = `${icon(next === 'cards' ? 'full' : 'table')}<span>${escapeHtml(viewLabel(next))}</span>`;
       viewToggleButton.title = `Switch to ${viewLabel(next).toLocaleLowerCase()}`;
       viewToggleButton.setAttribute('aria-label', viewToggleButton.title);
+      toolbarRecommendationsIcon.innerHTML = icon('recommendations');
       toolbarClearButton.innerHTML = icon('clear');
       toolbarFiltersButton.innerHTML = icon('filter');
       toolbarTopButton.innerHTML = icon('top');
@@ -3499,16 +3716,38 @@
       }
     }
 
-    function focusableDrawerElements() {
-      return [...filterDrawer.querySelectorAll('button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])')]
+    function focusableDialogElements(dialog) {
+      return [...dialog.querySelectorAll('button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])')]
         .filter((element) => !element.disabled && element.offsetParent !== null);
+    }
+
+    function trapDialogFocus(event, dialog, fallback) {
+      if (event.key !== 'Tab') return;
+      const focusable = focusableDialogElements(dialog);
+      if (focusable.length === 0) {
+        event.preventDefault();
+        fallback.focus();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      if (!focusable.includes(document.activeElement)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
 
     function openFilterDrawer() {
       app.lastFocused = document.activeElement;
       filterDrawerControls.append(filterControls);
       filterDrawer.classList.remove('hidden');
-      document.body.classList.add('drawer-open');
+      syncDrawerOpenState();
       requestAnimationFrame(() => {
         (filterControls.querySelector('input, select, button') ?? filterDrawerPanel).focus();
       });
@@ -3517,7 +3756,7 @@
     function closeFilterDrawer({ restoreFocus = true } = {}) {
       returnControlsToPanel();
       filterDrawer.classList.add('hidden');
-      document.body.classList.remove('drawer-open');
+      syncDrawerOpenState();
       if (restoreFocus && app.lastFocused instanceof HTMLElement) {
         app.lastFocused.focus();
       }
@@ -4275,7 +4514,7 @@
     }
 
     function imageContainers() {
-      return [recommendationRails, activeImageContainer()];
+      return [recommendationTeaser, recommendationRails, activeImageContainer()];
     }
 
     function pendingLazyImages(containers = imageContainers()) {
@@ -4669,7 +4908,8 @@
       toolbarFiltersButton.addEventListener('click', showFilters);
       toolbarClearButton.addEventListener('click', resetFilters);
       toolbarTopButton.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
-      recommendationsToggleButton.addEventListener('click', toggleRecommendationsPanel);
+      recommendationsSeeAllButton.addEventListener('click', () => openRecommendationsDrawer(recommendationsSeeAllButton));
+      toolbarRecommendationsButton.addEventListener('click', () => openRecommendationsDrawer(toolbarRecommendationsButton));
       tasteToggleButton.addEventListener('click', toggleTasteControls);
       tasteResetButton.addEventListener('click', resetTasteProfile);
       tasteQuickEntryButton.addEventListener('click', toggleQuickEntry);
@@ -4706,19 +4946,8 @@
       });
       document.getElementById('tasteExportButton').addEventListener('click', exportTasteProfile);
       document.getElementById('tasteImportButton').addEventListener('click', importTasteProfile);
-      recommendationRails.addEventListener('click', (event) => {
-        const button = closestFromEvent(event, 'button[data-taste-action][data-game-id]');
-        if (!button) return;
-        const actionButtons = [...recommendationRails.querySelectorAll(`button[data-taste-action="${button.dataset.tasteAction}"]`)];
-        const index = actionButtons.indexOf(button);
-        const focusCandidates = [
-          button.dataset.gameId,
-          actionButtons[index + 1]?.dataset.gameId,
-          actionButtons[index - 1]?.dataset.gameId
-        ].filter(Boolean);
-        toggleTasteGame(button.dataset.tasteAction, button.dataset.gameId);
-        restoreRecommendationFocus(button.dataset.tasteAction, focusCandidates);
-      });
+      recommendationTeaser.addEventListener('click', (event) => handleRecommendationAction(recommendationTeaser, event));
+      recommendationRails.addEventListener('click', (event) => handleRecommendationAction(recommendationRails, event));
       for (const container of [cards, tableBody]) {
         container.addEventListener('click', (event) => {
           const button = closestFromEvent(event, 'button[data-taste-action][data-game-id]');
@@ -4726,7 +4955,7 @@
           toggleTasteGame(button.dataset.tasteAction, button.dataset.gameId);
         });
       }
-      for (const container of [recommendationRails, cards, tableBody]) {
+      for (const container of [recommendationTeaser, recommendationRails, cards, tableBody]) {
         container.addEventListener('mouseover', (event) => {
           const target = closestFromEvent(event, '[data-preview-game]');
           if (!target || (event.relatedTarget instanceof Node && target.contains(event.relatedTarget))) return;
@@ -4793,22 +5022,39 @@
           closeFilterDrawer();
           return;
         }
-        if (event.key !== 'Tab') return;
-        const focusable = focusableDrawerElements();
-        if (focusable.length === 0) {
-          event.preventDefault();
-          filterDrawerPanel.focus();
+        trapDialogFocus(event, filterDrawer, filterDrawerPanel);
+      });
+      document.getElementById('recommendationsDrawerClose').addEventListener('click', () => closeRecommendationsDrawer());
+      recommendationsDrawer.addEventListener('click', (event) => {
+        if (!mobileQuery.matches && closestFromEvent(event, '[data-close-recommendations]')) {
+          closeRecommendationsDrawer();
+        }
+      });
+      recommendationsDrawer.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+          closeMultiSelectMenus();
+          closeRecommendationsDrawer();
           return;
         }
-        const first = focusable[0];
-        const last = focusable.at(-1);
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first.focus();
-        }
+        trapDialogFocus(event, recommendationsDrawer, recommendationsDrawerPanel);
+      });
+      addEventListener('popstate', () => {
+        if (recommendationsDrawer.getAttribute('aria-hidden') !== 'false') return;
+        app.recommendationsHistoryEntry = false;
+        closeRecommendationsDrawer({ fromHistory: true });
+      });
+      mobileQuery.addEventListener('change', (event) => {
+        if (
+          !event.matches
+          || app.recommendationsHistoryEntry
+          || recommendationsDrawer.getAttribute('aria-hidden') !== 'false'
+        ) return;
+        history.pushState({ ...(history.state ?? {}), cataboxRecommendations: true }, '');
+        app.recommendationsHistoryEntry = true;
+      });
+      addEventListener('beforeunload', () => {
+        app.recommendationDrawerState.scrollTop = recommendationsDrawerBody.scrollTop;
+        saveRecommendationDrawerState();
       });
       addEventListener('scroll', () => {
         hideGamePreview();
@@ -4836,6 +5082,9 @@
         app.history = historyData;
         app.status = statusData;
         app.productsById = new Map(current.games.map((game) => [game.id, game]));
+        app.recommendationDrawerState = loadRecommendationDrawerState();
+        app.recommendationsSeen = recommendationsWereSeen();
+        app.recommendationsHistoryEntry = Boolean(history.state?.cataboxRecommendations);
         try {
           app.taste = loadTasteProfile();
         } catch (error) {
@@ -4854,6 +5103,9 @@
         renderKpis();
         renderResults();
         renderHistoryDashboard();
+        if (app.recommendationDrawerState.open) {
+          openRecommendationsDrawer(null, { pushHistory: !app.recommendationsHistoryEntry });
+        }
         void hydrateRecommendations();
       } catch (error) {
         document.querySelector('main').innerHTML = `<section class="panel status failed"><h2>Could not load catalog data</h2><p>${escapeHtml(error.message)}</p></section>`;
