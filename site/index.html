@@ -1460,7 +1460,7 @@
       <div class="recommendations-head">
         <div class="recommendations-copy">
           <h2 id="recommendationsTitle">Find your next game</h2>
-          <p class="muted">Explainable recommendations from catalog metadata, your active filters, and optional preferences that stay in this browser.</p>
+          <p class="muted">Explainable recommendations from catalog metadata and optional preferences that stay in this browser.</p>
         </div>
         <div class="recommendations-actions">
           <button id="tasteToggleButton" class="secondary" type="button" aria-expanded="false" aria-controls="tasteControls">Shape recommendations</button>
@@ -1509,7 +1509,7 @@
         <p id="tasteNotice" class="taste-notice" aria-live="polite"></p>
       </div>
       <div id="tasteQuickEntry" class="taste-quick-entry hidden">
-        <p class="muted">Search the whole catalog, including games hidden by the active filters and games that already left Game Pass. Marking a game played removes it from your recommendations.</p>
+        <p class="muted">Search every tracked game, including games that already left Game Pass. Marking a game played removes it from your recommendations.</p>
         <label class="quick-entry-field">Find a game to mark
           <input id="tasteQuickEntrySearch" type="search" autocomplete="off" placeholder="Start typing a game title" aria-describedby="tasteQuickEntryHint">
         </label>
@@ -2385,10 +2385,6 @@
       return new Set(TASTE_GAME_ACTIONS.flatMap((field) => app.taste[field]));
     }
 
-    function recommendationMatchesFilters(game) {
-      return selectedValues('state').includes('current') && matchesFilters(game);
-    }
-
     function stableRecommendationUnit(game) {
       const input = `${app.current?.familyHash ?? ''}:${game.id}`;
       let hash = 2166136261;
@@ -2463,7 +2459,7 @@
       const known = knownTasteGames();
       return [...candidates.entries()]
         .map(([id, artifact]) => ({ game: currentFamilies().find((game) => game.id === id), artifact }))
-        .filter(({ game }) => game && !known.has(game.id) && recommendationMatchesFilters(game))
+        .filter(({ game }) => game && !known.has(game.id))
         .map(({ game, artifact }) => ({
           game,
           artifact,
@@ -2576,7 +2572,7 @@
       const known = knownTasteGames();
       const artifacts = artifactCandidates();
       return currentFamilies()
-        .filter((game) => !known.has(game.id) && recommendationMatchesFilters(game))
+        .filter((game) => !known.has(game.id))
         .map((game) => {
           const artifact = artifacts.get(game.id) ?? null;
           return {
@@ -2618,7 +2614,7 @@
         if (items.length > 0) {
           rails.push({
             title: `Because you ${anchor.verb} ${anchor.game.title}`,
-            description: 'Closest catalog matches, re-ranked around your current constraints.',
+            description: 'Closest catalog matches, re-ranked around your recommendation preferences.',
             items
           });
         }
@@ -2825,15 +2821,15 @@
 
     function recommendationEmptyMessage() {
       const known = knownTasteGames();
-      if (known.size === 0) return 'No recommendation candidates match the active filters.';
-      const unmarked = currentFamilies().filter((game) => !known.has(game.id));
+      const current = currentFamilies();
+      const unmarked = current.filter((game) => !known.has(game.id));
+      if (current.length === 0) {
+        return 'No current games are available to recommend.';
+      }
       if (unmarked.length === 0) {
         return 'Every tracked game is already liked, disliked, saved, or marked played. Unmark a few in quick entry to get recommendations again.';
       }
-      if (!unmarked.some(recommendationMatchesFilters)) {
-        return `No unmarked game matches the active filters. ${known.size} game${known.size === 1 ? ' is' : 's are'} excluded because you already rated or played them.`;
-      }
-      return 'No recommendation candidates match the active filters.';
+      return 'No recommendation candidates are currently available.';
     }
 
     function renderRecommendations() {
