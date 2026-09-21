@@ -1,105 +1,188 @@
 {
-  "actionRunNumber": "13",
-  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/34834566833",
+  "actionRunNumber": "14",
+  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/35590556673",
   "baseline": false,
-  "catalogGeneratedAt": "2026-09-14T10:43:24.927Z",
-  "catalogHash": "b9e49ec563ccf3a4c1df14c2c34be7607086e3dcb408b2e36a30ffb2317e6f62",
+  "catalogGeneratedAt": "2026-09-21T10:46:59.376Z",
+  "catalogHash": "bfa4e68e5038fcda2ef3b5be54dc5defbfd386a5487658408d8ce950d1c74454",
   "changed": true,
   "errors": [],
   "eventCounts": {
-    "added": 4,
-    "platform_added": 4,
-    "tier_added": 2
+    "added": 5,
+    "platform_added": 10,
+    "removed": 12,
+    "tier_added": 5
   },
   "familyChanged": true,
   "familyEventCounts": {
-    "added": 4,
-    "platform_added": 4,
-    "tier_added": 2
+    "added": 5,
+    "platform_added": 10,
+    "removed": 12,
+    "tier_added": 5
   },
-  "familyHash": "8925808e32736e29acae29a917ba28c4d7bf9d601a179deba9ab27419ab10f9c",
-  "generatedAt": "2026-09-14T10:43:24.927Z",
+  "familyHash": "551e398d2c0f6e4afacf6a5e8d1532231771f82d591c5eab2d321bfa0cd4cba2",
+  "generatedAt": "2026-09-21T10:46:59.376Z",
   "language": "en-us",
-  "lastGoodCatalogHash": "ff1213a0765933eb714eae420ca1d63772faa9fe15fc07b3fafb14512dc65cab",
-  "lastGoodGeneratedAt": "2026-09-07T10:22:55.031Z",
-  "leavingSoonAdded": [],
-  "leavingSoonTotal": 11,
+  "lastGoodCatalogHash": "b9e49ec563ccf3a4c1df14c2c34be7607086e3dcb408b2e36a30ffb2317e6f62",
+  "lastGoodGeneratedAt": "2026-09-14T10:43:24.927Z",
+  "leavingSoonAdded": [
+    {
+      "familyId": "family-5dc652b2d1aecf0fa7b31c65624286e3950e6533f23012a2b0f5960fdbc2644c",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Atomfall",
+      "variantIds": [
+        "9NC4WDL5KZBL"
+      ]
+    },
+    {
+      "familyId": "family-b370a928bf6fe56f076d050bd280af2829ae9e1043b3ec7b61b703db7eda4517",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Lara Croft and the Guardian of Light",
+      "variantIds": [
+        "BX7XFZ51XTW8",
+        "9NS37Q75LBCG"
+      ]
+    },
+    {
+      "familyId": "family-f4beed8b6cd2d601928281e50ae8ebeb6a04f253ccd613adfe599f3704902c6a",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Little Nightmares II Enhanced Edition",
+      "variantIds": [
+        "C1H74N0TR8KT",
+        "9PBM67RXX3V8"
+      ]
+    },
+    {
+      "familyId": "family-37b4d74fbd49016adeab271f833c4613077eff677d799eb46c217bae8996cc08",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Little Rocket Lab",
+      "variantIds": [
+        "9N3M5D5ZSW34"
+      ]
+    },
+    {
+      "familyId": "family-99759fea9000a6e5ec458481afbf5150ab26287925179d91b8b2e95111f0e67f",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Sifu",
+      "variantIds": [
+        "9P7PF6ZP3958"
+      ]
+    },
+    {
+      "familyId": "family-5c81a5682fe4baa566551524ea66d56ce701348b64aceec5d259815eeb0b8d84",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "SWORN",
+      "variantIds": [
+        "9MWDJRQ1BXTC"
+      ]
+    },
+    {
+      "familyId": "family-fbab2758c9332aae86a319ef3ef27bcc4303f44ef56d4591d50ba0c3c2715e18",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Terminull Brigade™",
+      "variantIds": [
+        "9MW1V43D3VZN"
+      ]
+    }
+  ],
+  "leavingSoonTotal": 7,
   "market": "FR",
   "productChanged": true,
   "productEventCounts": {
     "added": 4,
-    "platform_added": 4,
-    "tier_added": 3
+    "platform_added": 10,
+    "removed": 13,
+    "tier_added": 5
   },
-  "productTotal": 909,
+  "productTotal": 900,
   "sourceHealth": {
     "displayCatalog": {
       "missingProductIds": [],
-      "requested": 909,
-      "returned": 909,
+      "requested": 900,
+      "returned": 900,
       "status": "ok"
     },
     "leavingSoon": [
       {
-        "count": 10,
+        "count": 7,
         "platform": "console",
-        "sourceCount": 10,
+        "sourceCount": 7,
         "status": "ok",
         "url": "https://catalog.gamepass.com/sigls/v2?id=393f05bf-e596-4ef6-9487-6d4fa0eab987&language=en-us&market=FR"
       },
       {
-        "count": 9,
+        "count": 7,
         "platform": "pc",
-        "sourceCount": 9,
+        "sourceCount": 7,
         "status": "ok",
         "url": "https://catalog.gamepass.com/sigls/v2?id=cc7fc951-d00f-410e-9e02-5e4628e04163&language=en-us&market=FR"
       }
     ],
     "sigls": [
       {
-        "count": 630,
+        "count": 624,
         "platform": "console",
-        "sourceCount": 630,
+        "sourceCount": 624,
         "status": "ok",
         "tier": "ultimate",
         "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0khs0"
       },
       {
-        "count": 601,
+        "count": 596,
         "platform": "pc",
-        "sourceCount": 601,
+        "sourceCount": 596,
         "status": "ok",
         "tier": "ultimate",
         "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0khs0"
       },
       {
-        "count": 442,
+        "count": 440,
         "platform": "console",
-        "sourceCount": 442,
+        "sourceCount": 440,
         "status": "ok",
         "tier": "premium",
         "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0p85b"
       },
       {
-        "count": 415,
+        "count": 414,
         "platform": "pc",
-        "sourceCount": 415,
+        "sourceCount": 414,
         "status": "ok",
         "tier": "premium",
         "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0p85b"
       },
       {
-        "count": 95,
+        "count": 93,
         "platform": "console",
-        "sourceCount": 95,
+        "sourceCount": 93,
         "status": "ok",
         "tier": "essential",
         "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0k5dj"
       },
       {
-        "count": 88,
+        "count": 86,
         "platform": "pc",
-        "sourceCount": 88,
+        "sourceCount": 86,
         "status": "ok",
         "tier": "essential",
         "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0k5dj"
@@ -107,6 +190,6 @@
     ]
   },
   "state": "success",
-  "total": 731,
+  "total": 724,
   "warnings": []
 }
