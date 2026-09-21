@@ -22,11 +22,11 @@ The site renders and counts game families first. A family with several PC, conso
 
 ## Recommendations
 
-The weekly catalog build generates deterministic, explainable recommendation candidates from title and description similarity, genres, publishers and developers, player modes, release era, tiers, and platforms. The public site combines those candidates with active filters and optional browser-local taste preferences.
+The weekly catalog build generates deterministic, explainable recommendation candidates from title and description similarity, genres, publishers and developers, player modes, release era, tiers, and platforms. The public site combines those candidates with optional browser-local taste preferences. Catalog search, filters, sorting, and view state do not affect recommendations; only feedback and controls under **Shape recommendations** change them.
 
 Every game card, table row, and recommendation card carries the same four markers: like, dislike, save for later, and already played. Games that have left the catalog accept saved and played markers only, since like and dislike feed catalog similarity lookups.
 
-Because a recommendation rail never repeats a game you already marked, marking played only from the rails would leave the rest of the catalog unreachable. **Log games you played** opens a quick-entry panel that searches every tracked game — including games hidden by the active filters and games that already left Game Pass — and marks each result without touching the catalog view. Typing a title and pressing Enter marks the first result as played and clears the box, so a back catalogue can be entered in one pass. A recent strip undoes the last markers.
+Because a recommendation rail never repeats a game you already marked, marking played only from the rails would leave the rest of the catalog unreachable. **Log games you played** opens a quick-entry panel that searches every tracked game — including games that already left Game Pass — and marks each result without touching the catalog view. Typing a title and pressing Enter marks the first result as played and clears the box, so a back catalogue can be entered in one pass. A recent strip undoes the last markers.
 
 Catabox does not upload recommendation interactions. Likes, saves, played markers, dismissals, preferred genres, platforms, tiers, player modes, and discovery style remain in `localStorage` on the current browser. The recommendation controls can reset the profile or export/import it as JSON.
 

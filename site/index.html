@@ -855,7 +855,7 @@
       scroll-snap-align: start;
     }
 
-    .recommendation-card-teaser .card-art {
+    .recommendation-card-teaser .card-media {
       aspect-ratio: 16 / 7;
     }
 
@@ -1462,6 +1462,7 @@
       background: color-mix(in srgb, var(--panel-2) 90%, var(--panel));
     }
 
+    .recommendation-card .card-media,
     .recommendation-card .card-art {
       aspect-ratio: 16 / 8.5;
     }
@@ -1636,9 +1637,76 @@
       opacity: 0.35;
     }
 
+    .card-media {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: #0d1520;
+    }
+
+    .card-media .card-art {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .card-media .empty {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
     .card-art {
       width: 100%;
       aspect-ratio: 16 / 9;
+    }
+
+    .card-leaving-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .card-leaving-ribbon {
+      position: absolute;
+      top: 32px;
+      right: -46px;
+      width: 180px;
+      transform: rotate(45deg);
+      background: linear-gradient(135deg, #ffd056 0%, #ff8f00 100%);
+      color: #0d1520;
+      text-align: center;
+      padding: 0.26rem 0;
+      font-size: 0.62rem;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      line-height: 1.25;
+      border-top: 1px solid rgb(255 255 255 / 45%);
+      border-bottom: 1px solid rgb(0 0 0 / 25%);
+      box-shadow: 0 4px 14px rgb(0 0 0 / 60%);
+      text-shadow: 0 1px 0 rgb(255 255 255 / 30%);
+      transition: filter 140ms ease;
+    }
+
+    .card:hover .card-leaving-ribbon,
+    .recommendation-card:hover .card-leaving-ribbon {
+      filter: brightness(1.08);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .card-leaving-ribbon {
+        transition: none !important;
+        transform: none !important;
+      }
     }
 
     .card-body {
@@ -1952,8 +2020,7 @@
         white-space: nowrap;
       }
 
-      .recommendation-card-teaser .card-art,
-      .recommendation-card-teaser > .empty {
+      .recommendation-card-teaser .card-media {
         height: 92px;
         aspect-ratio: auto;
       }
@@ -3284,10 +3351,6 @@
       return new Set(TASTE_GAME_ACTIONS.flatMap((field) => app.taste[field]));
     }
 
-    function recommendationMatchesFilters(game) {
-      return selectedValues('state').includes('current') && matchesFilters(game);
-    }
-
     function stableRecommendationUnit(game) {
       const input = `${app.current?.familyHash ?? ''}:${game.id}`;
       let hash = 2166136261;
@@ -3362,7 +3425,7 @@
       const known = knownTasteGames();
       return [...candidates.entries()]
         .map(([id, artifact]) => ({ game: currentFamilies().find((game) => game.id === id), artifact }))
-        .filter(({ game }) => game && !known.has(game.id) && recommendationMatchesFilters(game))
+        .filter(({ game }) => game && !known.has(game.id))
         .map(({ game, artifact }) => ({
           game,
           artifact,
@@ -3475,7 +3538,7 @@
       const known = knownTasteGames();
       const artifacts = artifactCandidates();
       return currentFamilies()
-        .filter((game) => !known.has(game.id) && recommendationMatchesFilters(game))
+        .filter((game) => !known.has(game.id))
         .map((game) => {
           const artifact = artifacts.get(game.id) ?? null;
           return {
@@ -3517,7 +3580,7 @@
         if (items.length > 0) {
           rails.push({
             title: `Because you ${anchor.verb} ${anchor.game.title}`,
-            description: 'Closest catalog matches, re-ranked around your current constraints.',
+            description: 'Closest catalog matches, re-ranked around your recommendation preferences.',
             items
           });
         }
@@ -3706,7 +3769,10 @@
         : `${game.genres?.slice(0, 2).join(' + ') || 'Catalog match'} · ${game.platforms.map((platform) => labelFor('platforms', platform)).join(' + ')}`;
       return `
         <article class="recommendation-card${compact ? ' recommendation-card-teaser' : ''}" data-preview-game="${escapeHtml(game.id)}">
-          ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
+          <div class="card-media">
+            ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
+            ${leavingSoonCardOverlay(game)}
+          </div>
           <div class="recommendation-card-body">
             <h4>${escapeHtml(game.title)}</h4>
             ${cardGenres(game)}
@@ -3723,15 +3789,15 @@
 
     function recommendationEmptyMessage() {
       const known = knownTasteGames();
-      if (known.size === 0) return 'No recommendation candidates match the active filters.';
-      const unmarked = currentFamilies().filter((game) => !known.has(game.id));
+      const current = currentFamilies();
+      const unmarked = current.filter((game) => !known.has(game.id));
+      if (current.length === 0) {
+        return 'No current games are available to recommend.';
+      }
       if (unmarked.length === 0) {
         return 'Every tracked game is already liked, disliked, saved, or marked played. Unmark a few in quick entry to get recommendations again.';
       }
-      if (!unmarked.some(recommendationMatchesFilters)) {
-        return `No unmarked game matches the active filters. ${known.size} game${known.size === 1 ? ' is' : 's are'} excluded because you already rated or played them.`;
-      }
-      return 'No recommendation candidates match the active filters.';
+      return 'No recommendation candidates are currently available.';
     }
 
     function recommendationRailHtml(rail, items = rail.items, { compact = false, dense = false } = {}) {
@@ -4525,6 +4591,18 @@
         : emptyText;
     }
 
+    function leavingSoonCardOverlay(game) {
+      const platforms = PLATFORMS.filter((platformId) => game.leavingSoonPlatforms?.includes(platformId));
+      if (platforms.length === 0) return '';
+      const platformLabel = platforms.map((platformId) => labelFor('platforms', platformId)).join(' + ');
+      const fullLabel = `Leaving soon · ${platformLabel}`;
+      return `
+        <div class="card-leaving-overlay" role="status" aria-label="${escapeHtml(fullLabel)}" title="${escapeHtml(fullLabel)}">
+          <div class="card-leaving-ribbon" aria-hidden="true">Leaving soon</div>
+        </div>
+      `;
+    }
+
     function cardImage(game) {
       return game.heroArt || game.poster || game.boxArt;
     }
@@ -5104,11 +5182,13 @@
       const image = cardImage(game);
       const modes = playerModeLabels(game);
       article.innerHTML = `
-        ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
+        <div class="card-media">
+          ${image ? lazyImageHtml(image, 'game-art card-art') : '<div class="empty" aria-hidden="true">No art</div>'}
+          ${leavingSoonCardOverlay(game)}
+        </div>
         <div class="card-body">
           <h3>${titleHtml(game)}</h3>
           ${cardGenres(game)}
-          ${leavingSoonBadge(game)}
           ${variantLinksHtml(game)}
           ${tasteActionRow(game)}
           <p>${escapeHtml(game.publisher || 'Unknown publisher')}</p>

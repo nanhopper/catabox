@@ -440,7 +440,25 @@ test('card genres render as accented chips above the publisher line', () => {
   assert.match(reportTemplate, /<td class="genre-col">\$\{genreChipList\(game\.genres \?\? \[\]\)\}<\/td>/);
 });
 
-test('recommendation UI keeps taste state local and explainable', () => {
+test('game card renders leaving soon overlay on the card media instead of in card body', () => {
+  const cardStart = reportTemplate.indexOf('function renderCard(game)');
+  const cardEnd = reportTemplate.indexOf('function renderTableRow(game)', cardStart);
+  assert(cardStart >= 0 && cardEnd > cardStart, 'renderCard should exist before renderTableRow');
+  const cardSource = reportTemplate.slice(cardStart, cardEnd);
+
+  assert.match(cardSource, /class="card-media"/);
+  assert.match(cardSource, /\$\{leavingSoonCardOverlay\(game\)\}/);
+  assert.doesNotMatch(cardSource, /<div class="card-body">[\s\S]*\$\{leavingSoonBadge\(game\)\}/);
+
+  assert.match(reportTemplate, /function leavingSoonCardOverlay\(game\)/);
+  assert.match(reportTemplate, /class="card-leaving-ribbon"/);
+  assert.doesNotMatch(reportTemplate, /class="card-leaving-macaron"/);
+  assert.doesNotMatch(reportTemplate, /class="card-leaving-flag"/);
+  assert.doesNotMatch(reportTemplate, /id="leavingStyleButton"/);
+  assert.doesNotMatch(reportTemplate, /id="toolbarLeavingStyle"/);
+});
+
+test('recommendation UI keeps taste state local and independent of catalog filters', () => {
   assert.match(reportTemplate, /id="recommendationsPanel"/);
   assert.match(reportTemplate, /id="recommendationTeaser"/);
   assert.match(reportTemplate, /id="recommendationsDrawer" class="recommendations-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="recommendationsDrawerTitle" aria-describedby="recommendationSummary" aria-hidden="true" tabindex="-1" inert/);
@@ -467,9 +485,21 @@ test('recommendation UI keeps taste state local and explainable', () => {
   assert.match(reportTemplate, /recommendationRailHtml\(rails\[0\], rails\[0\]\.items\.slice\(0, 4\), \{ compact: true \}\)/);
   assert.match(reportTemplate, /observeLazyImages\(\[recommendationTeaser, recommendationRails\]\)/);
   assert.match(reportTemplate, /class="recommendation-card\$\{compact \? ' recommendation-card-teaser' : ''\}" data-preview-game="\$\{escapeHtml\(game\.id\)\}"/);
+  assert.match(reportTemplate, /class="recommendation-card\$\{compact \? ' recommendation-card-teaser' : ''\}"[\s\S]*class="card-media"[\s\S]*\$\{leavingSoonCardOverlay\(game\)\}/);
   assert.match(reportTemplate, /<h4>\$\{escapeHtml\(game\.title\)\}<\/h4>\s+\$\{cardGenres\(game\)\}/);
+  assert.doesNotMatch(reportTemplate, /class="recommendation-card-body"[\s\S]*\$\{leavingSoonBadge\(game\)\}/);
   assert.match(reportTemplate, /for \(const container of \[recommendationTeaser, recommendationRails, cards, tableBody\]\)/);
-  assert.match(reportTemplate, /return selectedValues\('state'\)\.includes\('current'\) && matchesFilters\(game\)/);
+  assert.doesNotMatch(reportTemplate, /function recommendationMatchesFilters/);
+  const rankedStart = reportTemplate.indexOf('function rankedRecommendationCandidates()');
+  const rankedEnd = reportTemplate.indexOf('function latestTasteAnchor()', rankedStart);
+  assert(rankedStart >= 0 && rankedEnd > rankedStart, 'ranked recommendation candidates should exist');
+  const rankedSource = reportTemplate.slice(rankedStart, rankedEnd);
+  assert.doesNotMatch(rankedSource, /matchesFilters|selectedValues|allRowsForState/);
+  const anchorStart = reportTemplate.indexOf('function rankedAnchorCandidates(sourceId)');
+  const anchorEnd = reportTemplate.indexOf('function preferenceReasons(game, artifact = null)', anchorStart);
+  assert(anchorStart >= 0 && anchorEnd > anchorStart, 'anchor recommendation candidates should exist');
+  const anchorSource = reportTemplate.slice(anchorStart, anchorEnd);
+  assert.doesNotMatch(anchorSource, /matchesFilters|selectedValues|allRowsForState/);
   assert.match(reportTemplate, /function rankedAnchorCandidates\(sourceId\)/);
   assert.match(reportTemplate, /function restoreRecommendationFocus\(action, preferredGameIds, container = recommendationRails\)/);
   assert.match(reportTemplate, /function openRecommendationsDrawer\(/);
@@ -498,7 +528,7 @@ test('recommendation UI keeps taste state local and explainable', () => {
   assert.match(reportTemplate, /aria-label="Close recommendations"/);
   assert.match(reportTemplate, /transform: translateY\(100%\)/);
   assert.match(reportTemplate, /\.recommendation-teaser \{\s+max-height: 300px/);
-  assert.match(reportTemplate, /\.recommendation-card-teaser \.card-art,\s+\.recommendation-card-teaser > \.empty \{\s+height: 92px/);
+  assert.match(reportTemplate, /\.recommendation-card-teaser \.card-media \{\s+height: 92px/);
   assert.match(reportTemplate, /data-taste-action=/);
   assert.match(reportTemplate, /visible: '👍'/);
   assert.match(reportTemplate, /visible: '👎'/);
@@ -506,8 +536,8 @@ test('recommendation UI keeps taste state local and explainable', () => {
   assert.match(reportTemplate, /visible: '✓ Played it'/);
   assert.match(reportTemplate, /aria-label="\$\{escapeHtml\(`\$\{label\}: \$\{game\.title\}`\)\}"/);
   assert.match(reportTemplate, /Similar themes and description/);
-  assert.match(reportTemplate, /No recommendation candidates match the active filters/);
   assert.match(reportTemplate, /function recommendationEmptyMessage\(\)/);
+  assert.match(reportTemplate, /No current games are available to recommend/);
   assert.match(reportTemplate, /Every tracked game is already liked, disliked, saved, or marked played/);
 });
 
