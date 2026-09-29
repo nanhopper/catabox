@@ -1726,6 +1726,62 @@
       font-size: 0.9rem;
     }
 
+    .similar-games-slot:empty {
+      display: none;
+    }
+
+    .similar-games {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--line);
+    }
+
+    .similar-games-label {
+      flex: 1;
+      min-width: 0;
+      color: var(--muted);
+      font-size: 0.72rem;
+    }
+
+    .similar-games ul {
+      display: flex;
+      gap: 0.3rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .similar-game-link {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 52px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 0.35rem;
+      background: var(--panel-2);
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-decoration: none;
+    }
+
+    .similar-game-link:hover,
+    .similar-game-link:focus-visible {
+      outline: 2px solid var(--accent-2);
+      outline-offset: 2px;
+    }
+
+    .similar-game-art {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
     .variant-links,
     .xbox-link {
       font-size: 0.84rem;
@@ -2994,6 +3050,10 @@
       app.recommendationError = artifactIssue;
       app.recommendationsLoading = false;
       renderRecommendations();
+      for (const slot of cards.querySelectorAll('[data-similar-game]')) {
+        slot.innerHTML = similarGamesHtml({ id: slot.dataset.similarGame });
+      }
+      if (app.view === 'cards') observeLazyImages([cards]);
     }
 
     function emptyTasteProfile() {
@@ -3761,6 +3821,36 @@
       return `${location.pathname}?${params.toString()}`;
     }
 
+    function similarGamesHtml(game) {
+      const families = currentFamilies();
+      const source = families.find((family) => family.id === game.id);
+      const candidates = app.recommendations?.items?.[game.id]?.similar ?? [];
+      if (!source || candidates.length === 0) return '';
+      const seen = new Set([game.id]);
+      const games = candidates.flatMap(({ id }) => {
+        const candidate = families.find((family) => family.id === id);
+        if (!candidate || seen.has(id)) return [];
+        seen.add(id);
+        return [candidate];
+      }).slice(0, 3);
+      if (games.length === 0) return '';
+      return `
+        <div class="similar-games">
+          <span class="similar-games-label">Similar games</span>
+          <ul aria-label="${escapeHtml(`Games similar to ${source.title}`)}">
+            ${games.map((similar) => `
+              <li>
+                <a class="similar-game-link" href="${escapeHtml(catalogSearchUrl(similar))}" data-preview-game="${escapeHtml(similar.id)}" aria-label="${escapeHtml(`${similar.title} — show in catalog`)}" title="${escapeHtml(similar.title)}">
+                  <span aria-hidden="true">${escapeHtml(similar.title.slice(0, 2).toUpperCase())}</span>
+                  ${lazyImageHtml(thumbnailImage(similar), 'game-art similar-game-art', { width: 44, height: 52 })}
+                </a>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+    }
+
     function renderRecommendationCard(item, { compact = false, dense = false } = {}) {
       const game = item.game;
       const image = cardImage(game);
@@ -3782,6 +3872,7 @@
               <a href="${escapeHtml(game.url)}">Open on Xbox</a>
             </div>
             ${compact ? '' : tasteActionRow(game, { compact: dense })}
+            ${similarGamesHtml(game)}
           </div>
         </article>
       `;
@@ -5197,6 +5288,7 @@
           ${chipList([releaseLabel(game), pegiLabel(game), frAvailabilityLabel(game)])}
           ${modes.length ? chipList(modes.slice(0, 4)) : ''}
           ${badgeList(game)}
+          <div class="similar-games-slot" data-similar-game="${escapeHtml(game.id)}">${similarGamesHtml(game)}</div>
         </div>
       `;
       return article;
@@ -5541,7 +5633,7 @@
       for (const container of [recommendationTeaser, recommendationRails, cards, tableBody]) {
         container.addEventListener('mouseover', (event) => {
           const target = closestFromEvent(event, '[data-preview-game]');
-          if (!target || (event.relatedTarget instanceof Node && target.contains(event.relatedTarget))) return;
+          if (!target || (event.relatedTarget instanceof Element && event.relatedTarget.closest('[data-preview-game]') === target)) return;
           const game = gameFromPreviewTarget(target);
           if (!game) return;
           showGamePreview(game, event.clientX, event.clientY);
@@ -5552,7 +5644,7 @@
         });
         container.addEventListener('mouseout', (event) => {
           const target = closestFromEvent(event, '[data-preview-game]');
-          if (!target || (event.relatedTarget instanceof Node && target.contains(event.relatedTarget))) return;
+          if (!target || (event.relatedTarget instanceof Element && event.relatedTarget.closest('[data-preview-game]') === target)) return;
           hideGamePreview();
         });
         container.addEventListener('focusin', (event) => {
