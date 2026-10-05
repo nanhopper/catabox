@@ -1,105 +1,209 @@
 {
-  "actionRunNumber": "15",
-  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/36417345981",
+  "actionRunNumber": "16",
+  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/37308667240",
   "baseline": false,
-  "catalogGeneratedAt": "2026-09-28T11:43:38.760Z",
-  "catalogHash": "4afa67d59b920d1b2e2901406c462f8a4cfb78195fc4f6706c5fc8ee314aac20",
+  "catalogGeneratedAt": "2026-10-05T12:19:04.251Z",
+  "catalogHash": "bdf0ba734c4de6711a4b801a297ec17da2d3491282fd0ab4a43d853d1656a548",
   "changed": true,
   "errors": [],
   "eventCounts": {
-    "added": 3,
-    "platform_added": 4,
-    "tier_added": 3
+    "added": 1,
+    "platform_added": 3,
+    "removed": 9,
+    "tier_added": 1
   },
   "familyChanged": true,
   "familyEventCounts": {
-    "added": 3,
-    "platform_added": 4,
-    "tier_added": 3
+    "added": 1,
+    "platform_added": 3,
+    "removed": 9,
+    "tier_added": 1
   },
-  "familyHash": "0383d1ec28a939766c5474a4b609cb3865314d68a99ed5c6469c5d6edbfdfc38",
-  "generatedAt": "2026-09-28T11:43:38.760Z",
+  "familyHash": "f2080a24eba85eaaf0d9409c0f087f1bf0c3dd3b2e269d52fe6ffd184e7c6771",
+  "generatedAt": "2026-10-05T12:19:04.251Z",
   "language": "en-us",
-  "lastGoodCatalogHash": "bfa4e68e5038fcda2ef3b5be54dc5defbfd386a5487658408d8ce950d1c74454",
-  "lastGoodGeneratedAt": "2026-09-21T10:46:59.376Z",
-  "leavingSoonAdded": [],
-  "leavingSoonTotal": 7,
+  "lastGoodCatalogHash": "4afa67d59b920d1b2e2901406c462f8a4cfb78195fc4f6706c5fc8ee314aac20",
+  "lastGoodGeneratedAt": "2026-09-28T11:43:38.760Z",
+  "leavingSoonAdded": [
+    {
+      "familyId": "family-3b665800ef3ba3e57d31aa5c083f91fadc19acd9b13db58eb509f862e1fc2d6a",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "The Casting of Frank Stone™",
+      "variantIds": [
+        "9PG0PMB5Q0GT"
+      ]
+    },
+    {
+      "familyId": "family-2d437ed9d6a1845950659a62768dd7cd347f8ebaf9e1142aac342d23e8d53930",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Clair Obscur: Expedition 33",
+      "variantIds": [
+        "9PPT8K6GQHRZ"
+      ]
+    },
+    {
+      "familyId": "family-2e8ebaff6a572ef011c7a3e0bda9e41e50a2b6cdc909c1b50707de000419f90c",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Crime Scene Cleaner",
+      "variantIds": [
+        "9NGZ1M3N98P2"
+      ]
+    },
+    {
+      "familyId": "family-7ceca7c280fb1bca5c713730b551ef9eb4692fc4eb83dd08b1aea8ff38774f0b",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Donut County",
+      "variantIds": [
+        "9N6V2181GHLM"
+      ]
+    },
+    {
+      "familyId": "family-30ba3993e74374794364f0ea969ad6b09004bbf849934370dd76f492399a96d8",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Evil West",
+      "variantIds": [
+        "9MW581HCJPM6",
+        "9PC49MD70881"
+      ]
+    },
+    {
+      "familyId": "family-d615ab208a9a8ac70d36614e78657de90ae3bf1ba2223c9067b47d43e9fb30d1",
+      "platforms": [
+        "pc"
+      ],
+      "title": "Nova Roma (Game Preview)",
+      "variantIds": [
+        "9NBNFBQ546DT"
+      ]
+    },
+    {
+      "familyId": "family-0525549d46e1af8cd5fea51e392fbda28f9a0aea6b0df750b6bc1fe706a7516e",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Pacific Drive",
+      "variantIds": [
+        "9PNKG0WBL61W"
+      ]
+    },
+    {
+      "familyId": "family-4215ca31702564480be17fcf5542fba97a245edf3ce3a5df04380bb8f28163ed",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "A Plague Tale: Requiem",
+      "variantIds": [
+        "9ND0JVB184XL",
+        "9N97RC576957"
+      ]
+    },
+    {
+      "familyId": "family-3ca3ec9ac5fb1782050ea8f8ad87195ebae750f5559e53a70e4e297e3239359f",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Superball",
+      "variantIds": [
+        "9N4M72L6KGC8"
+      ]
+    }
+  ],
+  "leavingSoonTotal": 9,
   "market": "FR",
   "productChanged": true,
   "productEventCounts": {
-    "added": 3,
-    "platform_added": 4,
-    "tier_added": 3
+    "added": 1,
+    "platform_added": 2,
+    "removed": 10,
+    "tier_added": 1
   },
-  "productTotal": 903,
+  "productTotal": 894,
   "sourceHealth": {
     "displayCatalog": {
       "missingProductIds": [],
-      "requested": 903,
-      "returned": 903,
+      "requested": 894,
+      "returned": 894,
       "status": "ok"
     },
     "leavingSoon": [
       {
-        "count": 7,
+        "count": 8,
         "platform": "console",
-        "sourceCount": 7,
+        "sourceCount": 8,
         "status": "ok",
         "url": "https://catalog.gamepass.com/sigls/v2?id=393f05bf-e596-4ef6-9487-6d4fa0eab987&language=en-us&market=FR"
       },
       {
-        "count": 7,
+        "count": 9,
         "platform": "pc",
-        "sourceCount": 7,
+        "sourceCount": 9,
         "status": "ok",
         "url": "https://catalog.gamepass.com/sigls/v2?id=cc7fc951-d00f-410e-9e02-5e4628e04163&language=en-us&market=FR"
       }
     ],
     "sigls": [
       {
-        "count": 627,
+        "count": 620,
         "platform": "console",
-        "sourceCount": 627,
+        "sourceCount": 620,
         "status": "ok",
         "tier": "ultimate",
         "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0khs0"
       },
       {
-        "count": 599,
+        "count": 592,
         "platform": "pc",
-        "sourceCount": 599,
+        "sourceCount": 592,
         "status": "ok",
         "tier": "ultimate",
         "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0khs0"
       },
       {
-        "count": 443,
+        "count": 436,
         "platform": "console",
-        "sourceCount": 443,
+        "sourceCount": 436,
         "status": "ok",
         "tier": "premium",
         "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0p85b"
       },
       {
-        "count": 417,
+        "count": 410,
         "platform": "pc",
-        "sourceCount": 417,
+        "sourceCount": 410,
         "status": "ok",
         "tier": "premium",
         "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0p85b"
       },
       {
-        "count": 94,
+        "count": 93,
         "platform": "console",
-        "sourceCount": 94,
+        "sourceCount": 93,
         "status": "ok",
         "tier": "essential",
         "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0k5dj"
       },
       {
-        "count": 87,
+        "count": 86,
         "platform": "pc",
-        "sourceCount": 87,
+        "sourceCount": 86,
         "status": "ok",
         "tier": "essential",
         "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0k5dj"
@@ -107,6 +211,6 @@
     ]
   },
   "state": "success",
-  "total": 727,
+  "total": 719,
   "warnings": []
 }
