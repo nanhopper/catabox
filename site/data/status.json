@@ -1,36 +1,130 @@
 {
-  "actionRunNumber": "17",
-  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/38254064947",
+  "actionRunNumber": "18",
+  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/39240126135",
   "baseline": false,
-  "catalogGeneratedAt": "2026-10-12T13:13:02.669Z",
-  "catalogHash": "2f0ab47617fc3f358484ac5952fc6386ea91772adce7d58df0e3f5eb32c0a6b5",
+  "catalogGeneratedAt": "2026-10-19T10:49:03.677Z",
+  "catalogHash": "2e5531e5bc2a3c199dd2faef87ecc13fac3a621325ea4a6cef72b00e701d310d",
   "changed": true,
   "errors": [],
   "eventCounts": {
-    "added": 4
+    "added": 6,
+    "platform_removed": 2,
+    "removed": 9
   },
   "familyChanged": true,
   "familyEventCounts": {
-    "added": 4
+    "added": 6,
+    "platform_removed": 2,
+    "removed": 9
   },
-  "familyHash": "85916127776a9918ea20251cf32320e840fda61158a144c8141e6ed8a9bfcd83",
-  "generatedAt": "2026-10-12T13:13:02.669Z",
+  "familyHash": "e2b01f161c21214434ac8b9b08458e85f06f308d895cf6da64e924ed951755be",
+  "generatedAt": "2026-10-19T10:49:03.677Z",
   "language": "en-us",
-  "lastGoodCatalogHash": "bdf0ba734c4de6711a4b801a297ec17da2d3491282fd0ab4a43d853d1656a548",
-  "lastGoodGeneratedAt": "2026-10-05T12:19:04.251Z",
-  "leavingSoonAdded": [],
-  "leavingSoonTotal": 9,
+  "lastGoodCatalogHash": "2f0ab47617fc3f358484ac5952fc6386ea91772adce7d58df0e3f5eb32c0a6b5",
+  "lastGoodGeneratedAt": "2026-10-12T13:13:02.669Z",
+  "leavingSoonAdded": [
+    {
+      "familyId": "family-7b44d83f2e9679bc42148f1793daa80ed833d9c1691730f3e7f040f2c9e7cdc0",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Day of the Tentacle Remastered",
+      "variantIds": [
+        "9NKK6CX54183"
+      ]
+    },
+    {
+      "familyId": "family-26a297f91ac8e7ab144a50cda95b9c4096ccc8f29b3a92950e3f481e205c96c7",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Dead Static Drive",
+      "variantIds": [
+        "9MXWL7VJ2SJW"
+      ]
+    },
+    {
+      "familyId": "family-c749f6190b9f5088d4d625bafc5f167fc90341f0b822ce6714e57dfd5c292bdc",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Deep Rock Galactic",
+      "variantIds": [
+        "9NHFVWX1V7QJ"
+      ]
+    },
+    {
+      "familyId": "family-87933be9f450d3ea038b533b112397d3b1b4cefe2057a9a3ad26529feb07683e",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Full Throttle Remastered",
+      "variantIds": [
+        "9P3ZRGNQVC7D"
+      ]
+    },
+    {
+      "familyId": "family-5976e1fb2d9ca118d19203049d36f191fa1ce430fe8fe4d2319a744df8c0c591",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Lara Croft and the Temple of Osiris",
+      "variantIds": [
+        "C3553MB4P5TT"
+      ]
+    },
+    {
+      "familyId": "family-7063ca8983f6694787d521d824b91d30629d0752a606e6c7e7b798d2826c0729",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "LEGO® Star Wars™: The Skywalker Saga",
+      "variantIds": [
+        "BRMKDCZT0C4L"
+      ]
+    },
+    {
+      "familyId": "family-eb4679648a05eae737c22973e7ce20f11239e3e66bea0e700777aa8a95b7f76f",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Wartales",
+      "variantIds": [
+        "9NWQ686JB33G"
+      ]
+    },
+    {
+      "familyId": "family-ced0f9c22c1495215032cd8326512f2d5620a3418dc489ac70db4241f051e38f",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Wildgate",
+      "variantIds": [
+        "9N6VS1BMZ3BW"
+      ]
+    }
+  ],
+  "leavingSoonTotal": 8,
   "market": "FR",
   "productChanged": true,
   "productEventCounts": {
-    "added": 4
+    "added": 7,
+    "removed": 13
   },
-  "productTotal": 898,
+  "productTotal": 892,
   "sourceHealth": {
     "displayCatalog": {
       "missingProductIds": [],
-      "requested": 898,
-      "returned": 898,
+      "requested": 892,
+      "returned": 892,
       "status": "ok"
     },
     "leavingSoon": [
@@ -42,58 +136,58 @@
         "url": "https://catalog.gamepass.com/sigls/v2?id=393f05bf-e596-4ef6-9487-6d4fa0eab987&language=en-us&market=FR"
       },
       {
-        "count": 9,
+        "count": 8,
         "platform": "pc",
-        "sourceCount": 9,
+        "sourceCount": 8,
         "status": "ok",
         "url": "https://catalog.gamepass.com/sigls/v2?id=cc7fc951-d00f-410e-9e02-5e4628e04163&language=en-us&market=FR"
       }
     ],
     "sigls": [
       {
-        "count": 624,
+        "count": 621,
         "platform": "console",
-        "sourceCount": 624,
+        "sourceCount": 621,
         "status": "ok",
         "tier": "ultimate",
         "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0khs0"
       },
       {
-        "count": 596,
+        "count": 591,
         "platform": "pc",
-        "sourceCount": 596,
+        "sourceCount": 591,
         "status": "ok",
         "tier": "ultimate",
         "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0khs0"
       },
       {
-        "count": 437,
+        "count": 429,
         "platform": "console",
-        "sourceCount": 437,
+        "sourceCount": 429,
         "status": "ok",
         "tier": "premium",
         "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0p85b"
       },
       {
-        "count": 411,
+        "count": 403,
         "platform": "pc",
-        "sourceCount": 411,
+        "sourceCount": 403,
         "status": "ok",
         "tier": "premium",
         "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0p85b"
       },
       {
-        "count": 93,
+        "count": 92,
         "platform": "console",
-        "sourceCount": 93,
+        "sourceCount": 92,
         "status": "ok",
         "tier": "essential",
         "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0k5dj"
       },
       {
-        "count": 86,
+        "count": 85,
         "platform": "pc",
-        "sourceCount": 86,
+        "sourceCount": 85,
         "status": "ok",
         "tier": "essential",
         "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0k5dj"
@@ -101,6 +195,6 @@
     ]
   },
   "state": "success",
-  "total": 723,
+  "total": 720,
   "warnings": []
 }
