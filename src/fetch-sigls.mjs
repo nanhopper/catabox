@@ -1,8 +1,7 @@
 import {
   DEFAULT_LANGUAGE,
   DEFAULT_MARKET,
-  PLATFORM_IDS,
-  TIER_IDS,
+  TIER_SOURCE_PAIRS,
   USER_AGENT,
   applyProductSwap,
   buildSiglsUrl,
@@ -97,13 +96,11 @@ export async function fetchAllSigls({
   generatedAt = new Date().toISOString(),
   fetchImpl
 } = {}) {
-  const jobs = [];
-  for (const tierId of TIER_IDS) {
-    for (const platformId of PLATFORM_IDS) {
-      jobs.push(fetchSiglsList({ tierId, platformId, market, language, generatedAt, fetchImpl }));
-    }
-  }
-  return Promise.all(jobs);
+  return Promise.all(
+    TIER_SOURCE_PAIRS.map(({ tierId, platformId }) =>
+      fetchSiglsList({ tierId, platformId, market, language, generatedAt, fetchImpl })
+    )
+  );
 }
 
 function parseCliArgs(argv) {

@@ -2,8 +2,10 @@ import { readFile } from 'node:fs/promises';
 import {
   DEFAULT_LANGUAGE,
   DEFAULT_MARKET,
+  DIFF_DEFS,
   DIFF_LABELS,
   MAX_GAME_SCREENSHOTS,
+  OVERLAP_DEFS,
   PLATFORM_IDS,
   PLATFORM_LABELS,
   PRODUCT_SWAP_MAP,
@@ -19,6 +21,7 @@ import {
   normalizeWhitespace,
   sortTitle,
   stableStringify,
+  tierSupportsPlatform,
   toIsoDate,
   uniqueSorted,
   writeJsonFile
@@ -361,14 +364,12 @@ function emptySegments() {
 }
 
 function computeDiffs(tierSets) {
-  return {
-    premiumNotUltimate: differenceSorted([...tierSets.premium], tierSets.ultimate),
-    premiumNotEssential: differenceSorted([...tierSets.premium], tierSets.essential),
-    ultimateNotPremium: differenceSorted([...tierSets.ultimate], tierSets.premium),
-    essentialNotPremium: differenceSorted([...tierSets.essential], tierSets.premium),
-    essentialNotUltimate: differenceSorted([...tierSets.essential], tierSets.ultimate),
-    ultimateNotEssential: differenceSorted([...tierSets.ultimate], tierSets.essential)
-  };
+  return Object.fromEntries(
+    DIFF_DEFS.map(({ id, includedTierId, excludedTierId }) => [
+      id,
+      differenceSorted([...tierSets[includedTierId]], tierSets[excludedTierId])
+    ])
+  );
 }
 
 function normalizeSourceLists(sigls) {
@@ -429,6 +430,9 @@ export function normalizeCatalog({
     }
     if (!PLATFORM_IDS.includes(list.platform)) {
       throw new Error(`Unknown platform in SIGLS list: ${list.platform}`);
+    }
+    if (!tierSupportsPlatform(list.tier, list.platform)) {
+      throw new Error(`Unsupported SIGLS source in normalization: ${list.tier}/${list.platform}`);
     }
     rawLists[list.tier][list.platform] = uniqueSorted(list.productIds ?? []);
   }
@@ -521,6 +525,8 @@ export function normalizeCatalog({
     metadata: {
       generatedBy: 'catabox',
       source: 'Xbox Game Pass public SIGLS plus Microsoft DisplayCatalog metadata',
+      tierOrder: [...TIER_IDS],
+      platformOrder: [...PLATFORM_IDS],
       productSwapMap: PRODUCT_SWAP_MAP,
       productSource,
       missingProductIds,
@@ -531,11 +537,12 @@ export function normalizeCatalog({
         familyCount: families.length,
         collapsedProductCount: games.length - families.length
       },
-      overlap: {
-        ultimatePremium: intersectionSorted(rawLists.ultimate.all, rawLists.premium.all),
-        ultimateEssential: intersectionSorted(rawLists.ultimate.all, rawLists.essential.all),
-        premiumEssential: intersectionSorted(rawLists.premium.all, rawLists.essential.all)
-      }
+      overlap: Object.fromEntries(
+        OVERLAP_DEFS.map(({ id, leftTierId, rightTierId }) => [
+          id,
+          intersectionSorted(rawLists[leftTierId].all, rawLists[rightTierId].all)
+        ])
+      )
     }
   };
 }

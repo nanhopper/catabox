@@ -1,5 +1,5 @@
 import { readFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import {
   GENERATED_PATHS,
   isMainModule,
@@ -17,7 +17,8 @@ import { validateCatalog } from './validate-data.mjs';
 export async function migrateFamilies({
   currentPath = GENERATED_PATHS.current,
   historyPath = GENERATED_PATHS.history,
-  statusPath = GENERATED_PATHS.status
+  statusPath = GENERATED_PATHS.status,
+  renderSiteImpl = renderSite
 } = {}) {
   const current = JSON.parse(await readFile(currentPath, 'utf8'));
   const previousHistory = await readJsonIfExists(historyPath);
@@ -53,16 +54,24 @@ export async function migrateFamilies({
   status.productTotal = current.counts.total;
   status.changed = latestObservation?.changed ?? false;
   status.baseline = latestObservation?.baseline ?? false;
+  status.migration = historyResult.migration;
   status.eventCounts = latestObservation?.familyEventCounts ?? {};
   status.familyEventCounts = latestObservation?.familyEventCounts ?? {};
   status.productEventCounts = latestObservation?.productEventCounts ?? {};
   status.familyChanged = latestObservation?.familyChanged ?? false;
   status.productChanged = latestObservation?.productChanged ?? false;
 
+  if (historyResult.snapshot) {
+    const snapshotEntry = historyResult.history.snapshots.at(-1);
+    if (!snapshotEntry?.path) {
+      throw new Error('Family migration produced a snapshot without a history path');
+    }
+    await writeJsonFile(join(dirname(historyPath), snapshotEntry.path), historyResult.snapshot);
+  }
   await writeJsonFile(currentPath, current);
   await writeJsonFile(historyPath, historyResult.history);
   await writeJsonFile(statusPath, status);
-  await renderSite();
+  await renderSiteImpl();
   return { current, history: historyResult.history, status };
 }
 

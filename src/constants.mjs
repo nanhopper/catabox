@@ -11,25 +11,40 @@ export const SIGLS_ENDPOINT = 'https://catalog.gamepass.com/sigls/v3';
 export const DISPLAY_CATALOG_ENDPOINT = 'https://displaycatalog.mp.microsoft.com/v7.0/products';
 export const DISPLAY_CATALOG_MS_CV = 'DGU1mcuYo0WMMp+F.1';
 export const MAX_GAME_SCREENSHOTS = 8;
+export const HISTORY_SCHEMA_VERSION = 2;
 
 export const TIERS = [
   {
     id: 'ultimate',
     label: 'Ultimate',
     siglId: '97c6c862-d28a-4907-a3d5-c401f2296a53',
-    subscriptionContext: 'cfq7ttc0khs0'
+    subscriptionContext: 'cfq7ttc0khs0',
+    platformIds: ['console', 'pc'],
+    expectedSubsetOf: []
   },
   {
     id: 'premium',
     label: 'Premium',
     siglId: '09a72c0d-c466-426a-9580-b78955d8173a',
-    subscriptionContext: 'cfq7ttc0p85b'
+    subscriptionContext: 'cfq7ttc0p85b',
+    platformIds: ['console', 'pc'],
+    expectedSubsetOf: ['ultimate']
   },
   {
     id: 'essential',
     label: 'Essential',
     siglId: '34031711-5a70-4196-bab7-45757dc2294e',
-    subscriptionContext: 'cfq7ttc0k5dj'
+    subscriptionContext: 'cfq7ttc0k5dj',
+    platformIds: ['console', 'pc'],
+    expectedSubsetOf: ['premium', 'ultimate']
+  },
+  {
+    id: 'pcGamePass',
+    label: 'PC Game Pass',
+    siglId: '609d944c-d395-4c0a-9ea4-e9f39b52c1ad',
+    subscriptionContext: 'cfq7ttc0kgq8',
+    platformIds: ['pc'],
+    expectedSubsetOf: ['ultimate']
   }
 ];
 
@@ -51,31 +66,94 @@ export const PLATFORM_IDS = PLATFORMS.map((platform) => platform.id);
 
 export const TIER_LABELS = Object.fromEntries(TIERS.map((tier) => [tier.id, tier.label]));
 export const PLATFORM_LABELS = Object.fromEntries(PLATFORMS.map((platform) => [platform.id, platform.label]));
+export const TIER_SOURCE_PAIRS = TIERS.flatMap((tier) =>
+  tier.platformIds.map((platformId) => ({ tierId: tier.id, platformId }))
+);
 
 export const PRODUCT_SWAP_MAP = {
   '9PNQKHFLD2WQ': '9PNJXVCVWD4K'
 };
 
-export const SEGMENT_LABELS = {
-  ultimateOnly: 'Ultimate only',
-  premiumOnly: 'Premium only',
-  essentialOnly: 'Essential only',
-  ultimatePremium: 'Ultimate + Premium',
-  ultimateEssential: 'Ultimate + Essential',
-  premiumEssential: 'Premium + Essential',
-  allTiers: 'All tiers'
-};
+function capitalizeId(value) {
+  return `${value[0].toUpperCase()}${value.slice(1)}`;
+}
 
-export const SEGMENT_IDS = Object.keys(SEGMENT_LABELS);
+function combinedTierId(tierIds) {
+  return tierIds.map((tierId, index) => index === 0 ? tierId : capitalizeId(tierId)).join('');
+}
 
-export const DIFF_LABELS = {
-  premiumNotUltimate: 'Premium not Ultimate',
-  premiumNotEssential: 'Premium not Essential',
-  ultimateNotPremium: 'Ultimate not Premium',
-  essentialNotPremium: 'Essential not Premium',
-  essentialNotUltimate: 'Essential not Ultimate',
-  ultimateNotEssential: 'Ultimate not Essential'
-};
+export function orderedTierIds(tierIds) {
+  const requested = new Set(tierIds);
+  return TIER_IDS.filter((tierId) => requested.has(tierId));
+}
+
+export function segmentIdForTiers(tierIds) {
+  const ordered = orderedTierIds(tierIds);
+  if (ordered.length === 0) {
+    throw new Error('Cannot create a segment for an empty tier membership');
+  }
+  if (ordered.length === TIER_IDS.length) {
+    return 'allTiers';
+  }
+  if (ordered.length === 1) {
+    return `${ordered[0]}Only`;
+  }
+  return combinedTierId(ordered);
+}
+
+function tierCombinations() {
+  const combinations = [];
+  for (let mask = 1; mask < 2 ** TIER_IDS.length; mask += 1) {
+    combinations.push(TIER_IDS.filter((_, index) => (mask & (1 << index)) !== 0));
+  }
+  return combinations.sort((left, right) => left.length - right.length);
+}
+
+export const SEGMENT_DEFS = tierCombinations().map((tierIds) => ({
+  id: segmentIdForTiers(tierIds),
+  tierIds,
+  label: tierIds.length === TIER_IDS.length
+    ? 'All tiers'
+    : tierIds.length === 1
+      ? `${TIER_LABELS[tierIds[0]]} only`
+      : tierIds.map((tierId) => TIER_LABELS[tierId]).join(' + ')
+}));
+
+export const SEGMENT_IDS = SEGMENT_DEFS.map((segment) => segment.id);
+export const SEGMENT_LABELS = Object.fromEntries(SEGMENT_DEFS.map((segment) => [segment.id, segment.label]));
+
+export function diffIdForTiers(includedTierId, excludedTierId) {
+  return `${includedTierId}Not${capitalizeId(excludedTierId)}`;
+}
+
+export const DIFF_DEFS = TIER_IDS.flatMap((includedTierId) =>
+  TIER_IDS
+    .filter((excludedTierId) => excludedTierId !== includedTierId)
+    .map((excludedTierId) => ({
+      id: diffIdForTiers(includedTierId, excludedTierId),
+      includedTierId,
+      excludedTierId,
+      label: `${TIER_LABELS[includedTierId]} not ${TIER_LABELS[excludedTierId]}`
+    }))
+);
+
+export const DIFF_LABELS = Object.fromEntries(DIFF_DEFS.map((diff) => [diff.id, diff.label]));
+
+export const OVERLAP_DEFS = TIER_IDS.flatMap((leftTierId, index) =>
+  TIER_IDS.slice(index + 1).map((rightTierId) => ({
+    id: combinedTierId([leftTierId, rightTierId]),
+    leftTierId,
+    rightTierId
+  }))
+);
+
+export const EXPECTED_SUBSET_DEFS = TIERS.flatMap((tier) =>
+  tier.expectedSubsetOf.map((supersetTierId) => ({
+    subsetTierId: tier.id,
+    supersetTierId,
+    diffId: diffIdForTiers(tier.id, supersetTierId)
+  }))
+);
 
 export const GENERATED_PATHS = {
   siteDir: 'site',
@@ -106,6 +184,10 @@ export function getPlatform(platformId) {
   return platform;
 }
 
+export function tierSupportsPlatform(tierId, platformId) {
+  return getTier(tierId).platformIds.includes(platformId);
+}
+
 export function buildSiglsUrl({
   tierId,
   platformId,
@@ -114,6 +196,9 @@ export function buildSiglsUrl({
 }) {
   const tier = getTier(tierId);
   const platform = getPlatform(platformId);
+  if (!tier.platformIds.includes(platform.id)) {
+    throw new Error(`Unsupported SIGLS source: ${tier.id}/${platform.id}`);
+  }
   const params = new URLSearchParams({
     id: tier.siglId,
     language,

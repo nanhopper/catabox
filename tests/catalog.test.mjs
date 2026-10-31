@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { test } from 'node:test';
 import { buildCatalogSummary } from '../src/catalog-summary.mjs';
-import { MAX_GAME_SCREENSHOTS } from '../src/constants.mjs';
-import { parseSiglsResponse } from '../src/fetch-sigls.mjs';
+import { MAX_GAME_SCREENSHOTS, TIER_SOURCE_PAIRS, buildSiglsUrl } from '../src/constants.mjs';
+import { fetchAllSigls, parseSiglsResponse } from '../src/fetch-sigls.mjs';
 import {
   GAME_FAMILY_SCHEMA_VERSION,
   buildFamilyCatalog,
@@ -11,6 +13,7 @@ import {
   gameFamilyKey,
   stripPlatformQualifier
 } from '../src/game-families.mjs';
+import { migrateFamilies } from '../src/migrate-families.mjs';
 import { normalizeCatalog } from '../src/normalize-catalog.mjs';
 import {
   backfillFamilyHistory,
@@ -46,8 +49,14 @@ function list(tier, platform, productIds) {
 }
 
 function currentFromLists(lists, generatedAt, productMap = products) {
+  const completeLists = [...lists];
+  for (const { tierId, platformId } of TIER_SOURCE_PAIRS) {
+    if (!completeLists.some((item) => item.tier === tierId && item.platform === platformId)) {
+      completeLists.push(list(tierId, platformId, []));
+    }
+  }
   return normalizeCatalog({
-    sigls: lists,
+    sigls: completeLists,
     products: productMap,
     productSource: { endpoint: 'fixture' },
     generatedAt,
@@ -80,6 +89,14 @@ function catalogWithProducts(entries, memberships, generatedAt) {
   ], generatedAt, productMap);
 }
 
+function withoutTierTracking(history) {
+  const legacyHistory = structuredClone(history);
+  delete legacyHistory.schemaVersion;
+  delete legacyHistory.trackedTiers;
+  delete legacyHistory.tierBaselines;
+  return legacyHistory;
+}
+
 test('SIGLS parsing applies known product swaps', () => {
   const parsed = parseSiglsResponse([
     { siglId: 'fixture', title: 'All games' },
@@ -89,26 +106,64 @@ test('SIGLS parsing applies known product swaps', () => {
   assert.deepEqual(parsed.swapsApplied, [{ from: '9PNQKHFLD2WQ', to: '9PNJXVCVWD4K' }]);
 });
 
-test('normalizeCatalog computes tier segments and diffs without hierarchy assumptions', () => {
+test('SIGLS fetching uses only configured plan and platform pairs', async () => {
+  const requestedUrls = [];
+  const fetchImpl = async (url) => {
+    requestedUrls.push(url);
+    return {
+      ok: true,
+      status: 200,
+      statusText: 'OK',
+      json: async () => [{ title: 'fixture' }]
+    };
+  };
+  const lists = await fetchAllSigls({
+    generatedAt: '2026-01-01T00:00:00.000Z',
+    fetchImpl
+  });
+
+  assert.equal(lists.length, 7);
+  assert.deepEqual(
+    lists.map((item) => `${item.tier}/${item.platform}`),
+    TIER_SOURCE_PAIRS.map(({ tierId, platformId }) => `${tierId}/${platformId}`)
+  );
+  assert.equal(requestedUrls.some((url) => url.includes('cfq7ttc0kgq8') && url.includes('ConsoleGen')), false);
+  assert.throws(
+    () => buildSiglsUrl({ tierId: 'pcGamePass', platformId: 'console' }),
+    /Unsupported SIGLS source/
+  );
+});
+
+test('normalizeCatalog computes configured tier segments and diffs without hierarchy assumptions', () => {
   const current = currentFromLists([
     list('ultimate', 'console', ['AAA', 'BBB']),
     list('ultimate', 'pc', ['AAA']),
     list('premium', 'console', ['AAA', 'CCC']),
     list('premium', 'pc', ['CCC']),
     list('essential', 'console', ['AAA']),
-    list('essential', 'pc', [])
+    list('essential', 'pc', []),
+    list('pcGamePass', 'pc', ['AAA', 'DDD'])
   ], '2026-01-01T00:00:00.000Z');
 
-  assert.equal(current.counts.total, 3);
+  assert.equal(current.counts.total, 4);
   assert.equal(current.counts.tiers.ultimate, 2);
   assert.equal(current.counts.tiers.premium, 2);
   assert.equal(current.counts.tiers.essential, 1);
+  assert.equal(current.counts.tiers.pcGamePass, 2);
   assert.deepEqual(current.segments.allTiers, ['AAA']);
   assert.deepEqual(current.segments.ultimateOnly, ['BBB']);
   assert.deepEqual(current.segments.premiumOnly, ['CCC']);
+  assert.deepEqual(current.segments.pcGamePassOnly, ['DDD']);
   assert.deepEqual(current.diffs.premiumNotUltimate, ['CCC']);
+  assert.deepEqual(current.diffs.pcGamePassNotUltimate, ['DDD']);
   assert.deepEqual(current.diffs.essentialNotPremium, []);
   assert.equal(current.games.find((game) => game.id === 'AAA').segment, 'allTiers');
+  assert.equal(Object.keys(current.diffs).length, 12);
+  assert.equal(Object.keys(current.metadata.overlap).length, 6);
+  assert.equal(Object.keys(current.familyDiffs).length, 12);
+  assert.equal(Object.keys(current.familySegments).length, 15);
+  assert.equal(current.familyCounts.tiers.pcGamePass, 2);
+  assert.deepEqual(current.metadata.tierOrder, ['ultimate', 'premium', 'essential', 'pcGamePass']);
 });
 
 test('normalizeCatalog builds resolvable Xbox store links', () => {
@@ -413,6 +468,129 @@ test('preview slideshow starts each frame delay after the displayed image is rea
   assert.doesNotMatch(advanceSource, /incoming\.src = candidate\.url/);
 });
 
+test('tier and platform filters require a valid membership pair', () => {
+  const functionStart = reportTemplate.indexOf('function matchesTierAndPlatform');
+  const functionEnd = reportTemplate.indexOf('function matchesPlayerMode', functionStart);
+  assert(functionStart >= 0 && functionEnd > functionStart);
+  const selections = { tier: [], platform: [] };
+  const matchesTierAndPlatform = Function(
+    'selectedValues',
+    `"use strict"; return (${reportTemplate.slice(functionStart, functionEnd).trim()});`
+  )((id) => selections[id]);
+  const game = {
+    memberships: ['ultimate', 'pcGamePass'],
+    platforms: ['console', 'pc'],
+    platformByTier: {
+      ultimate: ['console', 'pc'],
+      pcGamePass: ['pc']
+    }
+  };
+
+  selections.tier = ['pcGamePass'];
+  selections.platform = ['console'];
+  assert.equal(matchesTierAndPlatform(game), false);
+  selections.platform = ['pc'];
+  assert.equal(matchesTierAndPlatform(game), true);
+  selections.tier = ['ultimate'];
+  selections.platform = ['console'];
+  assert.equal(matchesTierAndPlatform(game), true);
+  selections.tier = ['pcGamePass', 'ultimate'];
+  assert.equal(matchesTierAndPlatform(game), true);
+  selections.tier = [];
+  assert.equal(matchesTierAndPlatform(game), true);
+  selections.tier = ['pcGamePass'];
+  selections.platform = [];
+  assert.equal(matchesTierAndPlatform(game), true);
+});
+
+test('tier decision summary exposes family-level coverage and overlap deltas', () => {
+  const functionStart = reportTemplate.indexOf('function tierDecisionModel');
+  const functionEnd = reportTemplate.indexOf('function tierCoverageModel', functionStart);
+  assert(functionStart >= 0 && functionEnd > functionStart);
+  const tierDecisionModel = Function(
+    'tierComparisonId',
+    'tierIntersectionId',
+    `"use strict"; return (${reportTemplate.slice(functionStart, functionEnd).trim()});`
+  )(
+    (includedTier, excludedTier) =>
+      `${includedTier}Not${excludedTier[0].toUpperCase()}${excludedTier.slice(1)}`,
+    (leftTier, rightTier) =>
+      `${leftTier}And${rightTier[0].toUpperCase()}${rightTier.slice(1)}`
+  );
+  const model = tierDecisionModel({
+    tiers: {
+      ultimate: 731,
+      premium: 488,
+      essential: 107,
+      pcGamePass: 556
+    },
+    diffs: {
+      essentialNotPremium: 0,
+      premiumNotUltimate: 0,
+      premiumNotEssential: 381,
+      ultimateNotPremium: 243,
+      premiumNotPcGamePass: 77,
+      pcGamePassNotPremium: 145
+    }
+  });
+
+  assert.deepEqual(model.ladder, {
+    valid: true,
+    essential: 107,
+    premiumAdditional: 381,
+    ultimateAdditional: 243,
+    essentialOutsidePremium: 0,
+    premiumOutsideUltimate: 0
+  });
+  assert.deepEqual(model.pcComparison, {
+    premiumOnly: 77,
+    shared: 411,
+    pcGamePassOnly: 145,
+    combined: 633,
+    outsideBoth: 98
+  });
+  const currentModel = tierDecisionModel(checkedInCurrent.familyCounts, checkedInCurrent.families);
+  assert.equal(
+    checkedInCurrent.families.filter((family) =>
+      family.memberships.includes('premium') && family.memberships.includes('pcGamePass')
+    ).length,
+    currentModel.pcComparison.shared
+  );
+  assert.equal(model.comparisonIds.shared, 'premiumAndPcGamePass');
+
+  const coverageStart = functionEnd;
+  const coverageEnd = reportTemplate.indexOf('function coverageCardHtml', coverageStart);
+  const tierCoverageModel = Function(
+    'tierComparisonId',
+    `"use strict"; return (${reportTemplate.slice(coverageStart, coverageEnd).trim()});`
+  )((includedTier, excludedTier) =>
+    `${includedTier}Not${excludedTier[0].toUpperCase()}${excludedTier.slice(1)}`
+  );
+  assert.deepEqual(tierCoverageModel('premium', {
+    tiers: { ultimate: 2, premium: 2 },
+    diffs: { premiumNotUltimate: 1, ultimateNotPremium: 1 }
+  }, 2), {
+    tierCount: 2,
+    outsideUltimate: 1,
+    overlap: 1,
+    percentage: 50,
+    gap: 1
+  });
+  assert.equal(tierDecisionModel({
+    tiers: { ultimate: 2, premium: 2, essential: 1, pcGamePass: 1 },
+    diffs: {
+      essentialNotPremium: 0,
+      premiumNotUltimate: 1,
+      premiumNotEssential: 1,
+      ultimateNotPremium: 1,
+      premiumNotPcGamePass: 1,
+      pcGamePassNotPremium: 0
+    }
+  }).ladder.valid, false);
+  assert.match(reportTemplate, /data-decision-comparison/);
+  assert.match(reportTemplate, /Essential ⊂ Premium ⊂ Ultimate/);
+});
+
 test('validateCatalog rejects malformed screenshot arrays and accepts legacy missing fields', () => {
   const lists = [
     list('ultimate', 'console', ['9PNJXVCVWD4K']),
@@ -460,6 +638,40 @@ test('validateCatalog rejects malformed screenshot arrays and accepts legacy mis
     current.games[0].screenshots = invalidCase.screenshots;
     assert.match(validateCatalog({ current }).errors.join('\n'), invalidCase.error);
   }
+});
+
+test('normalization and validation enforce configured source topology', () => {
+  assert.throws(
+    () => currentFromLists([
+      list('pcGamePass', 'console', ['AAA']),
+      list('pcGamePass', 'pc', ['AAA'])
+    ], '2026-01-01T00:00:00.000Z'),
+    /Unsupported SIGLS source in normalization/
+  );
+
+  const current = currentFromLists([], '2026-01-01T00:00:00.000Z');
+  current.sourceLists = current.sourceLists.filter((source) => source.tier !== 'pcGamePass');
+  const errors = validateCatalog({ current }).errors.join('\n');
+  assert.match(errors, /Expected 7 SIGLS source lists, found 6/);
+  assert.match(errors, /Missing SIGLS source list for pcGamePass\/pc/);
+
+  const valid = currentFromLists([
+    list('ultimate', 'pc', ['AAA']),
+    list('pcGamePass', 'pc', ['AAA'])
+  ], '2026-01-01T00:00:00.000Z');
+  const missingLabel = structuredClone(valid);
+  delete missingLabel.labels.tiers.pcGamePass;
+  assert.match(
+    validateCatalog({ current: missingLabel }).errors.join('\n'),
+    /labels\.tiers\.pcGamePass must be a non-empty string/
+  );
+
+  const invalidOverlap = structuredClone(valid);
+  invalidOverlap.metadata.overlap.ultimatePcGamePass = [];
+  assert.match(
+    validateCatalog({ current: invalidOverlap }).errors.join('\n'),
+    /metadata\.overlap\.ultimatePcGamePass does not match ultimate\/pcGamePass intersection/
+  );
 });
 
 test('history baseline is not treated as new, later runs track observed changes', () => {
@@ -667,6 +879,257 @@ test('legacy history without snapshots seeds families without false events', () 
   assert.equal(legacyHistory.observations[0].productChanged, true);
 });
 
+test('family history backfill preserves tier-baseline semantics', () => {
+  const first = currentFromLists([
+    list('ultimate', 'pc', ['AAA'])
+  ], '2026-04-20T00:00:00.000Z');
+  const baseline = updateHistory({ current: first, generatedAt: first.generatedAt });
+  const migratedCurrent = currentFromLists([
+    list('ultimate', 'pc', ['AAA']),
+    list('pcGamePass', 'pc', ['AAA'])
+  ], '2026-04-27T00:00:00.000Z');
+  const migrated = updateHistory({
+    previousHistory: withoutTierTracking(baseline.history),
+    current: migratedCurrent,
+    generatedAt: migratedCurrent.generatedAt
+  });
+  const historyWithoutFamilies = structuredClone(migrated.history);
+  delete historyWithoutFamilies.families;
+  delete historyWithoutFamilies.familyEvents;
+  delete historyWithoutFamilies.familyHash;
+  delete historyWithoutFamilies.familySchemaVersion;
+
+  backfillFamilyHistory({
+    history: historyWithoutFamilies,
+    snapshots: [baseline.snapshot, migrated.snapshot]
+  });
+
+  assert.deepEqual(historyWithoutFamilies.familyEvents, []);
+  assert.deepEqual(historyWithoutFamilies.observations.at(-1).familyEventCounts, {});
+  assert.equal(historyWithoutFamilies.observations.at(-1).familyChanged, false);
+  const [family] = migratedCurrent.families;
+  assert.deepEqual(
+    historyWithoutFamilies.families[family.id].memberships,
+    ['ultimate', 'pcGamePass']
+  );
+  assert.deepEqual(
+    historyWithoutFamilies.families[family.id].platformByTier,
+    { ultimate: ['pc'], pcGamePass: ['pc'] }
+  );
+});
+
+test('history baselines a newly configured tier before tracking later changes', () => {
+  const legacyCurrent = currentFromLists([
+    list('ultimate', 'console', ['AAA', 'BBB']),
+    list('ultimate', 'pc', ['AAA', 'BBB']),
+    list('premium', 'console', ['AAA']),
+    list('premium', 'pc', ['AAA']),
+    list('essential', 'console', ['AAA']),
+    list('essential', 'pc', []),
+    list('pcGamePass', 'pc', [])
+  ], '2026-01-01T00:00:00.000Z');
+  const legacyHistory = withoutTierTracking(updateHistory({
+    current: legacyCurrent,
+    generatedAt: legacyCurrent.generatedAt
+  }).history);
+
+  const migratedCurrent = currentFromLists([
+    list('ultimate', 'console', ['AAA', 'BBB']),
+    list('ultimate', 'pc', ['AAA', 'BBB']),
+    list('premium', 'console', ['AAA', 'DDD']),
+    list('premium', 'pc', ['AAA', 'DDD']),
+    list('essential', 'console', ['AAA']),
+    list('essential', 'pc', []),
+    list('pcGamePass', 'pc', ['AAA', 'BBB', 'CCC'])
+  ], '2026-01-08T00:00:00.000Z');
+  const migrated = updateHistory({
+    previousHistory: legacyHistory,
+    current: migratedCurrent,
+    generatedAt: migratedCurrent.generatedAt
+  });
+
+  assert.deepEqual(migrated.migration, {
+    type: 'tier_baseline',
+    generatedAt: '2026-01-08T00:00:00.000Z',
+    tierIds: ['pcGamePass'],
+    productCount: 3,
+    newProductCount: 1
+  });
+  assert.deepEqual(migrated.productEvents.map((event) => [event.type, event.productId]), [['added', 'DDD']]);
+  assert.equal(
+    migrated.familyEvents.some((event) =>
+      ['tier_added', 'platform_added'].includes(event.type) && event.tier === 'pcGamePass'
+    ),
+    false
+  );
+  assert.deepEqual(migrated.history.trackedTiers, ['ultimate', 'premium', 'essential', 'pcGamePass']);
+  assert.equal(migrated.history.games.AAA.tierFirstObservedAt.pcGamePass, '2026-01-08T00:00:00.000Z');
+  assert.equal(migrated.history.games.CCC.firstObservedSource, 'tier_baseline');
+  assert.equal(migrated.history.games.CCC.addedAt, null);
+  const aaaFamily = migratedCurrent.families.find((family) => family.variantIds.includes('AAA'));
+  assert.equal(
+    migrated.history.families[aaaFamily.id].tierFirstObservedAt.pcGamePass,
+    '2026-01-08T00:00:00.000Z'
+  );
+  assert.equal(migrated.snapshot !== null, true);
+
+  const laterCurrent = currentFromLists([
+    list('ultimate', 'console', ['AAA', 'BBB']),
+    list('ultimate', 'pc', ['AAA', 'BBB']),
+    list('premium', 'console', ['AAA', 'DDD']),
+    list('premium', 'pc', ['AAA', 'DDD']),
+    list('essential', 'console', ['AAA']),
+    list('essential', 'pc', []),
+    list('pcGamePass', 'pc', ['AAA', 'CCC', 'DDD'])
+  ], '2026-01-15T00:00:00.000Z');
+  const later = updateHistory({
+    previousHistory: migrated.history,
+    current: laterCurrent,
+    generatedAt: laterCurrent.generatedAt
+  });
+
+  assert.equal(later.migration, null);
+  assert.deepEqual(
+    later.productEvents.map((event) => [event.type, event.productId, event.tier, event.platform]),
+    [
+      ['tier_removed', 'BBB', 'pcGamePass', null],
+      ['platform_removed', 'BBB', 'pcGamePass', 'pc'],
+      ['tier_added', 'DDD', 'pcGamePass', null],
+      ['platform_added', 'DDD', 'pcGamePass', 'pc']
+    ]
+  );
+});
+
+test('tier baseline reactivates inactive records without stale membership removals', () => {
+  const first = currentFromLists([
+    list('ultimate', 'console', ['AAA'])
+  ], '2026-02-01T00:00:00.000Z');
+  const baseline = updateHistory({ current: first, generatedAt: first.generatedAt });
+  const removedCurrent = currentFromLists([], '2026-02-08T00:00:00.000Z');
+  const removed = updateHistory({
+    previousHistory: baseline.history,
+    current: removedCurrent,
+    generatedAt: removedCurrent.generatedAt
+  });
+  const migratedCurrent = currentFromLists([
+    list('pcGamePass', 'pc', ['AAA'])
+  ], '2026-02-15T00:00:00.000Z');
+  const migrated = updateHistory({
+    previousHistory: withoutTierTracking(removed.history),
+    current: migratedCurrent,
+    generatedAt: migratedCurrent.generatedAt
+  });
+
+  assert.deepEqual(migrated.productEvents, []);
+  assert.deepEqual(migrated.familyEvents, []);
+  assert.equal(migrated.migration.productCount, 1);
+  assert.equal(migrated.migration.newProductCount, 0);
+  assert.deepEqual(migrated.history.games.AAA.memberships, ['pcGamePass']);
+  assert.deepEqual(migrated.history.games.AAA.platformByTier, { pcGamePass: ['pc'] });
+  const [family] = migratedCurrent.families;
+  assert.deepEqual(migrated.history.families[family.id].memberships, ['pcGamePass']);
+  assert.deepEqual(migrated.history.families[family.id].platformByTier, { pcGamePass: ['pc'] });
+});
+
+test('same-timestamp history reruns preserve tier migration state', () => {
+  const first = currentFromLists([
+    list('ultimate', 'pc', ['AAA'])
+  ], '2026-03-01T00:00:00.000Z');
+  const baseline = updateHistory({ current: first, generatedAt: first.generatedAt });
+  const migratedCurrent = currentFromLists([
+    list('ultimate', 'pc', ['AAA']),
+    list('pcGamePass', 'pc', ['AAA'])
+  ], '2026-03-08T00:00:00.000Z');
+  const migrated = updateHistory({
+    previousHistory: withoutTierTracking(baseline.history),
+    current: migratedCurrent,
+    generatedAt: migratedCurrent.generatedAt
+  });
+  const rerun = updateHistory({
+    previousHistory: migrated.history,
+    current: migratedCurrent,
+    generatedAt: migratedCurrent.generatedAt
+  });
+
+  assert.deepEqual(rerun.migration, migrated.migration);
+  assert.equal(rerun.changed, true);
+  assert.equal(rerun.familyChanged, false);
+  assert.equal(rerun.productChanged, false);
+  assert.deepEqual(rerun.productEvents, []);
+  assert.deepEqual(rerun.familyEvents, []);
+  assert.deepEqual(rerun.history.observations.at(-1).migration, migrated.migration);
+  assert.equal(
+    rerun.history.observations.filter((item) => item.generatedAt === migratedCurrent.generatedAt).length,
+    1
+  );
+  assert.equal(rerun.snapshot !== null, true);
+});
+
+test('same-timestamp history reruns preserve the initial baseline', () => {
+  const current = currentFromLists([
+    list('ultimate', 'console', ['AAA'])
+  ], '2026-03-15T00:00:00.000Z');
+  const initial = updateHistory({ current, generatedAt: current.generatedAt });
+  const rerun = updateHistory({
+    previousHistory: initial.history,
+    current,
+    generatedAt: current.generatedAt
+  });
+
+  assert.equal(rerun.baseline, true);
+  assert.equal(rerun.changed, true);
+  assert.equal(rerun.familyChanged, true);
+  assert.equal(rerun.productChanged, true);
+  assert.deepEqual(rerun.productEvents, []);
+  assert.deepEqual(rerun.familyEvents, []);
+  assert.equal(rerun.history.observations.at(-1).baseline, true);
+  assert.equal(rerun.history.observations.at(-1).changed, true);
+  assert.equal(rerun.history.snapshots.length, 1);
+  assert.equal(rerun.history.snapshots[0].baseline, true);
+  assert.equal(rerun.snapshot !== null, true);
+});
+
+test('family migrator persists tier migration snapshots and status', async (context) => {
+  const temporaryDirectory = await mkdtemp(join(tmpdir(), 'catabox-family-migration-'));
+  context.after(() => rm(temporaryDirectory, { recursive: true, force: true }));
+  const currentPath = join(temporaryDirectory, 'current.json');
+  const historyPath = join(temporaryDirectory, 'history.json');
+  const statusPath = join(temporaryDirectory, 'status.json');
+  const first = currentFromLists([
+    list('ultimate', 'pc', ['AAA'])
+  ], '2026-04-01T00:00:00.000Z');
+  const baseline = updateHistory({ current: first, generatedAt: first.generatedAt });
+  const legacyHistory = withoutTierTracking(baseline.history);
+  legacyHistory.snapshots = [];
+  const migratedCurrent = currentFromLists([
+    list('ultimate', 'pc', ['AAA']),
+    list('pcGamePass', 'pc', ['AAA'])
+  ], '2026-04-08T00:00:00.000Z');
+  await Promise.all([
+    writeFile(currentPath, JSON.stringify(migratedCurrent)),
+    writeFile(historyPath, JSON.stringify(legacyHistory)),
+    writeFile(statusPath, JSON.stringify({ state: 'success' }))
+  ]);
+
+  const result = await migrateFamilies({
+    currentPath,
+    historyPath,
+    statusPath,
+    renderSiteImpl: async () => {}
+  });
+  const snapshotEntry = result.history.snapshots.at(-1);
+  const storedSnapshot = JSON.parse(
+    await readFile(join(temporaryDirectory, snapshotEntry.path), 'utf8')
+  );
+  const storedStatus = JSON.parse(await readFile(statusPath, 'utf8'));
+
+  assert.deepEqual(storedStatus.migration, result.status.migration);
+  assert.deepEqual(storedStatus.migration, result.history.observations.at(-1).migration);
+  assert.equal(storedSnapshot.generatedAt, migratedCurrent.generatedAt);
+  assert.equal(storedSnapshot.productTotal, migratedCurrent.counts.total);
+  assert.equal(storedSnapshot.familyTotal, migratedCurrent.familyCounts.total);
+});
+
 test('catalog action summary renders latest changes', () => {
   const status = {
     state: 'success',
@@ -738,6 +1201,23 @@ test('catalog action summary renders latest changes', () => {
   assert.match(summary, /Ultimate \/ Console/);
   assert.match(summary, /DisplayCatalog metadata/);
   assert.doesNotMatch(summary, /Old game/);
+
+  const migrationSummary = buildCatalogSummary({
+    status: {
+      ...status,
+      eventCounts: {},
+      migration: {
+        type: 'tier_baseline',
+        tierIds: ['pcGamePass'],
+        productCount: 556,
+        newProductCount: 0
+      }
+    },
+    history,
+    repository: 'example/catabox'
+  });
+  assert.match(migrationSummary, /# Catabox catalog update: PC Game Pass tier baseline/);
+  assert.match(migrationSummary, /\| Tier baseline \| PC Game Pass \(556 memberships\) \|/);
 });
 
 test('catalog action summary leads with families and retains product audit events', () => {

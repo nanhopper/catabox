@@ -274,25 +274,265 @@
       align-items: start;
     }
 
+    .decision-summary {
+      margin-bottom: 1rem;
+      padding: clamp(1rem, 2.5vw, 1.5rem);
+      border: 1px solid color-mix(in srgb, var(--accent-2) 24%, var(--line));
+      border-radius: 1rem;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--accent) 7%, transparent), transparent 42%),
+        color-mix(in srgb, var(--panel) 90%, transparent);
+      box-shadow: var(--shadow);
+    }
+
+    .decision-summary-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .decision-summary-head h2,
+    .decision-card h3 {
+      margin: 0;
+    }
+
+    .decision-summary-head > p {
+      max-width: 42rem;
+      margin: 0;
+      text-align: right;
+    }
+
+    .decision-eyebrow {
+      margin: 0 0 0.2rem;
+      color: var(--accent);
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
     .kpis {
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     }
 
     .kpi {
+      position: relative;
       background: var(--panel-2);
       border: 1px solid var(--line);
       border-radius: 0.85rem;
       padding: 1rem;
-      min-height: 7rem;
+      min-height: 9rem;
+      overflow: hidden;
+      text-align: left;
+      cursor: pointer;
+      transition: border-color 140ms ease, transform 140ms ease, background 140ms ease;
+    }
+
+    .kpi:hover {
+      border-color: color-mix(in srgb, var(--accent-2) 56%, var(--line));
+      transform: translateY(-2px);
+    }
+
+    .kpi:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .kpi:disabled:hover {
+      border-color: var(--line);
+      transform: none;
+    }
+
+    .kpi.is-active {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 10%, var(--panel-2));
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent);
+    }
+
+    .kpi-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .kpi-title > span:first-child {
+      color: var(--text);
+      font-weight: 750;
+    }
+
+    .kpi-badge {
+      border: 1px solid color-mix(in srgb, var(--accent-2) 55%, var(--line));
+      border-radius: 999px;
+      padding: 0.1rem 0.45rem;
+      color: var(--accent-2);
+      font-size: 0.68rem;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
     }
 
     .kpi strong {
       display: block;
+      margin-top: 0.35rem;
       font-size: 2rem;
       line-height: 1.1;
     }
 
-    .kpi span,
+    .kpi-meta {
+      min-height: 2.7rem;
+      margin: 0.35rem 0 0.65rem;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .coverage-meter {
+      height: 0.35rem;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--line) 72%, transparent);
+      overflow: hidden;
+    }
+
+    .coverage-meter > span {
+      display: block;
+      width: var(--coverage);
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--accent-2), var(--accent));
+    }
+
+    .decision-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .decision-card {
+      min-width: 0;
+      padding: 1rem;
+      border: 1px solid var(--line);
+      border-radius: 0.85rem;
+      background: color-mix(in srgb, var(--panel-2) 92%, transparent);
+    }
+
+    .decision-card-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .decision-card-head p,
+    .decision-note {
+      margin: 0.2rem 0 0;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .decision-card-total {
+      flex: 0 0 auto;
+      color: var(--accent);
+      font-size: 0.8rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .decision-strip {
+      display: flex;
+      gap: 0.35rem;
+      min-width: 0;
+    }
+
+    .decision-segment {
+      --segment-color: var(--accent-2);
+      position: relative;
+      flex: var(--segment-size) 1 0;
+      min-width: 5.5rem;
+      min-height: 6.6rem;
+      padding: 0.75rem;
+      border-color: color-mix(in srgb, var(--segment-color) 55%, var(--line));
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--segment-color) 16%, transparent), transparent 64%),
+        #0d1520;
+      overflow: hidden;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .decision-segment::before {
+      position: absolute;
+      inset: 0 0 auto;
+      height: 0.25rem;
+      background: var(--segment-color);
+      content: "";
+    }
+
+    .decision-segment:hover {
+      border-color: var(--segment-color);
+    }
+
+    .decision-segment:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .decision-segment:disabled:hover {
+      border-color: color-mix(in srgb, var(--segment-color) 55%, var(--line));
+    }
+
+    .decision-segment.is-active {
+      border-color: var(--segment-color);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--segment-color) 18%, transparent);
+    }
+
+    .decision-segment span,
+    .decision-segment small {
+      display: block;
+    }
+
+    .decision-segment span {
+      color: var(--text);
+      font-size: 0.78rem;
+      font-weight: 750;
+    }
+
+    .decision-segment strong {
+      display: block;
+      margin: 0.15rem 0;
+      font-size: clamp(1.35rem, 2.5vw, 2rem);
+      line-height: 1;
+    }
+
+    .decision-segment small {
+      color: var(--muted);
+      font-size: 0.7rem;
+      line-height: 1.25;
+    }
+
+    .decision-segment-essential {
+      --segment-color: var(--accent);
+    }
+
+    .decision-segment-premium {
+      --segment-color: var(--accent-2);
+    }
+
+    .decision-segment-ultimate {
+      --segment-color: var(--warn);
+    }
+
+    .decision-segment-shared {
+      --segment-color: color-mix(in srgb, var(--accent) 54%, var(--accent-2));
+    }
+
+    .decision-note {
+      margin-top: 0.65rem;
+    }
+
     .muted {
       color: var(--muted);
     }
@@ -1001,6 +1241,38 @@
         padding-bottom: 6rem;
       }
 
+      .decision-summary-head {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .decision-summary-head > p {
+        text-align: left;
+      }
+
+      .decision-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .decision-card-head {
+        display: block;
+      }
+
+      .decision-card-total {
+        display: block;
+        margin-top: 0.4rem;
+      }
+
+      .decision-strip {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .decision-segment {
+        min-width: 0;
+        min-height: 6rem;
+      }
+
       .results-toolbar {
         top: auto;
         bottom: 0.75rem;
@@ -1034,6 +1306,16 @@
         min-width: 0;
       }
 
+    }
+
+    @media (max-width: 520px) {
+      .decision-strip {
+        grid-template-columns: 1fr;
+      }
+
+      .decision-segment {
+        min-height: 4.8rem;
+      }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -1075,7 +1357,17 @@
   </header>
 
   <main>
-    <section class="kpis" id="kpis" aria-label="Catalog key performance indicators"></section>
+    <section class="decision-summary" aria-labelledby="decisionSummaryTitle">
+      <div class="decision-summary-head">
+        <div>
+          <p class="decision-eyebrow">Tier decision guide</p>
+          <h2 id="decisionSummaryTitle">Compare catalog coverage at a glance</h2>
+        </div>
+        <p class="muted">Counts use grouped games rather than product listings. Select any card or segment to inspect those games.</p>
+      </div>
+      <div class="kpis" id="kpis" aria-label="Plan catalog coverage"></div>
+      <div class="decision-grid" id="decisionComparisons" aria-label="Plan catalog comparisons"></div>
+    </section>
 
     <section id="filterPanel" class="panel" aria-labelledby="filtersTitle">
       <h2 id="filtersTitle">Find games</h2>
@@ -1088,9 +1380,6 @@
           <div class="multi-select" data-filter-id="tier">
             <select id="tier" class="multi-select-native" multiple tabindex="-1" aria-hidden="true">
               <option value="">All tiers</option>
-              <option value="ultimate">Ultimate</option>
-              <option value="premium">Premium</option>
-              <option value="essential">Essential</option>
             </select>
             <button id="tierButton" class="multi-select-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="tierMenu" aria-labelledby="tierLabel tierButton"></button>
             <div id="tierMenu" class="multi-select-menu hidden" role="group" aria-labelledby="tierLabel"></div>
@@ -1304,36 +1593,9 @@
   </main>
 
   <script>
-    const TIERS = ['ultimate', 'premium', 'essential'];
     const PLATFORMS = ['console', 'pc'];
-    const TIER_COMPARISONS = [
-      {
-        id: 'premiumNotUltimate',
-        label: 'Premium, not Ultimate',
-        matches: (game) => app.tierComparisonSets.premiumNotUltimate.has(game.id)
-      },
-      {
-        id: 'premiumNotEssential',
-        label: 'Premium, not Essential',
-        matches: (game) => app.tierComparisonSets.premiumNotEssential.has(game.id)
-      },
-      {
-        id: 'ultimateNotPremium',
-        label: 'Ultimate, not Premium',
-        matches: (game) => app.tierComparisonSets.ultimateNotPremium.has(game.id)
-      },
-      {
-        id: 'essentialNotPremium',
-        label: 'Essential, not Premium',
-        matches: (game) => app.tierComparisonSets.essentialNotPremium.has(game.id)
-      },
-      {
-        id: 'essentialNotUltimate',
-        label: 'Essential, not Ultimate',
-        matches: (game) => app.tierComparisonSets.essentialNotUltimate.has(game.id)
-      }
-    ];
-    const TIER_COMPARISON_BY_ID = Object.fromEntries(TIER_COMPARISONS.map((item) => [item.id, item]));
+    let TIER_COMPARISONS = [];
+    let TIER_COMPARISON_BY_ID = {};
     const SORT_CONFIG = {
       title: {
         label: 'Title',
@@ -1379,13 +1641,7 @@
       history: null,
       status: null,
       productsById: new Map(),
-      tierComparisonSets: {
-        premiumNotUltimate: new Set(),
-        premiumNotEssential: new Set(),
-        ultimateNotPremium: new Set(),
-        essentialNotPremium: new Set(),
-        essentialNotUltimate: new Set()
-      },
+      tierComparisonSets: {},
       tierComparisonSetsReady: false,
       rows: [],
       view: 'cards',
@@ -1415,6 +1671,9 @@
     const controls = Object.fromEntries(Object.keys(defaults).map((id) => [id, document.getElementById(id)]));
     const filterPanel = document.getElementById('filterPanel');
     const filterControls = document.getElementById('filterControls');
+    const decisionSummary = document.querySelector('.decision-summary');
+    const kpis = document.getElementById('kpis');
+    const decisionComparisons = document.getElementById('decisionComparisons');
     const resultsHead = document.getElementById('resultsHead');
     const cards = document.getElementById('cards');
     const tableSection = document.getElementById('tableSection');
@@ -1499,6 +1758,60 @@
 
     function labelFor(kind, id) {
       return app.current?.labels?.[kind]?.[id] ?? id;
+    }
+
+    function configuredTierIds() {
+      return app.current?.metadata?.tierOrder ?? Object.keys(app.current?.labels?.tiers ?? {});
+    }
+
+    function tierComparisonId(includedTier, excludedTier) {
+      return `${includedTier}Not${excludedTier[0].toUpperCase()}${excludedTier.slice(1)}`;
+    }
+
+    function tierIntersectionId(leftTier, rightTier) {
+      return `${leftTier}And${rightTier[0].toUpperCase()}${rightTier.slice(1)}`;
+    }
+
+    function configureTierComparisons() {
+      const tierLabels = app.current?.labels?.tiers ?? {};
+      const tierIds = configuredTierIds();
+      const differences = tierIds.flatMap((includedTier) =>
+        tierIds
+          .filter((excludedTier) => excludedTier !== includedTier)
+          .map((excludedTier) => {
+            const id = tierComparisonId(includedTier, excludedTier);
+            return {
+              id,
+              type: 'difference',
+              includedTier,
+              excludedTier,
+              label: `${tierLabels[includedTier]}, not ${tierLabels[excludedTier]}`,
+              predicate: (game) =>
+                game.memberships.includes(includedTier) && !game.memberships.includes(excludedTier),
+              matches: (game) => app.tierComparisonSets[id]?.has(game.id) ?? false
+            };
+          })
+      );
+      const intersections = tierIds.flatMap((leftTier, index) =>
+        tierIds.slice(index + 1)
+          .filter((rightTier) => currentFamilies().some((game) =>
+            game.memberships.includes(leftTier) && game.memberships.includes(rightTier)
+          ))
+          .map((rightTier) => {
+            const id = tierIntersectionId(leftTier, rightTier);
+            return {
+              id,
+              type: 'intersection',
+              tierIds: [leftTier, rightTier],
+              label: `${tierLabels[leftTier]} and ${tierLabels[rightTier]}`,
+              predicate: (game) =>
+                game.memberships.includes(leftTier) && game.memberships.includes(rightTier),
+              matches: (game) => app.tierComparisonSets[id]?.has(game.id) ?? false
+            };
+          })
+      );
+      TIER_COMPARISONS = [...differences, ...intersections];
+      TIER_COMPARISON_BY_ID = Object.fromEntries(TIER_COMPARISONS.map((item) => [item.id, item]));
     }
 
     function optionValue(item) {
@@ -1711,6 +2024,11 @@
 
     function populateFilters() {
       setOptions(
+        controls.tier,
+        configuredTierIds(),
+        (tierId) => labelFor('tiers', tierId)
+      );
+      setOptions(
         controls.tierComparison,
         TIER_COMPARISONS.filter((item) => app.tierComparisonSets[item.id]?.size > 0),
         (item) => item.label
@@ -1726,18 +2044,12 @@
     }
 
     function populateTierComparisonSets() {
-      const comparisonRules = {
-        premiumNotUltimate: ['premium', 'ultimate'],
-        premiumNotEssential: ['premium', 'essential'],
-        ultimateNotPremium: ['ultimate', 'premium'],
-        essentialNotPremium: ['essential', 'premium'],
-        essentialNotUltimate: ['essential', 'ultimate']
-      };
-      app.tierComparisonSets = Object.fromEntries(Object.entries(comparisonRules).map(([id, [includedTier, excludedTier]]) => {
-        const existing = app.current.familyDiffs?.[id];
+      app.tierComparisonSets = Object.fromEntries(TIER_COMPARISONS.map((comparison) => {
+        const { id } = comparison;
+        const existing = comparison.type === 'difference' ? app.current.familyDiffs?.[id] : null;
         if (Array.isArray(existing)) return [id, new Set(existing)];
         return [id, new Set(currentFamilies()
-          .filter((game) => game.memberships.includes(includedTier) && !game.memberships.includes(excludedTier))
+          .filter(comparison.predicate)
           .map((game) => game.id))];
       }));
       app.tierComparisonSetsReady = true;
@@ -1802,7 +2114,7 @@
         });
     }
 
-    function resetFilters() {
+    function resetFilterValues() {
       for (const [id, fallback] of Object.entries(defaults)) {
         if (isMultiSelect(controls[id])) {
           setSelectedValues(id, []);
@@ -1810,7 +2122,41 @@
         }
         controls[id].value = fallback;
       }
+      toolbarSearch.value = controls.search.value;
+    }
+
+    function resetFilters() {
+      resetFilterValues();
       renderResults();
+    }
+
+    function updateDecisionSummaryState() {
+      const tiers = selectedValues('tier');
+      const comparisonId = controls.tierComparison.value;
+      for (const button of decisionSummary.querySelectorAll('[data-decision-tier], [data-decision-comparison]')) {
+        const tierId = button.dataset.decisionTier;
+        const buttonComparisonId = button.dataset.decisionComparison;
+        const active = tierId
+          ? tiers.length === 1 && tiers[0] === tierId && !comparisonId
+          : Boolean(buttonComparisonId) && buttonComparisonId === comparisonId;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-pressed', String(active));
+      }
+    }
+
+    function applyDecisionFilter(button) {
+      resetFilterValues();
+      if (button.dataset.decisionTier) {
+        setSelectedValues('tier', [button.dataset.decisionTier]);
+      }
+      if (button.dataset.decisionComparison) {
+        controls.tierComparison.value = button.dataset.decisionComparison;
+      }
+      renderResults();
+      resultsHead.scrollIntoView({
+        behavior: reducedMotionQuery.matches ? 'auto' : 'smooth',
+        block: 'start'
+      });
     }
 
     function updateToolbarVisibility() {
@@ -2022,6 +2368,20 @@
       return TIER_COMPARISON_BY_ID[value]?.matches(game) ?? false;
     }
 
+    function matchesTierAndPlatform(game) {
+      const tiers = selectedValues('tier');
+      const platforms = selectedValues('platform');
+      if (tiers.length === 0) {
+        return platforms.length === 0 || platforms.some((platformId) => game.platforms.includes(platformId));
+      }
+      if (platforms.length === 0) {
+        return tiers.some((tierId) => game.memberships.includes(tierId));
+      }
+      return tiers.some((tierId) =>
+        platforms.some((platformId) => game.platformByTier?.[tierId]?.includes(platformId))
+      );
+    }
+
     function matchesPlayerMode(game) {
       return selectedValuesMatch('playerMode', (value) => {
         if (value === 'single') return game.supportsSinglePlayer === true;
@@ -2044,9 +2404,8 @@
         const haystack = [game.title, game.publisher, game.developer, game.id, game.shortDescription, variantText].join(' ').toLocaleLowerCase();
         if (!haystack.includes(query)) return false;
       }
-      if (!selectedValuesMatch('tier', (value) => game.memberships.includes(value))) return false;
+      if (!matchesTierAndPlatform(game)) return false;
       if (!matchesTierComparison(game)) return false;
-      if (!selectedValuesMatch('platform', (value) => game.platforms.includes(value))) return false;
       if (!selectedValuesMatch('genre', (value) => (game.genres ?? []).includes(value))) return false;
       if (!selectedValuesMatch('publisher', (value) => game.publisher === value)) return false;
       if (!selectedValuesMatch('frAvailability', (value) => {
@@ -2771,32 +3130,240 @@
         cards.innerHTML = '<p class="empty">No games match these filters.</p>';
       }
       syncUrl();
+      updateDecisionSummaryState();
       app.imageObserver?.disconnect();
       observeLazyImages();
     }
 
+    function tierDecisionModel(counts, families = null) {
+      const requiredTierIds = ['ultimate', 'premium', 'essential', 'pcGamePass'];
+      if (!requiredTierIds.every((tierId) => Number.isFinite(counts.tiers?.[tierId]))) {
+        return null;
+      }
+      const count = (tierId) => Number(counts.tiers[tierId]);
+      const difference = (includedTier, excludedTier) =>
+        Number(counts.diffs?.[tierComparisonId(includedTier, excludedTier)] ?? 0);
+      const ultimate = count('ultimate');
+      const premium = count('premium');
+      const pcGamePass = count('pcGamePass');
+      const premiumOnly = difference('premium', 'pcGamePass');
+      const pcGamePassOnly = difference('pcGamePass', 'premium');
+      const essentialOutsidePremium = difference('essential', 'premium');
+      const premiumOutsideUltimate = difference('premium', 'ultimate');
+      const shared = Math.max(0, Math.min(
+        premium - premiumOnly,
+        pcGamePass - pcGamePassOnly
+      ));
+      const premiumAndPcGamePass = premium + pcGamePass - shared;
+      const outsideBoth = Array.isArray(families)
+        ? families.filter((family) =>
+            family.memberships.includes('ultimate')
+            && !family.memberships.includes('premium')
+            && !family.memberships.includes('pcGamePass')
+          ).length
+        : Math.max(0, ultimate - premiumAndPcGamePass);
+      return {
+        total: ultimate,
+        ladder: {
+          valid: essentialOutsidePremium === 0 && premiumOutsideUltimate === 0,
+          essential: count('essential'),
+          premiumAdditional: difference('premium', 'essential'),
+          ultimateAdditional: difference('ultimate', 'premium'),
+          essentialOutsidePremium,
+          premiumOutsideUltimate
+        },
+        pcComparison: {
+          premiumOnly,
+          shared,
+          pcGamePassOnly,
+          combined: premiumAndPcGamePass,
+          outsideBoth
+        },
+        comparisonIds: {
+          premiumAdditional: tierComparisonId('premium', 'essential'),
+          ultimateAdditional: tierComparisonId('ultimate', 'premium'),
+          premiumOnly: tierComparisonId('premium', 'pcGamePass'),
+          shared: tierIntersectionId('premium', 'pcGamePass'),
+          pcGamePassOnly: tierComparisonId('pcGamePass', 'premium')
+        }
+      };
+    }
+
+    function tierCoverageModel(tierId, counts, ultimateCount) {
+      const tierCount = Number(counts.tiers?.[tierId] ?? 0);
+      const outsideUltimate = tierId === 'ultimate'
+        ? 0
+        : Number(counts.diffs?.[tierComparisonId(tierId, 'ultimate')] ?? 0);
+      const overlap = Math.max(0, tierCount - outsideUltimate);
+      const percentage = ultimateCount > 0
+        ? Math.min(100, Math.round((overlap / ultimateCount) * 100))
+        : 0;
+      const gap = tierId === 'ultimate'
+        ? 0
+        : Number(counts.diffs?.[tierComparisonId('ultimate', tierId)] ?? 0);
+      return { tierCount, outsideUltimate, overlap, percentage, gap };
+    }
+
+    function coverageCardHtml(tierId, counts, ultimateCount) {
+      const { tierCount, outsideUltimate, percentage, gap } =
+        tierCoverageModel(tierId, counts, ultimateCount);
+      const label = labelFor('tiers', tierId);
+      const detail = tierId === 'ultimate'
+        ? '100% of the grouped catalog'
+        : outsideUltimate > 0
+          ? `Covers ${percentage}% of Ultimate · ${outsideUltimate.toLocaleString()} outside it`
+          : `${percentage}% of Ultimate · ${gap.toLocaleString()} fewer`;
+      const badge = tierId === 'pcGamePass' ? '<span class="kpi-badge">PC only</span>' : '';
+      const action = tierCount > 0
+        ? `data-decision-tier="${escapeHtml(tierId)}"`
+        : 'disabled aria-disabled="true"';
+      return `
+        <button
+          type="button"
+          class="kpi"
+          ${action}
+          aria-label="Show ${escapeHtml(label)} games: ${tierCount.toLocaleString()}"
+          aria-pressed="false"
+          style="--coverage: ${percentage}%"
+        >
+          <span class="kpi-title"><span>${escapeHtml(label)}</span>${badge}</span>
+          <strong>${tierCount.toLocaleString()}</strong>
+          <p class="kpi-meta">${escapeHtml(detail)}</p>
+          <span class="coverage-meter" aria-hidden="true"><span></span></span>
+        </button>
+      `;
+    }
+
+    function decisionSegmentHtml({
+      className,
+      label,
+      count,
+      detail,
+      tierId = null,
+      comparisonId = null
+    }) {
+      const numericCount = Number(count);
+      const actionable = numericCount > 0 && (tierId || comparisonId);
+      const action = actionable
+        ? tierId
+          ? `data-decision-tier="${escapeHtml(tierId)}"`
+          : `data-decision-comparison="${escapeHtml(comparisonId)}"`
+        : 'disabled aria-disabled="true"';
+      return `
+        <button
+          type="button"
+          class="decision-segment ${escapeHtml(className)}"
+          ${action}
+          aria-label="${actionable ? `Show ${numericCount.toLocaleString()} games` : 'No games available'}: ${escapeHtml(label)}"
+          aria-pressed="false"
+          style="--segment-size: ${Math.max(numericCount, 1)}"
+        >
+          <span>${escapeHtml(label)}</span>
+          <strong>${numericCount.toLocaleString()}</strong>
+          <small>${escapeHtml(detail)}</small>
+        </button>
+      `;
+    }
+
     function renderKpis() {
       const counts = app.current.familyCounts ?? app.current.counts;
-      const baseCards = [
-        ['Games', counts.total],
-        ['Ultimate', counts.tiers.ultimate],
-        ['Premium', counts.tiers.premium],
-        ['Essential', counts.tiers.essential]
-      ];
-      const diffCards = [
-        ['Premium not Ultimate', counts.diffs.premiumNotUltimate],
-        ['Premium not Essential', counts.diffs.premiumNotEssential],
-        ['Ultimate not Premium', counts.diffs.ultimateNotPremium],
-        ['Essential not Premium', counts.diffs.essentialNotPremium],
-        ['Essential not Ultimate', counts.diffs.essentialNotUltimate]
-      ].filter(([, value]) => Number(value) > 0);
-      const cardsData = [...baseCards, ...diffCards];
-      document.getElementById('kpis').replaceChildren(...cardsData.map(([label, value]) => {
-        const item = document.createElement('article');
-        item.className = 'kpi';
-        item.innerHTML = `<span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong>`;
-        return item;
-      }));
+      const ultimateCount = Number(counts.tiers?.ultimate ?? counts.total ?? 0);
+      kpis.innerHTML = configuredTierIds()
+        .map((tierId) => coverageCardHtml(tierId, counts, ultimateCount))
+        .join('');
+
+      const model = tierDecisionModel(counts, currentFamilies());
+      if (!model) {
+        decisionComparisons.replaceChildren();
+        decisionComparisons.classList.add('hidden');
+        return;
+      }
+      decisionComparisons.classList.remove('hidden');
+      const ladderCard = model.ladder.valid
+        ? `
+          <article class="decision-card">
+            <div class="decision-card-head">
+              <div>
+                <h3>Main plan ladder</h3>
+                <p>Each step includes the catalog before it.</p>
+              </div>
+              <span class="decision-card-total">${model.total.toLocaleString()} Ultimate games</span>
+            </div>
+            <div class="decision-strip" role="group" aria-label="Essential, Premium, and Ultimate catalog expansion">
+              ${decisionSegmentHtml({
+                className: 'decision-segment-essential',
+                label: 'Essential',
+                count: model.ladder.essential,
+                detail: 'included games',
+                tierId: 'essential'
+              })}
+              ${decisionSegmentHtml({
+                className: 'decision-segment-premium',
+                label: 'Premium adds',
+                count: model.ladder.premiumAdditional,
+                detail: 'beyond Essential',
+                comparisonId: model.comparisonIds.premiumAdditional
+              })}
+              ${decisionSegmentHtml({
+                className: 'decision-segment-ultimate',
+                label: 'Ultimate adds',
+                count: model.ladder.ultimateAdditional,
+                detail: 'beyond Premium',
+                comparisonId: model.comparisonIds.ultimateAdditional
+              })}
+            </div>
+            <p class="decision-note">Essential ⊂ Premium ⊂ Ultimate in the current public catalog.</p>
+          </article>
+        `
+        : `
+          <article class="decision-card">
+            <div class="decision-card-head">
+              <div>
+                <h3>Main plan hierarchy changed</h3>
+                <p>The current public lists no longer form a clean nested ladder.</p>
+              </div>
+              <span class="decision-card-total">Use exact comparisons</span>
+            </div>
+            <p><strong>${model.ladder.essentialOutsidePremium.toLocaleString()}</strong> Essential games sit outside Premium; <strong>${model.ladder.premiumOutsideUltimate.toLocaleString()}</strong> Premium games sit outside Ultimate.</p>
+            <p class="decision-note">The ladder is hidden to avoid presenting non-subset catalogs as cumulative upgrades.</p>
+          </article>
+        `;
+      decisionComparisons.innerHTML = `
+        ${ladderCard}
+        <article class="decision-card">
+          <div class="decision-card-head">
+            <div>
+              <h3>Premium vs PC Game Pass</h3>
+              <p>Where the two mid-level catalogs differ.</p>
+            </div>
+            <span class="decision-card-total">${model.pcComparison.combined.toLocaleString()} combined</span>
+          </div>
+          <div class="decision-strip" role="group" aria-label="Premium and PC Game Pass catalog overlap">
+            ${decisionSegmentHtml({
+              className: 'decision-segment-premium',
+              label: 'Premium only',
+              count: model.pcComparison.premiumOnly,
+              detail: 'not in PC Game Pass',
+              comparisonId: model.comparisonIds.premiumOnly
+            })}
+            ${decisionSegmentHtml({
+              className: 'decision-segment-shared',
+              label: 'Shared',
+              count: model.pcComparison.shared,
+              detail: 'in both plans',
+              comparisonId: model.comparisonIds.shared
+            })}
+            ${decisionSegmentHtml({
+              className: 'decision-segment-ultimate',
+              label: 'PC Game Pass only',
+              count: model.pcComparison.pcGamePassOnly,
+              detail: 'not in Premium',
+              comparisonId: model.comparisonIds.pcGamePassOnly
+            })}
+          </div>
+          <p class="decision-note">Together they cover ${model.pcComparison.combined.toLocaleString()} games; Ultimate adds ${model.pcComparison.outsideBoth.toLocaleString()} outside both.</p>
+        </article>
+      `;
     }
 
     function renderStatus() {
@@ -2817,6 +3384,8 @@
       const warnings = status?.warnings ?? [];
       const errors = status?.errors ?? [];
       const display = status?.sourceHealth?.displayCatalog ?? {};
+      const migration = status?.migration;
+      const migrationTiers = (migration?.tierIds ?? []).map((tierId) => labelFor('tiers', tierId)).join(', ');
       document.getElementById('statusContent').innerHTML = `
         <div>
           <strong>Status</strong>
@@ -2845,8 +3414,14 @@
         </div>
         <div>
           <strong>SIGLS sources</strong>
-          <p>${sigls.length ? sigls.map((source) => `${source.tier}/${source.platform}: ${source.count}`).join('<br>') : 'No source details'}</p>
+          <p>${sigls.length ? sigls.map((source) => `${escapeHtml(labelFor('tiers', source.tier))}/${escapeHtml(labelFor('platforms', source.platform))}: ${Number(source.count ?? 0).toLocaleString()}`).join('<br>') : 'No source details'}</p>
         </div>
+        ${migration ? `
+          <div>
+            <strong>Tier baseline</strong>
+            <p>${escapeHtml(migrationTiers)}: ${Number(migration.productCount ?? 0).toLocaleString()} existing memberships baselined without change events.</p>
+          </div>
+        ` : ''}
         <div>
           <strong>Warnings/errors</strong>
           <div class="chips">
@@ -2938,7 +3513,7 @@
         </article>
         <article class="chart">
           <h3>Recent tier migrations</h3>
-          ${recentTier.length ? `<ol>${recentTier.map((event) => `<li>${escapeHtml(event.title)}: ${escapeHtml(event.type.replace('_', ' '))} ${escapeHtml(event.tier)} on ${escapeHtml(event.date)}</li>`).join('')}</ol>` : '<p class="muted">No tracker-observed tier migrations yet.</p>'}
+          ${recentTier.length ? `<ol>${recentTier.map((event) => `<li>${escapeHtml(event.title)}: ${escapeHtml(event.type.replace('_', ' '))} ${escapeHtml(labelFor('tiers', event.tier))} on ${escapeHtml(event.date)}</li>`).join('')}</ol>` : '<p class="muted">No tracker-observed tier migrations yet.</p>'}
         </article>
         <article class="chart">
           <h3>Product-listing audit</h3>
@@ -2995,6 +3570,11 @@
       toolbarFiltersButton.addEventListener('click', showFilters);
       toolbarClearButton.addEventListener('click', resetFilters);
       toolbarTopButton.addEventListener('click', () => scrollTo({ top: 0, behavior: 'smooth' }));
+      decisionSummary.addEventListener('click', (event) => {
+        const button = closestFromEvent(event, '[data-decision-tier], [data-decision-comparison]');
+        if (!(button instanceof HTMLButtonElement)) return;
+        applyDecisionFilter(button);
+      });
       for (const container of [cards, tableBody]) {
         container.addEventListener('mouseover', (event) => {
           const target = closestFromEvent(event, '[data-preview-game]');
@@ -3106,6 +3686,7 @@
         app.status = statusData;
         app.productsById = new Map(current.games.map((game) => [game.id, game]));
         setupImageObserver();
+        configureTierComparisons();
         populateTierComparisonSets();
         populateFilters();
         restoreFiltersFromUrl();

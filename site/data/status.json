@@ -1,20 +1,29 @@
 {
-  "actionRunNumber": "3",
-  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/29284910453",
+  "actionRunNumber": null,
+  "actionRunUrl": null,
   "baseline": false,
-  "catalogGeneratedAt": "2026-07-13T21:04:27.785Z",
-  "catalogHash": "079d724863368e84a52297c915c97a1aee386ac453b0a93dc1c5686c470d31ab",
-  "changed": false,
+  "catalogGeneratedAt": "2026-07-13T21:16:23.121Z",
+  "catalogHash": "2e5f5437fdafad87b8732aa426d0a14c8c67c83832e841d1d893449a8bbc83f9",
+  "changed": true,
   "errors": [],
   "eventCounts": {},
   "familyChanged": false,
   "familyEventCounts": {},
-  "familyHash": "2db6fb26fbf7726a76321c531901615b078110daa1ef748ff3e451cd45c78754",
-  "generatedAt": "2026-07-13T21:04:27.785Z",
+  "familyHash": "a3c772244a4a1e4c037271c29c86dc1b13e8da8f014a67d923320e49c95e5fc0",
+  "generatedAt": "2026-07-13T21:16:23.121Z",
   "language": "en-us",
   "lastGoodCatalogHash": "079d724863368e84a52297c915c97a1aee386ac453b0a93dc1c5686c470d31ab",
-  "lastGoodGeneratedAt": "2026-07-13T10:58:02.246Z",
+  "lastGoodGeneratedAt": "2026-07-13T21:04:27.785Z",
   "market": "FR",
+  "migration": {
+    "generatedAt": "2026-07-13T21:16:23.121Z",
+    "newProductCount": 0,
+    "productCount": 556,
+    "tierIds": [
+      "pcGamePass"
+    ],
+    "type": "tier_baseline"
+  },
   "productChanged": false,
   "productEventCounts": {},
   "productTotal": 919,
@@ -73,6 +82,14 @@
         "status": "ok",
         "tier": "essential",
         "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0k5dj"
+      },
+      {
+        "count": 556,
+        "platform": "pc",
+        "sourceCount": 556,
+        "status": "ok",
+        "tier": "pcGamePass",
+        "url": "https://catalog.gamepass.com/sigls/v3?id=609d944c-d395-4c0a-9ea4-e9f39b52c1ad&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0kgq8"
       }
     ]
   },

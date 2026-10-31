@@ -1,11 +1,13 @@
 import { createHash } from 'node:crypto';
 import {
+  DIFF_DEFS,
   MAX_GAME_SCREENSHOTS,
   PLATFORM_IDS,
   SEGMENT_IDS,
   TIER_IDS,
   hashObject,
   normalizeWhitespace,
+  segmentIdForTiers,
   sortTitle
 } from './constants.mjs';
 
@@ -85,16 +87,7 @@ export function gameFamilyId(key) {
 }
 
 export function segmentForTiers(tiers) {
-  const hasUltimate = tiers.includes('ultimate');
-  const hasPremium = tiers.includes('premium');
-  const hasEssential = tiers.includes('essential');
-  if (hasUltimate && hasPremium && hasEssential) return 'allTiers';
-  if (hasUltimate && hasPremium) return 'ultimatePremium';
-  if (hasUltimate && hasEssential) return 'ultimateEssential';
-  if (hasPremium && hasEssential) return 'premiumEssential';
-  if (hasUltimate) return 'ultimateOnly';
-  if (hasPremium) return 'premiumOnly';
-  return 'essentialOnly';
+  return segmentIdForTiers(tiers);
 }
 
 function hasPlatformQualifier(title) {
@@ -258,14 +251,12 @@ function membershipDiffs(items) {
     ])
   );
   const difference = (left, right) => [...left].filter((id) => !right.has(id)).sort();
-  return {
-    premiumNotUltimate: difference(tierSets.premium, tierSets.ultimate),
-    premiumNotEssential: difference(tierSets.premium, tierSets.essential),
-    ultimateNotPremium: difference(tierSets.ultimate, tierSets.premium),
-    essentialNotPremium: difference(tierSets.essential, tierSets.premium),
-    essentialNotUltimate: difference(tierSets.essential, tierSets.ultimate),
-    ultimateNotEssential: difference(tierSets.ultimate, tierSets.essential)
-  };
+  return Object.fromEntries(
+    DIFF_DEFS.map(({ id, includedTierId, excludedTierId }) => [
+      id,
+      difference(tierSets[includedTierId], tierSets[excludedTierId])
+    ])
+  );
 }
 
 export function buildMembershipSummary(items) {

@@ -1,12 +1,20 @@
 import { readFile } from 'node:fs/promises';
 import {
+  DIFF_DEFS,
   DIFF_LABELS,
+  EXPECTED_SUBSET_DEFS,
   GENERATED_PATHS,
+  HISTORY_SCHEMA_VERSION,
   MAX_GAME_SCREENSHOTS,
+  OVERLAP_DEFS,
   PLATFORM_IDS,
+  SEGMENT_IDS,
   TIER_IDS,
+  TIER_SOURCE_PAIRS,
   isMainModule,
-  stableStringify
+  segmentIdForTiers,
+  stableStringify,
+  tierSupportsPlatform
 } from './constants.mjs';
 import {
   GAME_FAMILY_SCHEMA_VERSION,
@@ -19,6 +27,21 @@ function tierUnion(rawLists, tierId) {
 
 function add(collection, message) {
   collection.push(message);
+}
+
+function sourceKey(tierId, platformId) {
+  return `${tierId}:${platformId}`;
+}
+
+function sameSortedValues(left = [], right = []) {
+  const normalizedLeft = [...left].sort();
+  const normalizedRight = [...right].sort();
+  return normalizedLeft.length === normalizedRight.length
+    && normalizedLeft.every((value, index) => value === normalizedRight[index]);
+}
+
+function sameValues(left = [], right = []) {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
 }
 
 function validateRequiredShape(current, errors) {
@@ -53,20 +76,55 @@ function validateRequiredShape(current, errors) {
   }
 }
 
+function validateLabels(current, errors) {
+  const definitions = [
+    ['tiers', TIER_IDS],
+    ['platforms', PLATFORM_IDS],
+    ['segments', SEGMENT_IDS],
+    ['diffs', DIFF_DEFS.map((diff) => diff.id)]
+  ];
+  for (const [kind, expectedIds] of definitions) {
+    const labels = current.labels?.[kind] ?? {};
+    const expected = new Set(expectedIds);
+    for (const id of expectedIds) {
+      if (typeof labels[id] !== 'string' || labels[id].trim() === '') {
+        add(errors, `labels.${kind}.${id} must be a non-empty string`);
+      }
+      if (!sameValues(current.metadata?.tierOrder, TIER_IDS)) {
+        add(errors, `metadata.tierOrder must match configured tier order: ${TIER_IDS.join(', ')}`);
+      }
+      if (!sameValues(current.metadata?.platformOrder, PLATFORM_IDS)) {
+        add(errors, `metadata.platformOrder must match configured platform order: ${PLATFORM_IDS.join(', ')}`);
+      }
+    }
+    for (const id of Object.keys(labels)) {
+      if (!expected.has(id)) {
+        add(errors, `Unexpected ${kind} label: ${id}`);
+      }
+    }
+  }
+}
+
 function validateSources(current, errors) {
   const sourceLists = current.sourceLists ?? [];
-  const expected = TIER_IDS.length * PLATFORM_IDS.length;
+  const expected = TIER_SOURCE_PAIRS.length;
   if (sourceLists.length !== expected) {
     add(errors, `Expected ${expected} SIGLS source lists, found ${sourceLists.length}`);
   }
-  for (const tierId of TIER_IDS) {
-    for (const platformId of PLATFORM_IDS) {
-      const source = sourceLists.find((item) => item.tier === tierId && item.platform === platformId);
-      if (!source) {
-        add(errors, `Missing SIGLS source list for ${tierId}/${platformId}`);
-      } else if (source.status !== 'ok') {
-        add(errors, `SIGLS source list for ${tierId}/${platformId} is not ok`);
-      }
+  const expectedKeys = new Set(TIER_SOURCE_PAIRS.map(({ tierId, platformId }) => sourceKey(tierId, platformId)));
+  for (const { tierId, platformId } of TIER_SOURCE_PAIRS) {
+    const matches = sourceLists.filter((item) => item.tier === tierId && item.platform === platformId);
+    if (matches.length === 0) {
+      add(errors, `Missing SIGLS source list for ${tierId}/${platformId}`);
+    } else if (matches.length > 1) {
+      add(errors, `Duplicate SIGLS source lists for ${tierId}/${platformId}`);
+    } else if (matches[0].status !== 'ok') {
+      add(errors, `SIGLS source list for ${tierId}/${platformId} is not ok`);
+    }
+  }
+  for (const source of sourceLists) {
+    if (!expectedKeys.has(sourceKey(source.tier, source.platform))) {
+      add(errors, `Unexpected SIGLS source list for ${source.tier}/${source.platform}`);
     }
   }
 }
@@ -90,6 +148,109 @@ function validateCounts(current, errors) {
       if (!gameIds.has(id)) {
         add(errors, `rawLists.${tierId} references missing game ${id}`);
       }
+    }
+    for (const platformId of PLATFORM_IDS) {
+      if (!tierSupportsPlatform(tierId, platformId) && (rawLists[tierId]?.[platformId]?.length ?? 0) > 0) {
+        add(errors, `rawLists.${tierId}.${platformId} must be empty because the source tuple is unsupported`);
+      }
+    }
+  }
+
+  const tierSets = Object.fromEntries(TIER_IDS.map((tierId) => [tierId, new Set(tierUnion(rawLists, tierId))]));
+  const expectedOverlapIds = new Set(OVERLAP_DEFS.map((overlap) => overlap.id));
+  for (const { id, leftTierId, rightTierId } of OVERLAP_DEFS) {
+    const expectedIds = [...tierSets[leftTierId]].filter((productId) => tierSets[rightTierId].has(productId));
+    const actualIds = current.metadata?.overlap?.[id] ?? [];
+    if (!sameSortedValues(actualIds, expectedIds)) {
+      add(errors, `metadata.overlap.${id} does not match ${leftTierId}/${rightTierId} intersection`);
+    }
+  }
+  for (const overlapId of Object.keys(current.metadata?.overlap ?? {})) {
+    if (!expectedOverlapIds.has(overlapId)) {
+      add(errors, `Unexpected overlap definition: ${overlapId}`);
+    }
+  }
+
+  const expectedDiffIds = new Set(DIFF_DEFS.map((diff) => diff.id));
+  for (const { id, includedTierId, excludedTierId } of DIFF_DEFS) {
+    const expectedIds = [...tierSets[includedTierId]].filter((productId) => !tierSets[excludedTierId].has(productId));
+    const actualIds = current.diffs?.[id] ?? [];
+    if (!sameSortedValues(actualIds, expectedIds)) {
+      add(errors, `diffs.${id} does not match ${includedTierId} minus ${excludedTierId}`);
+    }
+    if (current.counts?.diffs?.[id] !== expectedIds.length) {
+      add(errors, `counts.diffs.${id} (${current.counts?.diffs?.[id]}) does not match diff length (${expectedIds.length})`);
+    }
+  }
+  for (const diffId of Object.keys(current.diffs ?? {})) {
+    if (!expectedDiffIds.has(diffId)) {
+      add(errors, `Unexpected diff definition: ${diffId}`);
+    }
+  }
+
+  const expectedSegments = Object.fromEntries(SEGMENT_IDS.map((segmentId) => [segmentId, []]));
+  for (const game of games) {
+    const memberships = Array.isArray(game.memberships) ? game.memberships : [];
+    const unknownMemberships = memberships.filter((tierId) => !TIER_IDS.includes(tierId));
+    if (unknownMemberships.length > 0) {
+      add(errors, `game ${game.id} has unknown tier memberships: ${unknownMemberships.join(', ')}`);
+    }
+    const expectedMemberships = TIER_IDS.filter((tierId) => tierSets[tierId].has(game.id));
+    if (expectedMemberships.length === 0) {
+      add(errors, `game ${game.id} is not present in any raw tier list`);
+      continue;
+    }
+    if (!sameSortedValues(memberships, expectedMemberships)) {
+      add(errors, `game ${game.id} memberships do not match raw tier lists`);
+    }
+    const expectedSegmentId = segmentIdForTiers(expectedMemberships);
+    if (game.segment !== expectedSegmentId) {
+      add(errors, `game ${game.id} segment ${game.segment} does not match memberships (${expectedSegmentId})`);
+    }
+    expectedSegments[expectedSegmentId].push(game.id);
+    const expectedGamePlatforms = new Set();
+    for (const tierId of TIER_IDS) {
+      const expectedPlatforms = PLATFORM_IDS.filter((platformId) =>
+        rawLists[tierId]?.[platformId]?.includes(game.id)
+      );
+      const actualPlatforms = game.platformByTier?.[tierId] ?? [];
+      if (!sameSortedValues(actualPlatforms, expectedPlatforms)) {
+        add(errors, `game ${game.id} platformByTier.${tierId} does not match raw tier lists`);
+      }
+      for (const platformId of expectedPlatforms) {
+        expectedGamePlatforms.add(platformId);
+      }
+    }
+    if (!sameSortedValues(game.platforms, [...expectedGamePlatforms])) {
+      add(errors, `game ${game.id} platforms do not match tier/platform memberships`);
+    }
+    for (const [tierId, platforms] of Object.entries(game.platformByTier ?? {})) {
+      if (!TIER_IDS.includes(tierId)) {
+        add(errors, `game ${game.id} has platform membership for unknown tier ${tierId}`);
+        continue;
+      }
+      for (const platformId of platforms ?? []) {
+        if (!PLATFORM_IDS.includes(platformId)) {
+          add(errors, `game ${game.id} has unknown platform ${platformId} for tier ${tierId}`);
+        } else if (!tierSupportsPlatform(tierId, platformId)) {
+          add(errors, `game ${game.id} has unsupported ${tierId}/${platformId} membership`);
+        }
+      }
+    }
+  }
+  for (const segmentId of SEGMENT_IDS) {
+    const expectedIds = expectedSegments[segmentId];
+    const actualIds = current.segments?.[segmentId] ?? [];
+    if (!sameSortedValues(actualIds, expectedIds)) {
+      add(errors, `segments.${segmentId} does not match game memberships`);
+    }
+    if (current.counts?.segments?.[segmentId] !== expectedIds.length) {
+      add(errors, `counts.segments.${segmentId} (${current.counts?.segments?.[segmentId]}) does not match segment length (${expectedIds.length})`);
+    }
+  }
+  for (const segmentId of Object.keys(current.segments ?? {})) {
+    if (!SEGMENT_IDS.includes(segmentId)) {
+      add(errors, `Unexpected segment definition: ${segmentId}`);
     }
   }
   for (const [diffId, ids] of Object.entries(current.diffs ?? {})) {
@@ -237,7 +398,7 @@ function validateFamilyReferences(current, errors) {
 }
 
 function validateWarnings(current, previousCurrent, warnings) {
-  for (const diffId of ['premiumNotUltimate', 'essentialNotPremium', 'essentialNotUltimate']) {
+  for (const { diffId } of EXPECTED_SUBSET_DEFS) {
     const count = current.diffs?.[diffId]?.length ?? 0;
     if (count > 0) {
       add(warnings, `${DIFF_LABELS[diffId]} is non-zero (${count}). This may be expected if public SIGLS behavior changes.`);
@@ -257,10 +418,37 @@ function validateHistory(history, current, errors) {
   if (!history) {
     return;
   }
+  if (history.schemaVersion !== HISTORY_SCHEMA_VERSION) {
+    add(errors, `history schema version must be ${HISTORY_SCHEMA_VERSION}, found ${history.schemaVersion ?? 'missing'}`);
+  }
+  if (!sameSortedValues(history.trackedTiers, TIER_IDS)) {
+    add(errors, `history trackedTiers must match configured tiers: ${TIER_IDS.join(', ')}`);
+  }
+  for (const tierId of TIER_IDS) {
+    if (!history.tierBaselines?.[tierId]) {
+      add(errors, `history is missing tier baseline for ${tierId}`);
+    }
+  }
+  for (const migration of history.migrations ?? []) {
+    if (migration.type !== 'tier_baseline') {
+      add(errors, `history has unknown migration type: ${migration.type}`);
+    }
+    for (const tierId of migration.tierIds ?? []) {
+      if (!TIER_IDS.includes(tierId)) {
+        add(errors, `history migration references unknown tier ${tierId}`);
+      }
+    }
+  }
   const knownIds = new Set(Object.keys(history.games ?? {}));
   for (const event of history.events ?? []) {
     if (!knownIds.has(event.productId)) {
       add(errors, `history event ${event.id ?? '(no id)'} references unknown product ${event.productId}`);
+    }
+    if (event.tier && !TIER_IDS.includes(event.tier)) {
+      add(errors, `history event ${event.id ?? '(no id)'} references unknown tier ${event.tier}`);
+    }
+    if (event.platform && !PLATFORM_IDS.includes(event.platform)) {
+      add(errors, `history event ${event.id ?? '(no id)'} references unknown platform ${event.platform}`);
     }
   }
   if (history.familySchemaVersion !== GAME_FAMILY_SCHEMA_VERSION) {
@@ -348,6 +536,7 @@ export function validateCatalog({ current, previousCurrent = null, history = nul
     return { errors: ['current catalog is missing'], warnings };
   }
   validateRequiredShape(current, errors);
+  validateLabels(current, errors);
   validateSources(current, errors);
   validateCounts(current, errors);
   validateFamilyReferences(current, errors);

@@ -104,6 +104,8 @@ function summaryRows({ status, history, repository }) {
     status?.familyEventCounts == null ? status?.eventCounts : {}
   );
   const observation = observationForStatus({ status, history });
+  const migration = status?.migration;
+  const migrationTiers = (migration?.tierIds ?? []).map(tierLabel).join(', ');
   return [
     ['Repository', repository ?? process.env.GITHUB_REPOSITORY ?? 'Unknown'],
     ['Status', status?.state ?? 'unknown'],
@@ -113,6 +115,7 @@ function summaryRows({ status, history, repository }) {
     ['Game catalog changed', (status?.familyChanged ?? status?.changed) ? 'Yes' : 'No'],
     ['Product listings changed', (status?.productChanged ?? status?.changed) ? 'Yes' : 'No'],
     ['Baseline run', status?.baseline ? 'Yes' : 'No'],
+    ...(migration ? [['Tier baseline', `${migrationTiers} (${formatNumber(migration.productCount)} memberships)`]] : []),
     ['Game change events', pluralize(eventTotal(familyEventCounts), 'event')],
     ['Product-listing events', pluralize(eventTotal(productEventCounts), 'event')],
     ['Warnings', pluralize(status?.warnings?.length ?? 0, 'warning')],
@@ -161,7 +164,11 @@ export function buildCatalogSummary({
   );
   const eventCount = eventTotal(familyEventCounts);
   const title = status?.state === 'success'
-    ? `Catabox catalog update: ${status?.baseline ? 'baseline' : pluralize(eventCount, 'change')}`
+    ? `Catabox catalog update: ${status?.baseline
+      ? 'baseline'
+      : status?.migration
+        ? `${(status.migration.tierIds ?? []).map(tierLabel).join(', ')} tier baseline`
+        : pluralize(eventCount, 'change')}`
     : `Catabox catalog update ${status?.state ?? 'unknown'}`;
   const latestEvents = latestEventsForStatus({ status, history, maxEvents, scope: 'family' }).map((event) => [
     eventLabel(event.type),

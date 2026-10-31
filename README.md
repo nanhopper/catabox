@@ -10,8 +10,9 @@ The tracker is catalog-only: it does not use personal gamertags, libraries, play
 
 ## What it tracks
 
-- Xbox Game Pass **Ultimate**, **Premium**, and **Essential**
-- **Console** (`ConsoleGen8;ConsoleGen9`) and **PC** (`pc`)
+- Xbox Game Pass **Ultimate**, **Premium**, and **Essential** on console and PC
+- **PC Game Pass** on PC
+- Console uses `ConsoleGen8;ConsoleGen9`; PC uses `pc`
 - Default market availability: `FR`
 - Default product names and metadata language: `en-us`
 
@@ -30,13 +31,18 @@ Catabox uses the public Xbox catalog endpoints from a GitHub Actions Node job:
 
 Observed SIGLS behavior: each request returns one list header followed by product IDs that appear to represent the catalog membership for that subscription context and platform context in the requested market. Catabox treats those lists as source-of-truth observations, not as a contractual Microsoft API guarantee.
 
+Catabox fetches only the plan/platform combinations the subscription supports. It does not merge separate EA, Ubisoft, or Riot category lists into membership; provider games already exposed by Microsoft appear in the main plan lists.
+
 Known tier constants:
 
-| Tier | SIGLS ID | Subscription context |
-| --- | --- | --- |
-| Ultimate | `97c6c862-d28a-4907-a3d5-c401f2296a53` | `cfq7ttc0khs0` |
-| Premium | `09a72c0d-c466-426a-9580-b78955d8173a` | `cfq7ttc0p85b` |
-| Essential | `34031711-5a70-4196-bab7-45757dc2294e` | `cfq7ttc0k5dj` |
+| Tier | SIGLS ID | Subscription context | Source platforms |
+| --- | --- | --- | --- |
+| Ultimate | `97c6c862-d28a-4907-a3d5-c401f2296a53` | `cfq7ttc0khs0` | Console, PC |
+| Premium | `09a72c0d-c466-426a-9580-b78955d8173a` | `cfq7ttc0p85b` | Console, PC |
+| Essential | `34031711-5a70-4196-bab7-45757dc2294e` | `cfq7ttc0k5dj` | Console, PC |
+| PC Game Pass | `609d944c-d395-4c0a-9ea4-e9f39b52c1ad` | `cfq7ttc0kgq8` | PC |
+
+The PC Game Pass SIGLS endpoint also returns products if queried with a console platform context, despite identifying itself as “All PC Games.” Catabox intentionally does not treat that response as a valid source.
 
 The known product swap `9PNQKHFLD2WQ -> 9PNJXVCVWD4K` is applied before metadata enrichment.
 
@@ -60,6 +66,8 @@ Each update workflow run writes a GitHub Actions job summary led by game-family 
 ## History semantics
 
 The first successful run is a **baseline observation**. Game families and products present in that first run are marked as first observed, but not as truly new.
+
+When Catabox begins tracking an additional tier, its existing memberships receive their own tier baseline. That schema migration writes a snapshot but does not emit `added`, `tier_added`, or `platform_added` events for games that were already part of the newly introduced plan. Later changes to that plan use the normal event types below.
 
 Later successful runs generate the following tracker-observed events at both family and product level:
 
@@ -85,7 +93,7 @@ Validation also checks:
 - tier counts match raw SIGLS lists
 - family and product history events reference known tracked IDs
 - generated JSON is deterministic
-- warnings for `Premium not Ultimate`, `Essential not Premium`, or `Essential not Ultimate`
+- warnings when a configured expected subset is violated, including PC Game Pass products missing from Ultimate
 - warning for suspicious union-count swings above 20%
 
 ## Local development

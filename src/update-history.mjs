@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import {
   GENERATED_PATHS,
+  HISTORY_SCHEMA_VERSION,
   PLATFORM_IDS,
   TIER_IDS,
   hashObject,
@@ -16,6 +17,8 @@ import {
   buildFamilyCatalog,
   buildMembershipSummary
 } from './game-families.mjs';
+
+const LEGACY_TRACKED_TIER_IDS = ['ultimate', 'premium', 'essential'];
 
 function membershipSignature(game) {
   return TIER_IDS.flatMap((tierId) =>
@@ -69,10 +72,13 @@ function eventCounts(events) {
 
 function emptyHistory(current, generatedAt) {
   return {
+    schemaVersion: HISTORY_SCHEMA_VERSION,
     generatedAt,
     market: current.market,
     language: current.language,
     baselineAt: generatedAt,
+    trackedTiers: [...TIER_IDS],
+    tierBaselines: Object.fromEntries(TIER_IDS.map((tierId) => [tierId, generatedAt])),
     lastObservedAt: generatedAt,
     lastChangedAt: null,
     catalogHash: current.catalogHash,
@@ -88,6 +94,7 @@ function emptyHistory(current, generatedAt) {
 }
 
 function createGameRecord(game, generatedAt, source) {
+  const baseline = source === 'baseline' || source === 'tier_baseline';
   const tierFirstObservedAt = Object.fromEntries(game.memberships.map((tierId) => [tierId, generatedAt]));
   const platformFirstObservedAt = Object.fromEntries(game.platforms.map((platformId) => [platformId, generatedAt]));
   const tierPlatformFirstObservedAt = Object.fromEntries(
@@ -100,12 +107,12 @@ function createGameRecord(game, generatedAt, source) {
     title: game.title,
     firstObservedAt: generatedAt,
     firstObservedSource: source,
-    addedAt: source === 'baseline' ? null : generatedAt,
+    addedAt: baseline ? null : generatedAt,
     lastObservedAt: generatedAt,
     removedAt: null,
     readdedAt: null,
     active: true,
-    baseline: source === 'baseline',
+    baseline,
     memberships: game.memberships,
     platformByTier: game.platformByTier,
     platforms: game.platforms,
@@ -164,6 +171,135 @@ function updateFamilyRecord(record, family, generatedAt) {
   record.familySchemaVersion = family.familySchemaVersion;
   record.variantIds = [...family.variantIds];
   record.allVariantIds = [...new Set([...(record.allVariantIds ?? []), ...family.variantIds])].sort();
+}
+
+function trackedTiersBeforeMigration(history) {
+  if (Array.isArray(history.trackedTiers)) {
+    return history.trackedTiers.filter((tierId) => TIER_IDS.includes(tierId));
+  }
+  return LEGACY_TRACKED_TIER_IDS.filter((tierId) => TIER_IDS.includes(tierId));
+}
+
+function baselineTierMemberships({
+  records,
+  items,
+  previouslyTrackedTiers,
+  addedTierIds,
+  generatedAt
+}) {
+  const addedTierSet = new Set(addedTierIds);
+  const baselineIds = new Set();
+  let itemCount = 0;
+  let newItemCount = 0;
+
+  for (const item of items) {
+    const addedMemberships = item.memberships.filter((tierId) => addedTierSet.has(tierId));
+    if (addedMemberships.length === 0) {
+      continue;
+    }
+    itemCount += 1;
+    const record = records[item.id];
+    const hasPreviouslyTrackedMembership = item.memberships.some((tierId) =>
+      previouslyTrackedTiers.includes(tierId)
+    );
+    if (!record) {
+      if (!hasPreviouslyTrackedMembership) {
+        baselineIds.add(item.id);
+        newItemCount += 1;
+      }
+      continue;
+    }
+    const baselineOnlyReactivation = !record.active && !hasPreviouslyTrackedMembership;
+
+    record.memberships ??= [];
+    record.platformByTier ??= {};
+    record.tierFirstObservedAt ??= {};
+    record.platformFirstObservedAt ??= {};
+    record.tierPlatformFirstObservedAt ??= {};
+    for (const tierId of addedMemberships) {
+      if (!record.memberships.includes(tierId)) {
+        record.memberships.push(tierId);
+      }
+      const platforms = [...(item.platformByTier?.[tierId] ?? [])];
+      record.platformByTier[tierId] = platforms;
+      record.tierFirstObservedAt[tierId] ??= generatedAt;
+      for (const platformId of platforms) {
+        record.platformFirstObservedAt[platformId] ??= generatedAt;
+        record.tierPlatformFirstObservedAt[`${tierId}:${platformId}`] ??= generatedAt;
+      }
+    }
+    if (baselineOnlyReactivation) {
+      record.memberships = [...item.memberships];
+      record.platformByTier = Object.fromEntries(
+        Object.entries(item.platformByTier).map(([tierId, platforms]) => [tierId, [...platforms]])
+      );
+    } else {
+      record.memberships = TIER_IDS.filter((tierId) => record.memberships.includes(tierId));
+    }
+    record.platforms = PLATFORM_IDS.filter((platformId) =>
+      Object.values(record.platformByTier).some((platforms) => platforms.includes(platformId))
+    );
+    record.segment = item.segment;
+    if (baselineOnlyReactivation) {
+      record.active = true;
+      record.removedAt = null;
+    }
+  }
+
+  return { baselineIds, itemCount, newItemCount };
+}
+
+function prepareTierBaselineMigration({ history, current, generatedAt }) {
+  const previouslyTrackedTiers = trackedTiersBeforeMigration(history);
+  const addedTierIds = TIER_IDS.filter((tierId) => !previouslyTrackedTiers.includes(tierId));
+
+  history.schemaVersion = HISTORY_SCHEMA_VERSION;
+  history.tierBaselines ??= {};
+  for (const tierId of previouslyTrackedTiers) {
+    history.tierBaselines[tierId] ??= history.baselineAt ?? generatedAt;
+  }
+
+  if (addedTierIds.length === 0) {
+    history.trackedTiers = [...TIER_IDS];
+    return {
+      migration: null,
+      baselineProductIds: new Set(),
+      baselineFamilyIds: new Set()
+    };
+  }
+
+  const productBaseline = baselineTierMemberships({
+    records: history.games,
+    items: current.games,
+    previouslyTrackedTiers,
+    addedTierIds,
+    generatedAt
+  });
+  const familyBaseline = baselineTierMemberships({
+    records: history.families,
+    items: current.families,
+    previouslyTrackedTiers,
+    addedTierIds,
+    generatedAt
+  });
+
+  for (const tierId of addedTierIds) {
+    history.tierBaselines[tierId] = generatedAt;
+  }
+  history.trackedTiers = [...TIER_IDS];
+  const migration = {
+    type: 'tier_baseline',
+    generatedAt,
+    tierIds: addedTierIds,
+    productCount: productBaseline.itemCount,
+    newProductCount: productBaseline.newItemCount
+  };
+  history.migrations = [...(history.migrations ?? []), migration];
+  return {
+    migration,
+    baselineProductIds: productBaseline.baselineIds,
+    baselineFamilyIds: familyBaseline.baselineIds
+  };
 }
 
 function createEvent({ generatedAt, type, game, tier = null, platform = null, previous = null, current = null }) {
@@ -271,7 +407,7 @@ function familyFromRecord(record) {
   };
 }
 
-function updateFamilyRecords({ records, families, generatedAt, source = 'observed' }) {
+function updateFamilyRecords({ records, families, generatedAt, source = 'observed', baselineIds = new Set() }) {
   const currentFamilies = Object.fromEntries(families.map((family) => [family.id, family]));
   const events = [];
   for (const [familyId, record] of Object.entries(records)) {
@@ -284,8 +420,9 @@ function updateFamilyRecords({ records, families, generatedAt, source = 'observe
   for (const family of families) {
     const record = records[family.id];
     if (!record) {
-      records[family.id] = createFamilyRecord(family, generatedAt, source);
-      if (source !== 'baseline') {
+      const recordSource = baselineIds.has(family.id) ? 'tier_baseline' : source;
+      records[family.id] = createFamilyRecord(family, generatedAt, recordSource);
+      if (recordSource === 'observed') {
         events.push(createFamilyEvent({ generatedAt, type: 'added', family }));
       }
       continue;
@@ -434,11 +571,31 @@ export function backfillFamilyHistory({ history, snapshots = [] }) {
     const productCounts = snapshot.productCounts
       ?? productState?.productCounts
       ?? buildMembershipSummary(snapshot.games).counts;
+    const snapshotEntry = (history.snapshots ?? []).find((entry) =>
+      entry.generatedAt === snapshot.generatedAt
+    );
+    const observation = (history.observations ?? []).find((item) =>
+      item.generatedAt === snapshot.generatedAt
+    );
+    const migration = snapshot.migration ?? snapshotEntry?.migration ?? observation?.migration;
+    const addedTierIds = migration?.type === 'tier_baseline'
+      ? (migration.tierIds ?? []).filter((tierId) => TIER_IDS.includes(tierId))
+      : [];
+    const familyBaseline = index > 0 && addedTierIds.length > 0
+      ? baselineTierMemberships({
+          records: history.families,
+          items: catalog.families,
+          previouslyTrackedTiers: TIER_IDS.filter((tierId) => !addedTierIds.includes(tierId)),
+          addedTierIds,
+          generatedAt: snapshot.generatedAt
+        })
+      : { baselineIds: new Set() };
     const events = updateFamilyRecords({
       records: history.families,
       families: catalog.families,
       generatedAt: snapshot.generatedAt,
-      source: index === 0 ? 'baseline' : 'observed'
+      source: index === 0 ? 'baseline' : 'observed',
+      baselineIds: familyBaseline.baselineIds
     });
     history.familyEvents.push(...events);
     states.push({
@@ -493,7 +650,7 @@ export function backfillFamilyHistory({ history, snapshots = [] }) {
   return history;
 }
 
-function observationFor({ current, generatedAt, productEvents, familyEvents, baseline }) {
+function observationFor({ current, generatedAt, productEvents, familyEvents, baseline, migration }) {
   const familyCounts = current.familyCounts;
   const productsChanged = productEvents.length > 0;
   const familiesChanged = familyEvents.length > 0;
@@ -503,7 +660,7 @@ function observationFor({ current, generatedAt, productEvents, familyEvents, bas
     catalogHash: current.catalogHash,
     familyHash: current.familyHash,
     familySchemaVersion: GAME_FAMILY_SCHEMA_VERSION,
-    changed: baseline || productsChanged || familiesChanged,
+    changed: baseline || migration !== null || productsChanged || familiesChanged,
     familyChanged: baseline || familiesChanged,
     productChanged: baseline || productsChanged,
     baseline,
@@ -515,7 +672,8 @@ function observationFor({ current, generatedAt, productEvents, familyEvents, bas
     familyEventCounts: eventCounts(familyEvents),
     productTotal: current.counts.total,
     productCounts: current.counts,
-    productEventCounts: eventCounts(productEvents)
+    productEventCounts: eventCounts(productEvents),
+    ...(migration ? { migration } : {})
   };
 }
 
@@ -554,6 +712,22 @@ export function updateHistory({
   }
   history.families ??= {};
   history.familyEvents ??= [];
+  const existingObservation = (history.observations ?? []).find((item) =>
+    item.generatedAt === generatedAt
+  );
+  const observationBaseline = baseline || existingObservation?.baseline === true;
+  const tierBaseline = baseline
+    ? {
+        migration: null,
+        baselineProductIds: new Set(),
+        baselineFamilyIds: new Set()
+      }
+    : prepareTierBaselineMigration({ history, current, generatedAt });
+  const { baselineProductIds, baselineFamilyIds } = tierBaseline;
+  const migration = tierBaseline.migration
+    ?? existingObservation?.migration
+    ?? (history.migrations ?? []).find((item) => item.generatedAt === generatedAt)
+    ?? null;
 
   if (baseline) {
     for (const game of current.games) {
@@ -579,8 +753,12 @@ export function updateHistory({
     for (const game of current.games) {
       const record = previousRecords[game.id];
       if (!record) {
-        history.games[game.id] = createGameRecord(game, generatedAt, 'observed');
-        productEvents.push(createEvent({ generatedAt, type: 'added', game }));
+        if (baselineProductIds.has(game.id)) {
+          history.games[game.id] = createGameRecord(game, generatedAt, 'tier_baseline');
+        } else {
+          history.games[game.id] = createGameRecord(game, generatedAt, 'observed');
+          productEvents.push(createEvent({ generatedAt, type: 'added', game }));
+        }
         continue;
       }
       if (!record.active) {
@@ -623,7 +801,8 @@ export function updateHistory({
     : updateFamilyRecords({
       records: history.families,
       families: current.families,
-      generatedAt
+      generatedAt,
+      baselineIds: baselineFamilyIds
     });
 
   history.generatedAt = generatedAt;
@@ -631,6 +810,7 @@ export function updateHistory({
   history.catalogHash = current.catalogHash;
   history.familyHash = current.familyHash;
   history.familySchemaVersion = GAME_FAMILY_SCHEMA_VERSION;
+  history.schemaVersion = HISTORY_SCHEMA_VERSION;
   history.market = current.market;
   history.language = current.language;
   history.events = [...(history.events ?? []), ...productEvents];
@@ -646,21 +826,26 @@ export function updateHistory({
     generatedAt,
     productEvents: observationProductEvents,
     familyEvents: observationFamilyEvents,
-    baseline
+    baseline: observationBaseline,
+    migration
   });
   history.observations = [
     ...(history.observations ?? []).filter((item) => item.generatedAt !== generatedAt),
     observation
   ].sort((left, right) => left.generatedAt.localeCompare(right.generatedAt));
-  if (!baseline && (productEvents.length > 0 || familyEvents.length > 0)) {
+  const changed = observationBaseline
+    || migration !== null
+    || observationProductEvents.length > 0
+    || observationFamilyEvents.length > 0;
+  if (!observationBaseline && changed) {
     history.lastChangedAt = generatedAt;
   }
-  if (!baseline && familyEvents.length > 0) {
+  if (!observationBaseline && observationFamilyEvents.length > 0) {
     history.lastFamilyChangedAt = generatedAt;
   }
 
   let snapshot = null;
-  if (baseline || productEvents.length > 0 || familyEvents.length > 0) {
+  if (changed) {
     snapshot = membershipOnlySnapshot(current, generatedAt);
     const shortHash = hashObject(snapshot).slice(0, 8);
     const path = `snapshots/${todayFromIso(generatedAt)}-${shortHash}.json`;
@@ -678,20 +863,22 @@ export function updateHistory({
         familyCounts: current.familyCounts,
         productCounts: current.counts,
         changed: true,
-        baseline
+        baseline: observationBaseline,
+        ...(migration ? { migration } : {})
       }
     ];
   }
 
   return {
     history,
-    events: familyEvents,
-    productEvents,
-    familyEvents,
-    changed: baseline || productEvents.length > 0 || familyEvents.length > 0,
-    familyChanged: baseline || familyEvents.length > 0,
-    productChanged: baseline || productEvents.length > 0,
-    baseline,
+    events: observationFamilyEvents,
+    productEvents: observationProductEvents,
+    familyEvents: observationFamilyEvents,
+    changed,
+    familyChanged: observationBaseline || observationFamilyEvents.length > 0,
+    productChanged: observationBaseline || observationProductEvents.length > 0,
+    baseline: observationBaseline,
+    migration,
     snapshot
   };
 }
