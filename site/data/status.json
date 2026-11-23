@@ -1,108 +1,195 @@
 {
-  "actionRunNumber": "22",
-  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/43878288359",
+  "actionRunNumber": "23",
+  "actionRunUrl": "https://github.com/nanhopper/catabox/actions/runs/45211804253",
   "baseline": false,
-  "catalogGeneratedAt": "2026-11-16T13:42:16.263Z",
-  "catalogHash": "44d7e0611dc03461f5f46042ad26e3761f9491baf1bfc546cb257ed3b2210f66",
+  "catalogGeneratedAt": "2026-11-23T16:01:55.246Z",
+  "catalogHash": "139b5fb1a3599e52f351037a4fe1aa15caac24b0cf77f284af2e78fc8b0da405",
   "changed": true,
   "errors": [],
   "eventCounts": {
-    "added": 10,
-    "platform_added": 11,
-    "removed": 16,
-    "tier_added": 8
+    "added": 1,
+    "platform_added": 12,
+    "tier_added": 6
   },
   "familyChanged": true,
   "familyEventCounts": {
-    "added": 10,
-    "platform_added": 11,
-    "removed": 16,
-    "tier_added": 8
+    "added": 1,
+    "platform_added": 12,
+    "tier_added": 6
   },
-  "familyHash": "c652ef2a9331f3051e0ef379b195f4c3e30908644174da94218b22f79828d8f4",
-  "generatedAt": "2026-11-16T13:42:16.263Z",
+  "familyHash": "1ad12e92e60169a324b786d399adffba081a2a6368dc606261564af3e2124703",
+  "generatedAt": "2026-11-23T16:01:55.246Z",
   "language": "en-us",
-  "lastGoodCatalogHash": "b95067b2044ccf3bddb34595a2a806c6690666972984cdda395cd39a3d780c08",
-  "lastGoodGeneratedAt": "2026-11-09T13:56:58.880Z",
-  "leavingSoonAdded": [],
-  "leavingSoonTotal": 0,
+  "lastGoodCatalogHash": "44d7e0611dc03461f5f46042ad26e3761f9491baf1bfc546cb257ed3b2210f66",
+  "lastGoodGeneratedAt": "2026-11-16T13:42:16.263Z",
+  "leavingSoonAdded": [
+    {
+      "familyId": "family-916cbe82ae5d7bd226e69f86d84cf4a0cbf65c1aa9b1e0265635291d108dba25",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Aliens: Dark Descent",
+      "variantIds": [
+        "9MX7DMHK13SC",
+        "9N1M64W9XZQ7"
+      ]
+    },
+    {
+      "familyId": "family-bc9e24eeb0de3b959648b0b716d99e04a7535b9f9572bcbc6a73c1bd7624edca",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Banishers: Ghosts of New Eden",
+      "variantIds": [
+        "9NKFS43DLFFL"
+      ]
+    },
+    {
+      "familyId": "family-0531f403bcb51bcbdd8b8bfb28fff956e5e0aab57bdb7837f0dc263bb74b0faa",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "DreamWorks Gabby’s Dollhouse: Ready to Party",
+      "variantIds": [
+        "9NFQ1XMXDLN6"
+      ]
+    },
+    {
+      "familyId": "family-4b6eb7fa4663d908a91bbb58717e4b90f54cd099dd59240bbe6c7b9fe005dcff",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Generation Zero®",
+      "variantIds": [
+        "C20WW4W29FQ1"
+      ]
+    },
+    {
+      "familyId": "family-3ab606c1621a065422e8e8999589bc1fff2cedc3111c49abb27766a437cd1c4e",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "KILL IT WITH FIRE! 2",
+      "variantIds": [
+        "9MXHL3TT792F"
+      ]
+    },
+    {
+      "familyId": "family-3c8f24ff0662d3d33357c0ed905259d22a8c440993696bf652c0f7439c187985",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Moving Out 2",
+      "variantIds": [
+        "9P88K6NQW12H"
+      ]
+    },
+    {
+      "familyId": "family-9e7888ceb09d05a40f4cbd0666c564709484d0c3a29211ea7813c21079348653",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Star Trucker",
+      "variantIds": [
+        "9MT19Q3CRMQZ"
+      ]
+    },
+    {
+      "familyId": "family-40abe746e9a4e585f9b392abcbcc5cd58961de2ad71f83072717316f0a6a9bc4",
+      "platforms": [
+        "console",
+        "pc"
+      ],
+      "title": "Totally Reliable Delivery Service",
+      "variantIds": [
+        "9NZG72SH3H4W"
+      ]
+    }
+  ],
+  "leavingSoonTotal": 8,
   "market": "FR",
   "productChanged": true,
   "productEventCounts": {
-    "added": 8,
-    "platform_added": 13,
-    "removed": 15,
-    "tier_added": 9
+    "added": 1,
+    "platform_added": 12,
+    "tier_added": 6
   },
-  "productTotal": 892,
+  "productTotal": 893,
   "sourceHealth": {
     "displayCatalog": {
       "missingProductIds": [],
-      "requested": 892,
-      "returned": 892,
+      "requested": 893,
+      "returned": 893,
       "status": "ok"
     },
     "leavingSoon": [
       {
-        "count": 0,
+        "count": 8,
         "platform": "console",
-        "sourceCount": 0,
+        "sourceCount": 8,
         "status": "ok",
         "url": "https://catalog.gamepass.com/sigls/v2?id=393f05bf-e596-4ef6-9487-6d4fa0eab987&language=en-us&market=FR"
       },
       {
-        "count": 0,
+        "count": 8,
         "platform": "pc",
-        "sourceCount": 0,
+        "sourceCount": 8,
         "status": "ok",
         "url": "https://catalog.gamepass.com/sigls/v2?id=cc7fc951-d00f-410e-9e02-5e4628e04163&language=en-us&market=FR"
       }
     ],
     "sigls": [
       {
-        "count": 621,
+        "count": 622,
         "platform": "console",
-        "sourceCount": 621,
+        "sourceCount": 622,
         "status": "ok",
         "tier": "ultimate",
         "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0khs0"
       },
       {
-        "count": 591,
+        "count": 592,
         "platform": "pc",
-        "sourceCount": 591,
+        "sourceCount": 592,
         "status": "ok",
         "tier": "ultimate",
         "url": "https://catalog.gamepass.com/sigls/v3?id=97c6c862-d28a-4907-a3d5-c401f2296a53&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0khs0"
       },
       {
-        "count": 419,
+        "count": 425,
         "platform": "console",
-        "sourceCount": 419,
+        "sourceCount": 425,
         "status": "ok",
         "tier": "premium",
         "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0p85b"
       },
       {
-        "count": 396,
+        "count": 402,
         "platform": "pc",
-        "sourceCount": 396,
+        "sourceCount": 402,
         "status": "ok",
         "tier": "premium",
         "url": "https://catalog.gamepass.com/sigls/v3?id=09a72c0d-c466-426a-9580-b78955d8173a&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0p85b"
       },
       {
-        "count": 97,
+        "count": 98,
         "platform": "console",
-        "sourceCount": 97,
+        "sourceCount": 98,
         "status": "ok",
         "tier": "essential",
         "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=ConsoleGen8%3BConsoleGen9&subscriptionContext=cfq7ttc0k5dj"
       },
       {
-        "count": 84,
+        "count": 85,
         "platform": "pc",
-        "sourceCount": 84,
+        "sourceCount": 85,
         "status": "ok",
         "tier": "essential",
         "url": "https://catalog.gamepass.com/sigls/v3?id=34031711-5a70-4196-bab7-45757dc2294e&language=en-us&market=FR&platformContext=pc&subscriptionContext=cfq7ttc0k5dj"
@@ -110,6 +197,6 @@
     ]
   },
   "state": "success",
-  "total": 718,
+  "total": 719,
   "warnings": []
 }
